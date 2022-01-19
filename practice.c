@@ -18,6 +18,10 @@ void display();
 // ----------------------------------------------------------
 double rotate_y=0; 
 double rotate_x=0;
+double size_s=1.0;
+double translate_x = 0;
+double translate_y = 0;
+double translate_z = 0;
 
 // ----------------------------------------------------------
 // display() Callback function
@@ -30,6 +34,8 @@ void display(){
 
   glRotatef( rotate_x, 1.0, 0.0, 0.0 );
   glRotatef( rotate_y, 0.0, 1.0, 0.0 );
+  glScalef( size_s, size_s, size_s );
+  glTranslatef( translate_x, translate_y, translate_z );
 
   glBegin(GL_LINES);
   glColor3f( 1.0, 1.0, 1.0 );
@@ -94,20 +100,24 @@ void keyboard(unsigned char key, int x, int y ) {
 	  case 'q':
 		exit(0);
 		break;
-	  case 'd':
-		rotate_y += 5;
+	  case 'a':
+		translate_x += 0.01;
+		rotate_y -= 1;
 		printf("Updating d\n");
 		break;
-	  case 'a':
-		rotate_y -= 5;
+	  case 'd':
+		translate_x -= 0.01;
+		rotate_y += 1;
 		printf("Updating a\n");
 		break;
-	  case 'w':
-		rotate_x += 5;
-		printf("Updating w\n");
-		break;
 	  case 's':
-		rotate_x -= 5;
+		printf("Updating w\n");
+		translate_z += 0.01;
+		rotate_x += 1;
+		break;
+	  case 'w':
+		rotate_x -= 1;
+		translate_z -= 0.01;
 		printf("Updating s\n");
 		break;
 	}
