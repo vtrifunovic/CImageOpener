@@ -9,9 +9,11 @@
 //STB_Image import
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 #define checkImageWidth 640
-#define checkImageHeight 800
+#define checkImageHeight 640
 GLubyte checkImage[checkImageHeight][checkImageWidth][3];
 GLubyte checkImage_copy[checkImageHeight][checkImageWidth][3];
 
@@ -22,9 +24,9 @@ void run_Shift()
 	{
 		for (int y = 0; y < checkImageWidth; y++)
 		{
-			checkImage[x][y][0] += 10;
-			checkImage[x][y][1] += 20;
-			checkImage[x][y][2] += 30;
+			checkImage[x][y][0] = -checkImage[x][y][0];
+			checkImage[x][y][1] = -checkImage[x][y][1];
+			checkImage[x][y][2] = -checkImage[x][y][2];
 		}
 	}
 	glDrawPixels(checkImageWidth, checkImageHeight, GL_RGB, GL_UNSIGNED_BYTE, checkImage);
@@ -59,21 +61,23 @@ void make_grayscale()
 	{
 		for (int y = 0; y < checkImageWidth; y++)
 		{
-			float c = (checkImage[x][y][0] + checkImage[x][y][1] + checkImage[x][y][2])/3;
-			checkImage[x][y][0] = (int)c;
-			checkImage[x][y][1] = (int)c;
-			checkImage[x][y][2] = (int)c;
-			checkImage_copy[x][y][0] = (int)c;
-			checkImage_copy[x][y][1] = (int)c;
-			checkImage_copy[x][y][2] = (int)c;
+			int c = (int) (checkImage[x][y][0] + checkImage[x][y][1] + checkImage[x][y][2])/3;
+			checkImage[x][y][0] = c;
+			checkImage[x][y][1] = c;
+			checkImage[x][y][2] = c;
+			checkImage_copy[x][y][0] = c;
+			checkImage_copy[x][y][1] = c;
+			checkImage_copy[x][y][2] = c;
 
 		}
 	}
 	glDrawPixels(checkImageWidth, checkImageHeight, GL_RGB, GL_UNSIGNED_BYTE, checkImage);
 	glFlush();
 }
+
 void dilate()
 {
+	/*
 	int sum = 0, pixels = 0;
 	for (int x = 0; x < checkImageHeight; x++)
 	{
@@ -87,15 +91,80 @@ void dilate()
 	}
 	printf("Sum: %d\n", sum);
 	printf("Total Pixels: %d\n", pixels);
+	*/
 	int avg;
-	avg = (int)sum/pixels;
+	//avg = (int)sum/pixels;
 	int new;
-	printf("Avg. grayscale value: %d\n", avg);
+	//printf("Avg. grayscale value: %d\n", avg);
+	//******************
+	//* clean this up  *
+	//******************
 	for (int x = 0; x < checkImageHeight; x++)
 	{
 		for (int y = 0; y < checkImageWidth; y++)
 		{
 			//channel 0
+			avg = 0;
+			avg += checkImage[x+1][y][0];
+			avg += checkImage[x][y+1][0];
+			avg += checkImage[x-1][y][0];
+			avg += checkImage[x][y-1][0];
+			avg += checkImage[x+1][y+1][0];
+			avg += checkImage[x-1][y-1][0];
+			avg += checkImage[x+1][y-1][0];
+			avg += checkImage[x-1][y+1][0];
+			//
+			avg += checkImage[x+2][y][0];
+			avg += checkImage[x][y+2][0];
+			avg += checkImage[x-2][y][0];
+			avg += checkImage[x][y-2][0];
+			//
+			avg += checkImage[x+2][y+1][0];
+			avg += checkImage[x-2][y-1][0];
+			avg += checkImage[x+2][y-1][0];
+			avg += checkImage[x-2][y+1][0];
+			//
+			avg += checkImage[x+1][y+2][0];
+			avg += checkImage[x-1][y-2][0];
+			avg += checkImage[x+1][y-2][0];
+			avg += checkImage[x-1][y+2][0];
+			//
+			avg += checkImage[x+2][y+2][0];
+			avg += checkImage[x-2][y-2][0];
+			avg += checkImage[x+2][y-2][0];
+			avg += checkImage[x-2][y+2][0];
+			//
+			avg += checkImage[x+3][y][0];
+			avg += checkImage[x][y+3][0];
+			avg += checkImage[x-3][y][0];
+			avg += checkImage[x][y-3][0];
+			//
+			avg += checkImage[x+3][y+1][0];
+			avg += checkImage[x-3][y-1][0];
+			avg += checkImage[x+3][y-1][0];
+			avg += checkImage[x-3][y+1][0];
+			//
+			avg += checkImage[x+3][y+2][0];
+			avg += checkImage[x-3][y-2][0];
+			avg += checkImage[x+3][y-2][0];
+			avg += checkImage[x-3][y+2][0];
+			//
+			avg += checkImage[x+1][y+3][0];
+			avg += checkImage[x-1][y-3][0];
+			avg += checkImage[x+1][y-3][0];
+			avg += checkImage[x-1][y+3][0];
+			//
+			avg += checkImage[x+2][y+3][0];
+			avg += checkImage[x-2][y-3][0];
+			avg += checkImage[x+2][y-3][0];
+			avg += checkImage[x-2][y+3][0];
+			//
+			avg += checkImage[x+3][y+3][0];
+			avg += checkImage[x-3][y-3][0];
+			avg += checkImage[x+3][y-3][0];
+			avg += checkImage[x-3][y+3][0];
+			avg = (int) avg/88;
+			
 			if (checkImage[x][y][0] > avg)
 			{
 				new = checkImage[x][y][0] + 3;
@@ -127,7 +196,7 @@ void dilate()
 					}
 					else
 					{
-						checkImage[x-1][y][0] + 1;
+						checkImage[x-1][y][0] += 1;
 					}
 				}
 				if (y+1 < checkImageWidth)
@@ -187,7 +256,7 @@ void dilate()
 					}
 					else
 					{
-						checkImage[x-1][y][1] + 1;
+						checkImage[x-1][y][1] += 1;
 					}
 				}
 				if (y+1 < checkImageWidth)
@@ -247,7 +316,7 @@ void dilate()
 					}
 					else
 					{
-						checkImage[x-1][y][2] + 1;
+						checkImage[x-1][y][2] += 1;
 					}
 				}
 				if (y+1 < checkImageWidth)
@@ -283,6 +352,7 @@ void dilate()
 
 void erode()
 {
+	/*
 	int sum = 0, pixels = 0;
 	for (int x = 0; x < checkImageHeight; x++)
 	{
@@ -296,15 +366,79 @@ void erode()
 	}
 	printf("Sum: %d\n", sum);
 	printf("Total Pixels: %d\n", pixels);
+	*/
 	int avg;
-	avg = (int)sum/pixels;
-	printf("Avg. grayscale value: %d\n", avg);
+	//avg = (int)sum/pixels;
+	//printf("Avg. grayscale value: %d\n", avg);
 	int new2;
-	
+	//*********************
+	//* clean this up too *
+	//*********************
 	for (int x = 0; x < checkImageHeight; x++)
 	{
 		for (int y = 0; y < checkImageWidth; y++)
 		{
+			avg = 0;
+			avg += checkImage[x+1][y][0];
+			avg += checkImage[x][y+1][0];
+			avg += checkImage[x-1][y][0];
+			avg += checkImage[x][y-1][0];
+			avg += checkImage[x+1][y+1][0];
+			avg += checkImage[x-1][y-1][0];
+			avg += checkImage[x+1][y-1][0];
+			avg += checkImage[x-1][y+1][0];
+			//
+			avg += checkImage[x+2][y][0];
+			avg += checkImage[x][y+2][0];
+			avg += checkImage[x-2][y][0];
+			avg += checkImage[x][y-2][0];
+			//
+			avg += checkImage[x+2][y+1][0];
+			avg += checkImage[x-2][y-1][0];
+			avg += checkImage[x+2][y-1][0];
+			avg += checkImage[x-2][y+1][0];
+			//
+			avg += checkImage[x+1][y+2][0];
+			avg += checkImage[x-1][y-2][0];
+			avg += checkImage[x+1][y-2][0];
+			avg += checkImage[x-1][y+2][0];
+			//
+			avg += checkImage[x+2][y+2][0];
+			avg += checkImage[x-2][y-2][0];
+			avg += checkImage[x+2][y-2][0];
+			avg += checkImage[x-2][y+2][0];
+			//
+			avg += checkImage[x+3][y][0];
+			avg += checkImage[x][y+3][0];
+			avg += checkImage[x-3][y][0];
+			avg += checkImage[x][y-3][0];
+			//
+			avg += checkImage[x+3][y+1][0];
+			avg += checkImage[x-3][y-1][0];
+			avg += checkImage[x+3][y-1][0];
+			avg += checkImage[x-3][y+1][0];
+			//
+			avg += checkImage[x+3][y+2][0];
+			avg += checkImage[x-3][y-2][0];
+			avg += checkImage[x+3][y-2][0];
+			avg += checkImage[x-3][y+2][0];
+			//
+			avg += checkImage[x+1][y+3][0];
+			avg += checkImage[x-1][y-3][0];
+			avg += checkImage[x+1][y-3][0];
+			avg += checkImage[x-1][y+3][0];
+			//
+			avg += checkImage[x+2][y+3][0];
+			avg += checkImage[x-2][y-3][0];
+			avg += checkImage[x+2][y-3][0];
+			avg += checkImage[x-2][y+3][0];
+			//
+			avg += checkImage[x+3][y+3][0];
+			avg += checkImage[x-3][y-3][0];
+			avg += checkImage[x+3][y-3][0];
+			avg += checkImage[x-3][y+3][0];
+			avg = (int) avg/88;
+			
 			if (checkImage[x][y][0] > avg)
 			{
 				new2 = checkImage_copy[x][y][0] - 3;
@@ -325,7 +459,7 @@ void erode()
 					}
 					else
 					{
-						checkImage_copy[x+1][y][0] =- 1;
+						checkImage_copy[x+1][y][0] -= 1;
 					}
 				}
 				if (x-1 > 0){
@@ -386,7 +520,7 @@ void erode()
 					}
 					else
 					{
-						checkImage_copy[x+1][y][1] =- 1;
+						checkImage_copy[x+1][y][1] -= 1;
 					}
 				}
 				if (x-1 > 0){
@@ -447,7 +581,7 @@ void erode()
 					}
 					else
 					{
-						checkImage_copy[x+1][y][2] =- 1;
+						checkImage_copy[x+1][y][2] -= 1;
 					}
 				}
 				if (x-1 > 0){
@@ -502,33 +636,64 @@ void edge_detect()
 		for (int y = 0; y < checkImageWidth; y++)
 		{
 			xyz = checkImage[x][y][0] - checkImage_copy[x][y][0];
-			if (xyz < 0)
-			{
-				checkImage[x][y][0] = 255;
-			}
-			else
-			{
-				checkImage[x][y][0] = 0;
-			}
+			checkImage[x][y][0] = xyz;
 			xyz = checkImage[x][y][1] - checkImage_copy[x][y][1];
-			if (xyz < 0)
-			{
-				checkImage[x][y][1] = 255;
-			}
-			else
-			{
-				checkImage[x][y][1] = 0;
-			}
+			checkImage[x][y][1] = xyz;
 			xyz = checkImage[x][y][2] - checkImage_copy[x][y][2];
-			if (xyz < 0)
-			{
-				checkImage[x][y][2] = 255;
-			}
-			else
-			{
-				checkImage[x][y][2] = 0;
-			}
+			checkImage[x][y][2] = xyz;
+		}
+	}
+	glDrawPixels(checkImageWidth, checkImageHeight, GL_RGB, GL_UNSIGNED_BYTE, checkImage);
+	glFlush();
+}
 
+void v_blur()
+{
+	int avg;
+	
+	for (int i=1; i < checkImageHeight-1; i ++)
+	{
+		for (int j=1; j < checkImageWidth-1; j++)
+		{
+			//n4c0
+			 avg = 0;
+			 avg += checkImage[i+1][j][0];
+			 avg += checkImage[i-1][j][0];
+			 avg += checkImage[i][j+1][0];
+			 avg += checkImage[i][j-1][0];
+			 //n8c0
+			 avg += checkImage[i-1][j-1][0];
+			 avg += checkImage[i+1][j-1][0];
+			 avg += checkImage[i-1][j+1][0];
+			 avg += checkImage[i+1][j+1][0];
+			 avg = (int)avg/8;
+			 checkImage[i][j][0] = avg;
+			 //n4c1
+			 avg = 0;
+			 avg += checkImage[i+1][j][1];
+			 avg += checkImage[i-1][j][1];
+			 avg += checkImage[i][j+1][1];
+			 avg += checkImage[i][j-1][1];
+			 //n8c1
+			 avg += checkImage[i-1][j-1][1];
+			 avg += checkImage[i+1][j-1][1];
+			 avg += checkImage[i-1][j+1][1];
+			 avg += checkImage[i+1][j+1][1];
+			 avg = (int)avg/8;
+			 checkImage[i][j][1] = avg;
+			 //n4c2
+			 avg = 0;
+			 avg += checkImage[i+1][j][2];
+			 avg += checkImage[i-1][j][2];
+			 avg += checkImage[i][j+1][2];
+			 avg += checkImage[i][j-1][2];
+			 //n8c2
+			 avg += checkImage[i-1][j-1][2];
+			 avg += checkImage[i+1][j-1][2];
+			 avg += checkImage[i-1][j+1][2];
+			 avg += checkImage[i+1][j+1][2];
+			 avg = (int)avg/8;
+			 checkImage[i][j][2] = avg;
 		}
 	}
 	glDrawPixels(checkImageWidth, checkImageHeight, GL_RGB, GL_UNSIGNED_BYTE, checkImage);
@@ -543,7 +708,7 @@ void mask(){
 	scanf("%3d", &hgs);
 	for (int i = 0; i < checkImageHeight; i++) {
 		for (int j = 0; j < checkImageWidth; j++) {
-			if (checkImage[i][j][0] > lgs && checkImage[i][j][0] < hgs)
+			if (checkImage[i][j][0] >= lgs && checkImage[i][j][0] <= hgs)
 			{
 				checkImage[i][j][0] = 0;
 				checkImage[i][j][1] = 0;
@@ -557,11 +722,11 @@ void mask(){
 
 void reset()
 {
-   int i, j, c;
+   int i, j;
    
-   int width2, height2, bpp2, row2;
+   int width2, height2, bpp2;
 
-   uint8_t* rgb_image = stbi_load("./photos/test2.png", &width2, &height2, &bpp2, 3);
+   uint8_t* rgb_image = stbi_load("test.JPG", &width2, &height2, &bpp2, 3);
    
    printf("Resetting!... %d:%d\n", width2, height2);
    
@@ -582,9 +747,62 @@ void reset()
    glFlush();	
 }
 
+void v_canny()
+{
+	for (int x = 0; x < checkImageHeight-2; x++)
+	{
+		for (int y = 0; y < checkImageWidth-2; y++)
+		{	
+			if (checkImage[x][y][0] - checkImage[x+1][y][0] > 10 || checkImage[x][y][0] - checkImage[x][y+1][0] > 10)
+			{
+				checkImage[x][y][0] = 255;
+				checkImage[x][y][1] = 255;
+				checkImage[x][y][2] = 255;
+			}
+			else
+			{
+				checkImage[x][y][0] = 0;
+				checkImage[x][y][1] = 0;
+				checkImage[x][y][2] = 0;
+			}
+		}
+	}
+	glDrawPixels(checkImageWidth, checkImageHeight, GL_RGB, GL_UNSIGNED_BYTE, checkImage);
+   	glFlush();					
+}
+
+void save_image()
+{	
+	int w = checkImageWidth, h = checkImageHeight;
+	uint8_t* write_data;
+	write_data = (uint8_t* ) malloc(w*h*3);
+	printf("creating write_data\n");
+	int maxpixel = 0;
+	//error creating write_data array
+	
+	for (int i = 0; i < checkImageHeight; i++)
+	{
+		for (int j = 0; j < checkImageWidth; j++)
+		{
+			write_data[((w*h-w+j)-(i*w))*3] = (int) checkImage[i][j][0]; 
+			write_data[((w*h-w+j)-(i*w))*3+1] = (int) checkImage[i][j][1]; 
+			write_data[((w*h-w+j)-(i*w))*3+2] = (int) checkImage[i][j][2];
+			if (maxpixel < ((w*h-w+j)-(i*w))*3)
+			{
+				maxpixel = ((w*h-w+j)-(i*w))*3;
+			}
+		}
+	}
+	printf("Maxpixel = %d\n", maxpixel);
+	//free will crash, or create segmentation fault if data is incorrectly saved
+	//                  name         w  w  rgb    data  quality
+	stbi_write_jpg("test-saved.jpg", w, h, 3, write_data, 100);
+	free(write_data);		
+}
+
 void makeCheckImage(int width, int height,uint8_t* rgb_image)
 {
-   int i, j, c;
+   int i, j;
    
    printf("%d, %d\n", width, height);
    
@@ -647,13 +865,22 @@ void keyboard(unsigned char key, int x, int y)
       case 'p':
 		edge_detect();
 		break;
+      case 'l':
+      		save_image();
+      		break;
+      case 'v':
+      		v_canny();
+      		break;
+      case 'b':
+      		v_blur();
+      		break;
    }
 }
 
 
 int main(int argc, char** argv)
 {   
-   int width, height, bpp, row;
+   int width, height, bpp;
 
    uint8_t* rgb_image = stbi_load(argv[1], &width, &height, &bpp, 3);
    
