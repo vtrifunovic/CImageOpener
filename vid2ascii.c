@@ -8,7 +8,7 @@
 #define checkImageWidth 1920
 #define checkImageHeight 1080
 
-unsigned char frame[1920][1080][3] = {0};
+unsigned char frame[1080][1920][3] = {0};
 
 char grayscale[] = ".V#IX=!:. ";
 
@@ -30,11 +30,11 @@ void run_vid(char* argv)
 		if (count != 1920*1080*3) break;
 		linecount = 0;
 		printf("%d: ", linecount);
-		for (x = 0; x < 1920; x++)
+		for (x = 0; x < 1080; x++)
 		{
-			for (y=0; y<1080; y++)
+			for (y=0; y<1920; y++)
 			{
-				if ((x+1)%24 == 0 && (y+1)%18==0) //24 & 18
+				if ((y+1)%10 == 0 && (x+1)%20==0) //24 & 18
 				{
 					//int loops = 0;
 					int avg = 0;
@@ -44,7 +44,7 @@ void run_vid(char* argv)
 					{
 						for (yrows; yrows <= (y+5); yrows++)
 						{
-							int g = (int) (frame[xrows+5][yrows][0] + frame[xrows+5][yrows][1] + frame[xrows+5][yrows][2])/3;
+							int g = (int) (frame[xrows][yrows][0] + frame[xrows][yrows][1] + frame[xrows][yrows][2])/3;
 							avg += g;
 						}
 					}
@@ -53,7 +53,7 @@ void run_vid(char* argv)
 					//printf("Total loops: %d\n", loops);
 					nsend += 1;
 				}
-				if (nsend == 120) //120
+				if (nsend == 192) //120
 				{
 					linecount++;
 					printf("\n%d: ", linecount);
