@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <time.h>
+#include <unistd.h>
 #include <math.h>
 #define GL_GLEXT_PROTOTYPES
 #ifdef __APPLE__
@@ -115,16 +116,14 @@ void display(){
 		green -= 0.4;
 		blue -= 0.3;
 	}
-	display();
 }
-
 
 void keyboard(unsigned char key, int x, int y ) {
 	switch(key){
 		case 'q':
 			exit(0);
 			break;
-		glutPostRedisplay();
+	glutPostRedisplay();
 	}
 }
 
@@ -137,6 +136,7 @@ int main(int argc, char* argv[]){
 	valuey = valuey/2000;
 	printf("%f\n",valuex); 
 	printf("%f\n",valuey); 
+	printf("Reminder: get a new pen :3\n");
 	//  Initialize GLUT and process user parameters
 	glutInit(&argc,argv);
 	//  Request double buffered true color window with Z-buffer
@@ -150,6 +150,7 @@ int main(int argc, char* argv[]){
 	glutDisplayFunc(display);
 	glutKeyboardFunc(keyboard);
 	// Pass control to GLUT for events
+	glutIdleFunc(display);
 	glutMainLoop();
 	//  Return to OS
 	return 0;
