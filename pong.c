@@ -27,7 +27,7 @@ double hmove = 0;
 double vmove = 0;
 double hinc = -0.009;
 double vinc = 0.0;
-double pastmoves[50];
+double pastmoves[75];
 
 void check_move()
 {
@@ -35,7 +35,7 @@ void check_move()
 	{
 		printf("Left Point!\n");
 		hmove=0;
-		hinc = -0.005;
+		hinc = 0.005;
 		vinc = 0.0;
 		vmove=0;
 		shiftleft = 0;
@@ -46,7 +46,7 @@ void check_move()
 		printf("Right Point!\n");
 		hmove=0;
 		vmove=0;
-		hinc = 0.005;
+		hinc = -0.005;
 		vinc = 0.0;
 		shiftleft = 0;
 		shiftright = 0;
@@ -65,15 +65,14 @@ void check_move()
 		vinc = (vmove-shiftleft)/25;
 	}
 	double avg = 0;
-	for (int x = 0; x < 49; x++)
+	for (int x = 0; x < 74; x++)
 	{
 		pastmoves[x] = pastmoves[x+1];
 		avg += pastmoves[x];
 	}
-	pastmoves[49] = vmove;
+	pastmoves[74] = vmove;
 	avg += vmove;
-	avg = avg/50;
-	printf("Avg: %f\n", avg);
+	avg = avg/75;
 	shiftright = (avg);//+(shiftleft*0.05);
 		
 }
@@ -118,14 +117,10 @@ void keyboard(unsigned char key, int x, int y ) {
 			break;
 		// MOVEMENT FOR LEFT PADDLE
 		case 'w':
-			dpinc = 0;
-			shiftleft += upinc+0.03;
-			upinc += 0.005;
+			shiftleft += 0.03;
 			break;
 		case 's':
-			upinc = 0;
-			shiftleft -= dpinc+0.03;
-			dpinc += 0.005;
+			shiftleft -= 0.03;
 			break;
 		// MOVEMENT FOR RIGHT PADDLE
 		/*
