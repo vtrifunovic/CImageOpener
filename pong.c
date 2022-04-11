@@ -20,20 +20,33 @@ void display();
 // Global Variables
 // ----------------------------------------------------------
 double shiftleft = 0;
-double upinc = 0;
-double dpinc = 0;
 double shiftright = 0;
 double hmove = 0;
 double vmove = 0;
 double hinc = -0.009;
 double vinc = 0.0;
-double pastmoves[75];
+double pastmoves[60];
+int scorel = 0;
+int scorer = 0;
+
+void render_score(float xpos, float ypos, int score)
+{
+	char *c;
+	char *string = (char *)malloc(sizeof(score)*sizeof(int));
+	sprintf(string, "%d", score);
+	glColor3f(0.25,  0.75, 1);
+	glRasterPos3f(xpos, ypos, 0.3);
+	for (c = string; *c != '\0'; c++)
+	{
+		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
+	}
+}
 
 void check_move()
 {
 	if (hmove > 1)
 	{
-		printf("Left Point!\n");
+		scorel += 1;
 		hmove=0;
 		hinc = 0.005;
 		vinc = 0.0;
@@ -43,7 +56,7 @@ void check_move()
 	}
 	else if(hmove < -1)
 	{
-		printf("Right Point!\n");
+		scorer += 1;
 		hmove=0;
 		vmove=0;
 		hinc = -0.005;
@@ -51,7 +64,7 @@ void check_move()
 		shiftleft = 0;
 		shiftright = 0;
 	}
-	if (abs(vmove) >= 1)
+	if (fabs(vmove) >= 1)
 		vinc = -vinc;
 	// hitboxes of right paddle
 	if (hmove+0.05 > 0.85 && hmove+0.05 < 0.9 && vmove-0.05 < 0.2+shiftright && vmove+0.05 > -0.2+shiftright)
@@ -59,23 +72,31 @@ void check_move()
 		hinc = -(hinc+0.001);
 		vinc = (vmove-shiftright)/25;
 	}
+	// hitboxes of left paddle
 	if (hmove-0.05 < -0.85 && hmove > -0.9 && vmove-0.05 < 0.2+shiftleft && vmove+0.05 > -0.2+shiftleft)
 	{
 		hinc = -(hinc-0.001);
 		vinc = (vmove-shiftleft)/25;
 	}
 	double avg = 0;
-	for (int x = 0; x < 74; x++)
+	for (int x = 0; x < 59; x++)
 	{
 		pastmoves[x] = pastmoves[x+1];
 		avg += pastmoves[x];
 	}
-	pastmoves[74] = vmove;
+	pastmoves[59] = vmove;
 	avg += vmove;
-	avg = avg/75;
+	avg = avg/60;
 	shiftright = (avg);//+(shiftleft*0.05);
-		
+	render_score(-0.2, 0.7, scorel);
+	render_score(0.2, 0.7, scorer);
+	// 0.035 MAX SPEED
+	if (fabs(hinc) > 0.04)
+	{
+		hinc = (fabs(hinc)/hinc)*0.04;
+	}		
 }
+
 // ----------------------------------------------------------
 // display() Callback function
 // ----------------------------------------------------------
@@ -86,7 +107,8 @@ void display(){
 	
 	// BEGIN: BALL
 	float twicePi = 2.0 * 3.1415;
-	glColor3f( 1,  1, 1);
+	// fabs for float abs value
+	glColor3f(fabs(hmove),  0.75, fabs(vmove));
 	glBegin(GL_TRIANGLE_FAN);
 		glVertex2f(hmove, vmove); // center of circle
 		for(int i = 0; i <= 21;i++) { 
@@ -103,11 +125,11 @@ void display(){
 	glColor3f(1,1,1);
 	glRectf(0.85,0.2+shiftright,0.9,-0.2+shiftright);
 	// END
-	glFlush();
-	glutSwapBuffers();
 	hmove += hinc;
 	vmove += vinc;
 	check_move();
+	glFlush();
+	glutSwapBuffers();
 }
 
 void keyboard(unsigned char key, int x, int y ) {
@@ -122,15 +144,15 @@ void keyboard(unsigned char key, int x, int y ) {
 		case 's':
 			shiftleft -= 0.03;
 			break;
-		// MOVEMENT FOR RIGHT PADDLE
-		/*
-		case 'i':
-			shiftright += 0.02;
+		case 'r':
+			scorel = 0;
+			scorer = 0;
+			hmove=0;
+			hinc = 0.005;
+			vinc = 0.0;
+			vmove=0;
+			shiftleft = 0;
 			break;
-		case 'k':
-			shiftright -= 0.02;
-			break;
-		*/
 	glutPostRedisplay();
 	}
 }
@@ -144,7 +166,7 @@ int main(int argc, char* argv[]){
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 	glutInitWindowSize(800,800);
 	// Create window
-	glutCreateWindow("DVDMenu");
+	glutCreateWindow("Pong");
 	//  Enable Z-buffer depth test
 	glEnable(GL_DEPTH_TEST);
 	// Callback functions
