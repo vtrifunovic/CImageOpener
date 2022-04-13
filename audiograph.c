@@ -1,6 +1,7 @@
 // Import Statements
 // Program can only do .wav files for now
 // Stats -> 0% cpu (5950x) :: 8MB RAM :: 2MB GPU Memory (desktop)
+// -------> 1% cpu (5500U) :: 15.8MB RAM :: ?? GPU (laptop)
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -30,14 +31,14 @@
 // Definitions
 // ----------------------------------
 #define BUFSIZE 1024 // this is the buffer size of our audio
-#define SMSIZE 5 // this is to smoothen our bars from looking jittery
+#define SMSIZE 10 // this is to smoothen our bars from looking jittery
 // ---------------------------------
 // Global variables for pulseaudio
 // ---------------------------------
 pthread_t thread1;
 double PI;
 typedef double complex cplx;
-cplx buffer[1024];
+cplx buffer[BUFSIZE];
 double arr[4];
 
 // --------------------------------
@@ -103,7 +104,7 @@ void show(const char * s, cplx buffer[]) {
 // opengl function to display our audio graph
 void display(){
 	int gg;
-	sq1 -= 0.01;
+	sq1 -= 0.06;
 	float sq1avg = 0;
 	if (sq1 < 0) sq1 = 0;
 	for (gg = 0; gg < SMSIZE-1; gg++)
@@ -114,7 +115,7 @@ void display(){
 	sm1[SMSIZE-1] = sq1;
 	sq1avg += sq1;
 	sq1avg = sq1avg/SMSIZE;
-	sq2 -= 0.02;
+	sq2 -= 0.04;
 	if (sq2 < 0) sq2 = 0;
 	float sq2avg = 0;
 	for (gg = 0; gg < SMSIZE-1; gg++)
@@ -125,7 +126,7 @@ void display(){
 	sm2[SMSIZE-1] = sq2;
 	sq2avg += sq2;
 	sq2avg = sq2avg/SMSIZE;
-	sq3 -= 0.01;
+	sq3 -= 0.03;
 	if (sq3 < 0) sq3 = 0;
 	float sq3avg = 0;
 	for (gg = 0; gg < SMSIZE-1; gg++)
@@ -136,7 +137,7 @@ void display(){
 	sm3[SMSIZE-1] = sq3;
 	sq3avg += sq3;
 	sq3avg = sq3avg/SMSIZE;
-	sq4 -= 0.01;
+	sq4 -= 0.03;
 	if (sq4 < 0) sq4 = 0;
 	float sq4avg = 0;
 	for (gg = 0; gg < SMSIZE-1; gg++)
@@ -147,7 +148,7 @@ void display(){
 	sm4[SMSIZE-1] = sq4;
 	sq4avg += sq4;
 	sq4avg = sq4avg/SMSIZE;
-	sq5 -= 0.01;
+	sq5 -= 0.03;
 	if (sq5 < 0) sq5 = 0;
 	float sq5avg = 0;
 	for (gg = 0; gg < SMSIZE-1; gg++)
@@ -158,7 +159,7 @@ void display(){
 	sm5[SMSIZE-1] = sq5;
 	sq5avg += sq5;
 	sq5avg = sq5avg/SMSIZE;
-	sq6 -= 0.01;
+	sq6 -= 0.03;
 	if (sq6 < 0) sq6 = 0;
 	float sq6avg = 0;
 	for (gg = 0; gg < SMSIZE-1; gg++)
@@ -169,7 +170,7 @@ void display(){
 	sm6[SMSIZE-1] = sq6;
 	sq6avg += sq6;
 	sq6avg = sq6avg/SMSIZE;
-	sq7 -= 0.01;
+	sq7 -= 0.03;
 	if (sq7 < 0) sq7 = 0;
 	float sq7avg = 0;
 	for (gg = 0; gg < SMSIZE-1; gg++)
@@ -181,20 +182,90 @@ void display(){
 	sq7avg += sq7;
 	sq7avg = sq7avg/SMSIZE;
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+	// SQ1 :: BEGIN
+	glBegin(GL_POLYGON);
+	glColor3f(1,1,1);
+	glVertex3f(-0.9, -0.9, 0);
 	glColor3f(sq1avg,1-sq1avg,1-0.5*sq1avg);
-	glRectf(-0.9,-0.9,-0.7, -0.8+sq1avg); //sq1
+	glVertex3f(-0.9, -0.8+sq1avg, 0);
+	glColor3f(sq1avg,1-sq1avg,1-0.5*sq1avg);
+	glVertex3f(-0.7, -0.8+sq1avg, 0);
+	glColor3f(sq1avg,1-sq1avg,1-0.5*sq1avg);
+	glVertex3f(-0.7, -0.9, 0);
+	glEnd();
+	// SQ1 :: END
+	// SQ2 :: BEGIN
+	glBegin(GL_POLYGON);
+	glColor3f(1,1,1);
+	glVertex3f(-0.65, -0.9, 0);
 	glColor3f(sq2avg,1-sq2avg,1-0.5*sq2avg);
-	glRectf(-0.65,-0.9,-0.45, -0.8+sq2avg); //sq2
+	glVertex3f(-0.65, -0.8+sq2avg, 0);
+	glColor3f(sq2avg,1-sq2avg,1-0.5*sq2avg);
+	glVertex3f(-0.45, -0.8+sq2avg, 0);
+	glColor3f(sq2avg,1-sq2avg,1-0.5*sq2avg);
+	glVertex3f(-0.45, -0.9, 0);
+	glEnd();
+	// SQ2 :: END
+	// SQ3 :: BEGIN
+	glBegin(GL_POLYGON);
+	glColor3f(1,1,1);
+	glVertex3f(-0.4, -0.9, 0);
 	glColor3f(sq3avg,1-sq3avg,1-0.5*sq3avg);
-	glRectf(-0.4,-0.9,-0.2, -0.8+sq3avg); //sq3
+	glVertex3f(-0.4, -0.8+sq3avg, 0);
+	glColor3f(sq3avg,1-sq3avg,1-0.5*sq3avg);
+	glVertex3f(-0.2, -0.8+sq3avg, 0);
+	glColor3f(sq3avg,1-sq3avg,1-0.5*sq3avg);
+	glVertex3f(-0.2, -0.9, 0);
+	glEnd();
+	// SQ3 :: END
+	// SQ4 :: BEGIN
+	glBegin(GL_POLYGON);
+	glColor3f(1,1,1);
+	glVertex3f(-0.15, -0.9, 0);
 	glColor3f(sq4avg,1-sq4avg,1-0.5*sq4avg);
-	glRectf(-0.15,-0.9,0.05, -0.8+sq4avg); //sq4
+	glVertex3f(-0.15, -0.8+sq4avg, 0);
+	glColor3f(sq4avg,1-sq4avg,1-0.5*sq4avg);
+	glVertex3f(0.05, -0.8+sq4avg, 0);
+	glColor3f(sq4avg,1-sq4avg,1-0.5*sq4avg);
+	glVertex3f(0.05, -0.9, 0);
+	glEnd();
+	// SQ4 :: END
+	// SQ5 :: BEGIN
+	glBegin(GL_POLYGON);
+	glColor3f(1,1,1);
+	glVertex3f(0.1, -0.9, 0);
 	glColor3f(sq5avg,1-sq5avg,1-0.5*sq5avg);
-	glRectf(0.1,-0.9, 0.3, -0.8+sq5avg); //sq5
+	glVertex3f(0.1, -0.8+sq5avg, 0);
+	glColor3f(sq5avg,1-sq5avg,1-0.5*sq5avg);
+	glVertex3f(0.3, -0.8+sq5avg, 0);
+	glColor3f(sq5avg,1-sq5avg,1-0.5*sq5avg);
+	glVertex3f(0.3, -0.9, 0);
+	glEnd();
+	// SQ5 :: END
+	// SQ6 :: BEGIN
+	glBegin(GL_POLYGON);
+	glColor3f(1,1,1);
+	glVertex3f(0.35, -0.9, 0);
 	glColor3f(sq6avg,1-sq6avg,1-0.5*sq6avg);
-	glRectf(0.35,-0.9,0.55, -0.8+sq6avg); //sq6
+	glVertex3f(0.35, -0.8+sq6avg, 0);
+	glColor3f(sq6avg,1-sq6avg,1-0.5*sq6avg);
+	glVertex3f(0.55, -0.8+sq6avg, 0);
+	glColor3f(sq6avg,1-sq6avg,1-0.5*sq6avg);
+	glVertex3f(0.55, -0.9, 0);
+	glEnd();	
+	// SQ6 :: END
+	// SQ7 :: BEGIN
+	glBegin(GL_POLYGON);
+	glColor3f(1,1,1);
+	glVertex3f(0.6, -0.9, 0);
 	glColor3f(sq7avg,1-sq7avg,1-0.5*sq7avg);
-	glRectf(0.6,-0.9,0.8, -0.8+sq7avg); //sq7
+	glVertex3f(0.6, -0.8+sq7avg, 0);
+	glColor3f(sq7avg,1-sq7avg,1-0.5*sq7avg);
+	glVertex3f(0.8, -0.8+sq7avg, 0);
+	glColor3f(sq7avg,1-sq7avg,1-0.5*sq7avg);
+	glVertex3f(0.8, -0.9, 0);
+	glEnd();
+	// SQ7 :: END
 	glFlush();
 	glutSwapBuffers();
 }
@@ -218,7 +289,7 @@ void* random_print()
     if (2 > 1) {
         int fd;
  
-        if ((fd = open("RosesRemix.wav", O_RDONLY)) < 0) {
+        if ((fd = open("SuddenLoss.wav", O_RDONLY)) < 0) {
             fprintf(stderr, __FILE__": open() failed: %s\n", strerror(errno));
             goto finish;
         }
@@ -264,33 +335,33 @@ void* random_print()
         free2 = arr[1];
         
         //1 :: Split frequencies into proper bar
-        if (free2 < 50 && free2 > 0)
-        	sq7 += 0.06;
-        if (sq7 > 0.7) sq7 = 0.7;
+        if (free2 < 50 && free2 > 25)
+        	sq7 += 0.1;
+        if (sq7 > 1.7) sq7 = 1.5;
         //2
         if (free2 > 50 && free2 < 75)
-        	sq6 += 0.04;
-        if (sq6 > 1.7) sq6 = 1.7;
+        	sq6 += 0.11;
+        if (sq6 > 1.7) sq6 = 1.5;
         //3
         if (free2 > 75 && free2 < 125)
-         	sq5 += 0.035;
-        if (sq5 > 1.7) sq5 = 1.7;
+         	sq5 += 0.1;
+        if (sq5 > 1.7) sq5 = 1.5;
         //4
         if (free2 > 158 && free2 < 200)
-         	sq4 += 0.045;
-        if (sq4 > 1.7) sq4 = 1.7;
+         	sq4 += 0.1;
+        if (sq4 > 1.7) sq4 = 1.5;
         //5
         if (free2 > 200 && free2 < 300)
-         	sq3 += 0.045;
-        if (sq3 > 1.7) sq3 = 1.7;
+         	sq3 += 0.1;
+        if (sq3 > 1.7) sq3 = 1.5;
         // 6
         if (free2 > 300 && free2 < 500)
-         	sq2 += 0.09;
-        if (sq2 > 0.7) sq2 = 0.7;
+         	sq2 += 0.15;
+        if (sq2 > 1.7) sq2 = 1.5;
         // 7
         if (free2 > 500)
-        	sq1 += 0.09;
-        if (sq1 > 1.7) sq1 = 1.7;;
+        	sq1 += 0.15;
+        if (sq1 > 1.7) sq1 = 1.5;
         /* ... and play it */
         if (pa_simple_write(s, buf, (size_t) r, &error) < 0) {
             fprintf(stderr, __FILE__": pa_simple_write() failed: %s\n", pa_strerror(error));
