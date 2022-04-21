@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <time.h>
 #include <unistd.h>
+#include <string.h>
 #include <math.h>
 #define GL_GLEXT_PROTOTYPES
 #ifdef __APPLE__
@@ -111,6 +112,9 @@ void show_mine(float x, float y, float size, int fail, int posx, int posy)
 
 void uncovermine(float x, float y, float size, int fail)
 {
+	// Uncomment for really cool animation
+	//glFlush();
+	//glutSwapBuffers();
 	int posx = x*10+10;
 	int posy = 19-(y*10+10);
 	show_mine(x, y, size, fail, posx, posy);
@@ -195,7 +199,7 @@ void mine_check(int x, int y)
 		printf("Game over!\n");
 		uncovermine((float)x/10-1,-((float)y/10-1)-0.1,0.1, 1);
 	}
-	// WHAT??
+	// For Classic Animation
 	glFlush();
 	glutSwapBuffers();
 }
@@ -204,6 +208,14 @@ void keyboard(unsigned char key, int x, int y ) {
 	switch(key){
 		case 'q':
 			exit(0);
+			break;
+		case 'r':
+			depth = 0;
+			memset(minefield, 0, sizeof(minefield));
+			memset(minefieldtotals, 0, sizeof(minefieldtotals));
+			memset(flags, 0, sizeof(flags));
+			memset(DFS, 0, sizeof(DFS));
+			display();
 			break;
 	glutPostRedisplay();
 	}
