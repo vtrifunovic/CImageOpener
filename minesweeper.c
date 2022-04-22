@@ -35,27 +35,49 @@ void box(float x, float y, float size)
 	glEnd();
 }
 
-// ----------------------------------------------------------
-// display() Callback function
-// ----------------------------------------------------------
-
-// Make it an actual flag
+// Draws flags
 void draw_flag(int x, int y, int state)
 {
 	float posx = ((float)x/10)-1;
 	float posy = -(((float)y/10)-1)-0.1;
-	char *c = "F";
-	if (state == 1)
-		{glColor3f(1,0,1);
-		glRasterPos3f(posx+0.04, posy+0.04, 0.5+depth);}
-	else
-		{glColor3f(0,1,0);
-		glRasterPos3f(posx+0.04, posy+0.04, 0.5+depth);}
-	glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
+	if (state == 1){
+		glColor3f(1, 0, 0.75);
+		glBegin(GL_TRIANGLES);
+		glVertex3f(posx+0.04, posy-0.01+0.1, 0.2+depth);
+		glVertex3f(posx+0.08, posy-0.025+0.1, 0.2+depth);
+		glVertex3f(posx+0.04, posy-0.05+0.1, 0.2+depth);
+		glEnd();
+		glColor3f(1, 0, 0.75);
+		glBegin(GL_POLYGON);
+		glVertex3f(posx+0.036, posy-0.01+0.1, 0.2+depth);
+		glVertex3f(posx+0.03999, posy-0.01+0.1, 0.2+depth);
+		glVertex3f(posx+0.03999, posy-0.09+0.1, 0.2+depth);
+		glVertex3f(posx+0.036, posy-0.09+0.1, 0.2+depth);
+		glEnd();
+	}
+	else{
+		glColor3f(0, 0, 0);
+		glBegin(GL_POLYGON);
+		glVertex3f(posx+0.036, posy-0.01+0.1, 0.2+depth);
+		glColor3f(0, 0, 0);
+		glVertex3f(posx+0.03999, posy-0.01+0.1, 0.2+depth);
+		glColor3f(0, 0, 0);
+		glVertex3f(posx+0.03999, posy-0.09+0.1, 0.2+depth);
+		glColor3f(0, 0, 0);
+		glVertex3f(posx+0.036, posy-0.09+0.1, 0.2+depth);
+		glEnd();
+		glColor3f(1,0,0);
+		glBegin(GL_TRIANGLES);
+		glVertex3f(posx+0.04, posy-0.01+0.1, 0.2+depth);
+		glVertex3f(posx+0.08, posy-0.025+0.1, 0.2+depth);
+		glVertex3f(posx+0.04, posy-0.05+0.1, 0.2+depth);
+		glEnd();
+	}
 	glFlush();
 	glutSwapBuffers();
 }
 
+// Displays # of nearby mines
 void minenumber(int x, int y)
 {
 	float posx = ((float)x/10)-1;
@@ -94,27 +116,45 @@ void show_mine(float x, float y, float size, int fail, int posx, int posy)
 	glBegin(GL_POLYGON);
 	if (fail == 1){
 		glColor3f(1, 0, 0);
-		glVertex3f(x, y, 0.4);
-		glVertex3f(x+size, y, 0.4);
-		glVertex3f(x+size, y+size, 0.4);
-		glVertex3f(x, y+size, 0.4);
+		glVertex3f(x, y, 0);
+		glVertex3f(x+size, y, 0);
+		glVertex3f(x+size, y+size, 0);
+		glVertex3f(x, y+size, 0);
+		glEnd();
+		glColor3f(0, 0, 0);
+		glBegin(GL_TRIANGLES);
+		glVertex3f(x+0.05, y+0.01, -0.001);
+		glVertex3f(x+0.087, y+0.067, -0.001);
+		glVertex3f(x+0.013, y+0.067, -0.001);
+		glEnd();
+		glBegin(GL_TRIANGLES);
+		glVertex3f(x+0.05, y+0.09, -0.001);
+		glVertex3f(x+0.087, y+0.033, -0.001);
+		glVertex3f(x+0.013, y+0.033, -0.001);
+		glEnd();
+		glBegin(GL_TRIANGLE_FAN);
+		float twicePi = 2.0 * 3.1415;
+		glVertex3f(x+0.05, y+0.05, -0.01); // center of circle
+		for(int i = 0; i <= 21;i++) { 
+			glVertex3f(
+		            (x+0.05)+(0.03 * cos(i *  twicePi / 20)), 
+			    (y+0.05)+(0.03 * sin(i * twicePi / 20)), -0.01
+			);
+		}
 		glEnd();
 		return;
 	}
 	else
 		glColor3f(0,0,0);
-	glVertex3f(x, y, 0.4);
-	glVertex3f(x+size, y, 0.4);
-	glVertex3f(x+size, y+size, 0.4);
-	glVertex3f(x, y+size, 0.4);
+	glVertex3f(x, y, 0);
+	glVertex3f(x+size, y, 0);
+	glVertex3f(x+size, y+size, 0);
+	glVertex3f(x, y+size, 0);
 	glEnd();	
 }
 
 void uncovermine(float x, float y, float size, int fail)
 {
-	// Uncomment for really cool animation
-	//glFlush();
-	//glutSwapBuffers();
 	int posx = x*10+10;
 	int posy = 19-(y*10+10);
 	show_mine(x, y, size, fail, posx, posy);
@@ -125,6 +165,10 @@ void uncovermine(float x, float y, float size, int fail)
 		return;
 		
 	// REGULAR MINESWEEPER DOES AN N8 SEARCH
+	// Uncomment for cool animation --> does cause bugs tho
+	//glFlush();
+	//glutSwapBuffers();
+	//usleep(30000); // <--- this is needed to stop flashing
 	for (int a = -1; a < 2; a++){
 		for (int b = -1; b < 2; b++){
 			if (minefieldtotals[posx][posy+b] == 0 && fabs(x) < 1 && fabs(y) < 1 && DFS[posx+a][posy+b] == 0)
@@ -139,11 +183,29 @@ void uncovermine(float x, float y, float size, int fail)
 void covermine(float x, float y, float size)
 {
 	glBegin(GL_POLYGON);
-	glColor3f(1,0,1);
+	glColor3f(1,0,0.75);
 	glVertex3f(x, y, 0.5);
 	glVertex3f(x+size, y, 0.5);
 	glVertex3f(x+size, y+size, 0.5);
 	glVertex3f(x, y+size, 0.5);
+	glEnd();
+	glBegin(GL_POLYGON);
+	glColor3f(1, 0, 1);
+	glVertex3f(x, y, 0.49);
+	glVertex3f(x+size, y, 0.49);
+	glVertex3f(x+size-0.01, y+0.01, 0.49);
+	glVertex3f(x+0.01, y+0.01, 0.49);
+	glVertex3f(x+0.01, y+size-0.01, 0.49);
+	glVertex3f(x, y+size, 0.49);
+	glEnd();
+	glBegin(GL_POLYGON);
+	glColor3f(0.75, 0, 0.75);
+	glVertex3f(x+size, y+size, 0.49);
+	glVertex3f(x, y+size, 0.49);
+	glVertex3f(x+0.01, y+size-0.01, 0.49);
+	glVertex3f(x+size-0.01, y+size-0.01, 0.49);
+	glVertex3f(x+size-0.01, y+0.01, 0.49);
+	glVertex3f(x+size, y, 0.49);
 	glEnd();
 }
 
@@ -152,8 +214,6 @@ void display(){
 	srand(time(NULL));
 	for (int x = 0; x < 20; x++){
 		for (int y = 0; y < 20; y++){
-			float xpos = (float)x/10;
-			float ypos = (float)y/10;
 			if (rand()%10+1==1)
 				minefield[x][y] = 1;
 		}
@@ -174,7 +234,6 @@ void display(){
 			minefieldtotals[x][y] = tot;
 		}
 	}
-	
 	glFlush();
 	glutSwapBuffers();
 }
@@ -205,8 +264,17 @@ void mine_check(int x, int y)
 }
 
 void keyboard(unsigned char key, int x, int y ) {
+	int row = 0;
 	switch(key){
 		case 'q':
+			for (int x = 0; x < 20; x++){
+				printf("Row %d: ", row);
+				row++;
+				for (int y = 0; y < 20; y++){
+					printf("%d ", minefield[x][y]); 
+				}
+				printf("\n");
+			} 
 			exit(0);
 			break;
 		case 'r':
