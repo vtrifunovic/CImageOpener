@@ -14,10 +14,10 @@
 
 
 float depth = 0;
-int minefield[21][21];
-int minefieldtotals[21][21];
-int flags[21][21];
-int DFS[21][21];
+int minefield[20][20];
+int minefieldtotals[20][20];
+int flags[20][20];
+int DFS[20][20];
 // ----------------------------------------------------------
 // Function Prototypes
 // ----------------------------------------------------------
@@ -227,8 +227,10 @@ void display(){
 			int tot = 0;
 			for (int a = -1; a < 2; a++){
 				for (int b = -2; b < 1; b++){
-					if (minefield[x+a][y+b] == 1)
-						tot += 1;
+					// preventing out of bounds addition
+					if (y+b < 19 && y+b > 0)
+						if (minefield[x+a][y+b] == 1)
+							tot += 1;
 				}
 			}
 			minefieldtotals[x][y] = tot;
