@@ -12,12 +12,15 @@
 #include <GL/glut.h>
 #endif
 
-
+// ----------------------------------------------------------
+// Global Variables
+// ----------------------------------------------------------
 float depth = 0;
 int minefield[20][20];
 int minefieldtotals[20][20];
 int flags[20][20];
 int DFS[20][20];
+int totalmines = 0;
 // ----------------------------------------------------------
 // Function Prototypes
 // ----------------------------------------------------------
@@ -158,12 +161,11 @@ void uncovermine(float x, float y, float size, int fail)
 	int posx = x*10+10;
 	int posy = 19-(y*10+10);
 	show_mine(x, y, size, fail, posx, posy);
-	printf("%f :: %f --> %d :: %d ==> %d\n", x,y,posx,posy, minefieldtotals[posx][posy]);
 	if (fail == 1)
 		return;
+	DFS[posx][posy] = 1;
 	if (minefieldtotals[posx][posy] != 0)
 		return;
-		
 	// REGULAR MINESWEEPER DOES AN N8 SEARCH
 	// Uncomment for cool animation --> does cause bugs tho
 	//glFlush();
@@ -172,10 +174,12 @@ void uncovermine(float x, float y, float size, int fail)
 	for (int a = -1; a < 2; a++){
 		for (int b = -1; b < 2; b++){
 			if (minefieldtotals[posx][posy+b] == 0 && fabs(x) < 1 && fabs(y) < 1 && DFS[posx+a][posy+b] == 0)
-				{DFS[posx+a][posy+b] = 1;
+				{
+				DFS[posx+a][posy+b] = 1;
 				uncovermine((float)(posx+a)/10-1,-((float)(posy+b)/10-1)-0.1,0.1, 0);}
 			else if (minefield[posx+a][posy+b-1] != 1 && fabs(x) < 1 && fabs(y) < 1 && DFS[posx+a][posy+b] == 0)
-				show_mine((float)(posx+a)/10-1, -((float)(posy+b)/10-1)-0.1, size, fail, posx+a, posy+b);
+				{DFS[posx+a][posy+b] = 1;
+				show_mine((float)(posx+a)/10-1, -((float)(posy+b)/10-1)-0.1, size, fail, posx+a, posy+b);}
 		}
 	}
 }
@@ -214,10 +218,16 @@ void display(){
 	srand(time(NULL));
 	for (int x = 0; x < 20; x++){
 		for (int y = 0; y < 20; y++){
-			if (rand()%10+1==1)
-				minefield[x][y] = 1;
+			if (y < 19 && y > -1){
+				if (rand()%7+1==1)
+				{
+					minefield[x][y] = 1;
+					totalmines += 1;
+				}
+			}
 		}
 	}
+	printf("Total mines created: %d\n", totalmines);
 	for (int x = 0; x < 20; x++){
 		for (int y = 0; y < 20; y++){
 			float xpos = (float)x/10;
@@ -228,7 +238,7 @@ void display(){
 			for (int a = -1; a < 2; a++){
 				for (int b = -2; b < 1; b++){
 					// preventing out of bounds addition
-					if (y+b < 19 && y+b > 0)
+					if (y+b < 19 && y+b > -1)
 						if (minefield[x+a][y+b] == 1)
 							tot += 1;
 				}
@@ -238,6 +248,18 @@ void display(){
 	}
 	glFlush();
 	glutSwapBuffers();
+}
+
+void check_win(){
+	int uncoveredmines = 0;
+	for (int j = 0; j < 20; j++){
+		for (int k = 0; k < 20; k++){
+			uncoveredmines += DFS[j][k];
+		}
+	}
+	printf("Totalmines :: %d ==> Minesleft: %d\n", totalmines, 400-uncoveredmines);
+	if (400-uncoveredmines == totalmines)
+		printf("You won!!\n");
 }
 
 // TO DO -->
@@ -255,6 +277,7 @@ void mine_check(int x, int y)
 		return;
 	else if (minefield[x][y-1] != 1){
 		uncovermine((float)x/10-1,-((float)y/10-1)-0.1,0.1, 0);
+		check_win();
 	}
 	else{
 		printf("Game over!\n");
@@ -273,7 +296,7 @@ void keyboard(unsigned char key, int x, int y ) {
 				printf("Row %d: ", row);
 				row++;
 				for (int y = 0; y < 20; y++){
-					printf("%d ", minefield[x][y]); 
+					printf("%d ", DFS[x][y]); 
 				}
 				printf("\n");
 			} 
@@ -285,6 +308,7 @@ void keyboard(unsigned char key, int x, int y ) {
 			memset(minefieldtotals, 0, sizeof(minefieldtotals));
 			memset(flags, 0, sizeof(flags));
 			memset(DFS, 0, sizeof(DFS));
+			totalmines = 0;
 			display();
 			break;
 	glutPostRedisplay();
