@@ -1,5 +1,7 @@
 # CImageOpener
-opens image using C &  stb_image
+Basic Image Processing engine written in C, used to be the CImageOpener.c file, but have now re-structured it to be much cleaner and better organized.
 
-# compiled with
-gcc imagereader.c -o imagereader -lglut -lGL -lm -lGLU
+# Build
+- STB_Image.h
+- OpenGL
+- GLFW
