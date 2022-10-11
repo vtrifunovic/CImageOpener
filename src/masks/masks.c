@@ -12,12 +12,12 @@ K9_Image rgb_mask(K9_Image image, vec3 lower_bound, vec3 higher_bound){
 	}
 	int psize = image.width * image.height;
 	K9_Image mask = {
-        .channels = 1,
-        .name = (char *) malloc(strlen(image.name)+5),
-        .height = image.height,
-        .width = image.width,
-        .image = malloc(psize),
-    };
+		.channels = 1,
+		.name = (char *)malloc(strlen(image.name) + 5),
+		.height = image.height,
+		.width = image.width,
+		.image = (uint8_t *) malloc(psize),
+	};
 	mask.name = strcpy(mask.name, "mask_");
     mask.name = strcat(mask.name, image.name);
 	for (int x = 0; x < psize; x++){

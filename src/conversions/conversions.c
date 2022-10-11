@@ -18,7 +18,7 @@ K9_Image rgb_to_gray(K9_Image image){
         .height = image.height,
         .width = image.width,
         .channels = 1,
-        .image = malloc(totalpixels),
+        .image = (uint8_t *) malloc(totalpixels),
     };
     gray.name = strcpy(gray.name, "gray_");
     gray.name = strcat(gray.name, image.name);
@@ -35,11 +35,11 @@ K9_Image rgb_to_hsv(K9_Image image){
     }
     int totalpixels = image.width * image.height;
     K9_Image hsv = {
-        .name = (char *) malloc(strlen(image.name)+4),
+        .name = (char *)malloc(strlen(image.name) + 4),
         .height = image.height,
         .width = image.width,
         .channels = image.channels,
-        .image = malloc(totalpixels*3),
+        .image = (uint8_t *) malloc(totalpixels * 3),
     };
     hsv.name = strcpy(hsv.name, "hsv_");
     hsv.name = strcat(hsv.name, image.name);
@@ -60,17 +60,21 @@ K9_Image rgb_to_hsv(K9_Image image){
             h = fmod(60 * ((b - r)/cdiff) + 120, 360);
         else if (cmax == b)
             h = fmod(60 * ((r - g)/cdiff) + 240, 360);
-        
         if (cmax == 0)
             s = 0;
         else
             s = (1 - cmin/cmax)*255;
-        v = cmax * 255;
         // OpenCV stores images as BGR so image is displayed as VSH
         // This stores images as RGB so image is displayed as HSV
-        hsv.image[a*3] = h/2;
+        hsv.image[a*3] = cmax * 255;
         hsv.image[a*3+1] = s;
-        hsv.image[a*3+2] = v;
+        hsv.image[a*3+2] = h/2;
     }
     return hsv;
+}
+
+void invert(K9_Image image){
+    for (int i = 0; i < image.width * image.height * image.channels; i++){
+        image.image[i] = 255 - image.image[i];
+    }
 }
