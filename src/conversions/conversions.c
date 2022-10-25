@@ -5,6 +5,7 @@
 #include "conversions.h"
 #include "../render/render.h"
 #include "../linmath.h"
+#include "../typename.h"
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
@@ -20,8 +21,9 @@ K9_Image rgb_to_gray(K9_Image image){
         .channels = 1,
         .image = (uint8_t *) malloc(totalpixels),
     };
-    gray.name = strcpy(gray.name, "gray_");
-    gray.name = strcat(gray.name, image.name);
+
+    strcpy(gray.name, "gray_");
+    strcat(gray.name, image.name);
     for (int g = 0; g < totalpixels; g++){
         int avg = (image.image[g*3] + image.image[g*3+1] + image.image[g*3+2])/3;
         gray.image[g] = avg;
@@ -41,8 +43,8 @@ K9_Image rgb_to_hsv(K9_Image image){
         .channels = image.channels,
         .image = (uint8_t *) malloc(totalpixels * 3),
     };
-    hsv.name = strcpy(hsv.name, "hsv_");
-    hsv.name = strcat(hsv.name, image.name);
+    strcpy(hsv.name, "hsv_");
+    strcat(hsv.name, image.name);
     double r, g, b, cmax, cmin, cdiff;
     double h = -1, s = -1, v;
     for (int a = 0; a < totalpixels; a++){
@@ -66,9 +68,9 @@ K9_Image rgb_to_hsv(K9_Image image){
             s = (1 - cmin/cmax)*255;
         // OpenCV stores images as BGR so image is displayed as VSH
         // This stores images as RGB so image is displayed as HSV
-        hsv.image[a*3] = cmax * 255;
+        hsv.image[a*3] = h/2;
         hsv.image[a*3+1] = s;
-        hsv.image[a*3+2] = h/2;
+        hsv.image[a*3+2] = cmax * 255;
     }
     return hsv;
 }
@@ -77,4 +79,47 @@ void invert(K9_Image image){
     for (int i = 0; i < image.width * image.height * image.channels; i++){
         image.image[i] = 255 - image.image[i];
     }
+}
+
+K9_Image resize_img(K9_Image image, vec2 scale, char *type){
+    K9_Image ret_img = {
+        .channels = image.channels,
+        .width = image.width*scale[0],
+        .height = image.height*scale[1],
+        .name = (char *) malloc(strlen(image.name)+4),
+        .image = (uint8_t *) malloc(image.width * scale[0] * image.height * scale[1] * image.channels),
+    };
+    strcpy(ret_img.name, "re_");
+    strcat(ret_img.name, image.name);
+    double sizex = image.height/(double)ret_img.height;
+    double sizey = image.width/(double)ret_img.width;
+    // nearest neighbor interpolation
+    if (strcmp(type, K9_NEAREST) == 0){
+        for (int x = 0; x < ret_img.height; x++){
+            for (int y = 0; y < ret_img.width; y++){
+                double posx = floor(y*sizex);
+                double posy = floor(x*sizey);
+                for (int z = 0; z < image.channels; z++){
+                    ret_img.image[((x*ret_img.width)+y)*image.channels+z] = 
+                    image.image[((int)(posy*image.width)+(int)posx)*image.channels+z];
+                }
+            }
+        }
+    }
+    else if (strcmp(type, K9_BILLINEAR)==0){
+        for (int x = 0; x < ret_img.height; x++){
+            for (int y = 0; y < ret_img.width; y++){
+                double ipl1 = ((scale[0])/1 * 
+                image.image[(int)((x*image.width)+y)]) + (scale[1]/1 * 
+                image.image[(int)((x*image.width)+y+3)]);
+                double ipl2 = ((scale[0])/1 * 
+                image.image[(int)((x*image.width)+y)]) + (scale[1]/1 * 
+                image.image[(int)((x*image.width)+y+3)]);;
+                ret_img.image[((x*ret_img.width)+y)*3] = image.image[(int)((x*ipl1*image.width)+y*ipl2)*3];
+                ret_img.image[((x*ret_img.width)+y)*3+1] = image.image[(int)((x*ipl1*image.width)+y*ipl2)*3+1];
+                ret_img.image[((x*ret_img.width)+y)*3+2] = image.image[(int)((x*ipl1*image.width)+y*ipl2)*3+2];
+            }
+        }
+    }
+    return ret_img;
 }

@@ -18,6 +18,8 @@ static void fps_count(GLFWwindow *window){
 }
 
 static void show_gray(GLFWwindow *window, K9_Image image){
+    glClearColor (0.1, 0.1, 0.1, 0.1);
+    glClear(GL_COLOR_BUFFER_BIT);
     GLubyte displayimg[image.height][image.width];
     for (int i = 0; i < image.height; i++) {
         for (int j = 0; j < image.width; j++) {
@@ -30,6 +32,7 @@ static void show_gray(GLFWwindow *window, K9_Image image){
 
 void show_image(GLFWwindow *window, K9_Image image, bool show_fps){
     //fps_count(window);
+    glfwSetWindowSize(window, image.width, image.height);
     glfwSetWindowTitle(window, image.name);
     if (image.channels == 1){
         show_gray(window, image);

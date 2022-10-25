@@ -18,8 +18,8 @@ K9_Image rgb_mask(K9_Image image, vec3 lower_bound, vec3 higher_bound){
 		.width = image.width,
 		.image = (uint8_t *) malloc(psize),
 	};
-	mask.name = strcpy(mask.name, "mask_");
-    mask.name = strcat(mask.name, image.name);
+	strcpy(mask.name, "mask_");
+    strcat(mask.name, image.name);
 	for (int x = 0; x < psize; x++){
 		for (int c = 0; c < 3; c++){
 			if (lower_bound[c] <= image.image[x*3+c] && higher_bound[c] >= image.image[x*3+c])
