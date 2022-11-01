@@ -8,7 +8,7 @@ K9_Image hit_x_miss(K9_Image image, Kernel kern){
     // center element has to be 1
     // don't cares are defined as anything negative
     if (image.channels > 1){
-        fprintf(stderr, "hit_x_miss needs a single channel image\n");
+        fprintf(stderr, "\e[1;31mhit_x_miss needs a single channel image\e[0m\n");
         return image;
     };
     K9_Image ret_img = {
@@ -44,7 +44,7 @@ K9_Image hit_x_miss(K9_Image image, Kernel kern){
 
 K9_Image bin_dilation(K9_Image image, Kernel kern){
     if (image.channels > 1){
-        fprintf(stderr, "bin_dilation needs single channel image\n");
+        fprintf(stderr, "\e[1;31mbin_dilation needs single channel image\e[0m\n");
         return image;
     }
     K9_Image ret_img = {
@@ -114,7 +114,7 @@ K9_Image bin_erosion(K9_Image image, Kernel kern){
     // still has an issue w/ malloc() overwriting other memory slots
     if (image.channels > 1)
     {
-        fprintf(stderr, "bin_erosion needs single channel image\n");
+        fprintf(stderr, "\e[1;31mbin_erosion needs single channel image\e[0m\n");
         return image;
     }
     K9_Image ret_img = {

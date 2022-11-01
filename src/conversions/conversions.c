@@ -82,6 +82,8 @@ void invert(K9_Image image){
 }
 
 K9_Image resize_img(K9_Image image, vec2 scale, char *type){
+    if (image.channels > 3)
+        image.channels = 3;
     K9_Image ret_img = {
         .channels = image.channels,
         .width = image.width*scale[0],
@@ -93,7 +95,7 @@ K9_Image resize_img(K9_Image image, vec2 scale, char *type){
     strcat(ret_img.name, image.name);
     double sizex = image.height/(double)ret_img.height;
     double sizey = image.width/(double)ret_img.width;
-    // nearest neighbor interpolation
+    // nearest neighbor interpolation :: still has issues
     if (strcmp(type, K9_NEAREST) == 0){
         for (int x = 0; x < ret_img.height; x++){
             for (int y = 0; y < ret_img.width; y++){
@@ -106,18 +108,16 @@ K9_Image resize_img(K9_Image image, vec2 scale, char *type){
             }
         }
     }
+    // not correct :: Work in progress
     else if (strcmp(type, K9_BILLINEAR)==0){
         for (int x = 0; x < ret_img.height; x++){
             for (int y = 0; y < ret_img.width; y++){
-                double ipl1 = ((scale[0])/1 * 
-                image.image[(int)((x*image.width)+y)]) + (scale[1]/1 * 
-                image.image[(int)((x*image.width)+y+3)]);
-                double ipl2 = ((scale[0])/1 * 
-                image.image[(int)((x*image.width)+y)]) + (scale[1]/1 * 
-                image.image[(int)((x*image.width)+y+3)]);;
-                ret_img.image[((x*ret_img.width)+y)*3] = image.image[(int)((x*ipl1*image.width)+y*ipl2)*3];
-                ret_img.image[((x*ret_img.width)+y)*3+1] = image.image[(int)((x*ipl1*image.width)+y*ipl2)*3+1];
-                ret_img.image[((x*ret_img.width)+y)*3+2] = image.image[(int)((x*ipl1*image.width)+y*ipl2)*3+2];
+                double dx = floor((float)((y/x + 0.5)*scale[0] - 0.5));
+                double dy = floor((float)((y/x + 0.5)*scale[1] - 0.5));
+                for (int z = 0; z < image.channels; z++){
+                    ret_img.image[((x * ret_img.width) + y) * image.channels + z] =
+                        image.image[((int)(dy * image.width) + (int)dx) * image.channels + z];
+                }
             }
         }
     }

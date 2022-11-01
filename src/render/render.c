@@ -5,11 +5,13 @@
 #include <GLFW/glfw3.h>
 #include "../linmath.h"
 #include "render.h"
+#include "../tools/basic_tools.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 struct timeval start, stop;
 
+// prototype for future
 static void fps_count(GLFWwindow *window){
     gettimeofday(&stop, NULL);
     double sec = (double)(stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec;
@@ -32,7 +34,7 @@ static void show_gray(GLFWwindow *window, K9_Image image){
 
 void show_image(GLFWwindow *window, K9_Image image, bool show_fps){
     //fps_count(window);
-    glfwSetWindowSize(window, image.width, image.height);
+    //glfwSetWindowSize(window, image.width, image.height);
     glfwSetWindowTitle(window, image.name);
     if (image.channels == 1){
         show_gray(window, image);
@@ -58,13 +60,13 @@ void show_image(GLFWwindow *window, K9_Image image, bool show_fps){
 
 GLFWwindow *init_window(K9_Image image){
     if (!glfwInit()){
-        fprintf(stderr, "GLFW did not initialize");
+        fprintf(stderr, "\e[1;31mGLFW did not initialize");
         exit(0);
     }
     //glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
     GLFWwindow *window = glfwCreateWindow(image.width, image.height, image.name, NULL, NULL);
     if (!window){
-        fprintf(stderr, "Window could not be created! \n");
+        fprintf(stderr, "\e[1;31mWindow could not be created! \n");
         exit(0);
     }
     glfwMakeContextCurrent(window);
@@ -85,7 +87,7 @@ K9_Image load_image(char *file){
     memcpy(image.image, rgb_image, image.width*image.height*3);
     strcpy(image.name, file);
     stbi_image_free(rgb_image);
-    printf("Loaded: %s\n", image.name);
+    printf("\e[1;32mLoaded: \e[0m%s\n", image.name);
     printf("Dimensions:\n-->Width: %d, Height: %d, Channels: %d\n\n", image.width, image.height, image.channels);
     return image;
 }

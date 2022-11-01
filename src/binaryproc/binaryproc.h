@@ -1,3 +1,4 @@
+#pragma once
 #include "../render/render.h"
 
 typedef struct kernel {

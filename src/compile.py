@@ -7,7 +7,7 @@ def main():
     if platform.system() != "Linux":
         print("lol")
         return
-    compilation = "gcc main.c render/render.c masks/masks.c conversions/conversions.c binaryproc/binaryproc.c -lGL -lglfw -lm -Werror"
+    compilation = "gcc main.c render/render.c masks/masks.c conversions/conversions.c binaryproc/binaryproc.c tools/basic_tools.c -lGL -lglfw -lm -Werror"
     ret_code = subprocess.call(compilation, shell = True)
     if ret_code != 0:
         print("Code could not compile... Terminating")
