@@ -7,25 +7,25 @@ Basic Image Processing engine written in C, used to be the CImageOpener.c file, 
 - GLFW
 
 # Features
-## Rendering
-- Read & Display Images
-## Masks
-- RGB & Grayscale/single-channel mask
-- BitwiseAnd & BitwiseNot
-## Conversions
-- RGB to HSV and back
-- Inversion
-- Resizing (Nearest Neighbor)
-## Binary
-- Creating kernel
-- Hit-Miss
-- Binary Dilation & Erosion
-## Tools
-- Blur
-- Channel split & Re-Merge
+- Rendering
+    - Read & Display Images
+- Masks
+    - RGB & Grayscale/single-channel mask
+    - BitwiseAnd & BitwiseNot
+- Conversions
+    - RGB to HSV and back
+    - Inversion
+    - Resizing (Nearest Neighbor)
+- Binary
+    - Creating kernel
+    - Hit-Miss
+    - Binary Dilation & Erosion
+- Tools
+    - Blur
+    - Channel split & Re-Merge
+    - Crop/Zoom w/ fill & no fill
 
 # To-do Features
-- Crop/Zoom
 - Grayscale Dilation
 - Create contrast-stretching method
 - Image convolution??
