@@ -34,7 +34,7 @@ static void show_gray(GLFWwindow *window, K9_Image image){
 
 void show_image(GLFWwindow *window, K9_Image image, bool show_fps){
     //fps_count(window);
-    //glfwSetWindowSize(window, image.width, image.height);
+    glfwSetWindowSize(window, image.width, image.height);
     glfwSetWindowTitle(window, image.name);
     if (image.channels == 1){
         show_gray(window, image);
@@ -60,13 +60,13 @@ void show_image(GLFWwindow *window, K9_Image image, bool show_fps){
 
 GLFWwindow *init_window(K9_Image image){
     if (!glfwInit()){
-        fprintf(stderr, "\e[1;31mGLFW did not initialize");
+        fprintf(stderr, "\e[1;31mGLFW did not initialize\e[0m");
         exit(0);
     }
     //glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
     GLFWwindow *window = glfwCreateWindow(image.width, image.height, image.name, NULL, NULL);
     if (!window){
-        fprintf(stderr, "\e[1;31mWindow could not be created! \n");
+        fprintf(stderr, "\e[1;31mWindow could not be created! \e[0m\n");
         exit(0);
     }
     glfwMakeContextCurrent(window);
@@ -75,11 +75,14 @@ GLFWwindow *init_window(K9_Image image){
 }
 
 K9_Image load_image(char *file){
-    /* Error check for imcompatible images
-    & incorrect filenames */
     K9_Image image;
     // load image using stbi
     uint8_t *rgb_image = stbi_load(file, &image.width, &image.height, &image.channels, 3);
+    // Check that image exists
+    if (!rgb_image){
+        fprintf(stderr, "\e[1;31mError!\e[0m In function call load_image(), valid file was not given.\n");
+        exit(0);
+    }
     image.image = (uint8_t *) malloc(image.width * image.height * image.channels);
     image.name = (char *) malloc(strlen(file));
     // ^ allocating memory for the name and image data

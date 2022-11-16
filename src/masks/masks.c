@@ -7,7 +7,7 @@
 K9_Image rgb_mask(K9_Image image, vec3 lower_bound, vec3 higher_bound){
 	// Similar to OpenCV's inRange() function
 	if (image.channels == 1){
-		fprintf(stderr, "rgb_mask needs 3 channels\n");
+		fprintf(stderr, "\e[1;33mWarning!\e[0m Function rgb_mask() needs 3 channels, returning unmasked image.\n");
 		return image;
 	}
 	int psize = image.width * image.height;
@@ -30,32 +30,54 @@ K9_Image rgb_mask(K9_Image image, vec3 lower_bound, vec3 higher_bound){
 }
 
 void bitwiseAnd(K9_Image image, K9_Image mask){
+	if (mask.channels > 1){
+		fprintf(stderr, "\e[1;33mWarning!\e[0m Mask in bitwiseAnd() has more than one channel\n");
+	}
 	// Similar to OpenCV's bitwise_and
 	int size = image.width * image.height;
-	for (int x = 0; x < size; x++){
-		if (mask.image[x] != 255){
-			image.image[x*3] = 0;
-			image.image[x*3+1] = 0;
-			image.image[x*3+2] = 0;
+	if (image.channels == 3){
+		for (int x = 0; x < size; x++){
+			if (mask.image[x] != 255){
+				image.image[x*3] = 0;
+				image.image[x*3+1] = 0;
+				image.image[x*3+2] = 0;
+			}
+		}
+	} else {
+		for (int x = 0; x < size; x++){
+			if (mask.image[x] != 255){
+				image.image[x] = 0;
+			}
 		}
 	}
 }
 
 void bitwiseNot(K9_Image image, K9_Image mask){
+	if (mask.channels > 1){
+		fprintf(stderr, "\e[1;33mWarning!\e[0m Mask in bitwiseNot() has more than one channel\n");
+	}
 	// Similar to OpenCV's bitwise_not
 	int size = image.width * image.height;
-	for (int x = 0; x < size; x++){
-		if (mask.image[x] == 255){
-			image.image[x*3] = 0;
-			image.image[x*3+1] = 0;
-			image.image[x*3+2] = 0;
+	if (image.channels == 3){
+		for (int x = 0; x < size; x++){
+			if (mask.image[x] == 255){
+				image.image[x*3] = 0;
+				image.image[x*3+1] = 0;
+				image.image[x*3+2] = 0;
+			}
+		}
+	} else {
+		for (int x = 0; x < size; x++){
+			if (mask.image[x] == 255){
+				image.image[x] = 0;
+			}
 		}
 	}
 }
 
 void grayscale_mask(K9_Image image, int lower_bound, int higher_bound){
 	if (image.channels > 1){
-		fprintf(stderr, "Image has not been converted to grayscale\n");
+		fprintf(stderr, "\e[1;31mError!\e[0m Function grayscale_mask() requires single channel image.\n");
 		exit(0);
 	}
 	int totalpixels = image.width * image.height;

@@ -11,6 +11,7 @@
 
 K9_Image rgb_to_gray(K9_Image image){
     if (image.channels == 1){
+        fprintf(stderr,"\e[1;33mWarning!\e[0m In function rgb_to_gray(), image is already single channel.\n");
         return image;
     }
     int totalpixels = image.width * image.height;
@@ -33,6 +34,7 @@ K9_Image rgb_to_gray(K9_Image image){
 
 K9_Image rgb_to_hsv(K9_Image image){
     if (image.channels == 1){
+        fprintf(stderr,"\e[1;33mWarning!\e[0m In function rgb_to_hsv(), image is single channel.\n");
         return image;
     }
     int totalpixels = image.width * image.height;

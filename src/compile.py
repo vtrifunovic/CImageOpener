@@ -21,8 +21,9 @@ def main():
     for i in all_files:
         if ".png" in i or ".jpg" in i or ".JPG" in i:
             test_files.append(i)
-    for image in test_files:
-        subprocess.call(["./a.out", image])
+    # Currently not needed
+    #for image in test_files:
+    #    subprocess.call(["./a.out", image])
 
 if __name__ == "__main__":
     main()

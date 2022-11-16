@@ -1,9 +1,11 @@
 #include "basic_tools.h"
+#include "../typename.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
 K9_Image blur(K9_Image image, Kernel kern, int iterations){
+    iterations = abs(iterations);
     int totalpixels = image.width * image.height * image.channels;
     K9_Image ret_img = {
         .height = image.height,
@@ -56,8 +58,10 @@ K9_Image blur(K9_Image image, Kernel kern, int iterations){
 
 K9_Split split_channels(K9_Image image){
     int totalpixels = image.width*image.height;
-    if (image.channels < 3)
-        fprintf(stderr, "\e[1;31mCannot split less than 3 channels\e[0m\n");
+    if (image.channels < 3){
+        fprintf(stderr, "\e[1;31mError!\e[0m Function split_channels() cannot split less than 3 channels.\n");
+        exit(0);
+    }
     K9_Split ret_img = {
         .r = {
             .width = image.width,
@@ -95,7 +99,7 @@ K9_Split split_channels(K9_Image image){
 
 K9_Image merge_channels(K9_Image r, K9_Image g, K9_Image b){
     if (r.height != g.height || g.height != b.height || r.width != g.width || g.width != b.width)
-        fprintf(stderr,"\e[1;33mWarning!!!\e[0m In function call merge_channels() channel sizes do not match.\n");
+        fprintf(stderr,"\e[1;33mWarning!\e[0m In function call merge_channels() channel sizes do not match.\n");
     if (r.channels > 1 || g.channels > 1 || b.channels > 1){
         fprintf(stderr, "\e[1;31mAll images must be single channel\e[0m\n");
         exit(0);
@@ -117,6 +121,97 @@ K9_Image merge_channels(K9_Image r, K9_Image g, K9_Image b){
     return ret_img;
 }
 
+static int checkbounds(vec2 xcrop, vec2 ycrop, int x, int y){
+    return (x > xcrop[0] && x < xcrop[1] && y > ycrop[0] && y < ycrop[1]);
+}
+
+K9_Image crop(K9_Image image, vec2 xcrop, vec2 ycrop, char *type){
+    // needs warning to not crop oob memory
+    if (xcrop[1] - xcrop[0] > image.width){
+        fprintf(stderr, "\e[1;33mWarning!!!\e[0m In function call crop() x-axis is larger than image width. X-axis will not be cropped\n");
+        xcrop[0] = 0;
+        xcrop[1] = image.width;
+    }
+    if (ycrop[1] - ycrop[0] > image.height){
+        fprintf(stderr, "\e[1;33mWarning!!!\e[0m In function call crop() x-axis is larger than image width. X-axis will not be cropped\n");
+        ycrop[0] = 0;
+        ycrop[1] = image.height;
+    }
+    K9_Image ret_img = {
+        .channels = image.channels,
+        .name = (char *) malloc(strlen(image.name)+6),
+    };
+    strcpy(ret_img.name, "crop_");
+    strcat(ret_img.name, image.name);
+    if (strcmp(type, K9_FILL) == 0){
+        ret_img.height = image.height;
+        ret_img.width = image.width;
+        ret_img.image = (uint8_t *) malloc(image.height * image.width * image.channels);
+        for (int x = 0; x < image.width; x++){
+            for (int y = 0; y < image.height; y++){
+                for (int c = 0; c < image.channels; c++){
+                    if (checkbounds(xcrop, ycrop, x, y))
+                        ret_img.image[(y*image.width+x)*image.channels+c] = image.image[(y*image.width+x)*image.channels+c];
+                    else
+                        ret_img.image[(y*image.width+x)*image.channels+c] = 0;
+                }
+            }
+        }
+    }
+    if (strcmp(type, K9_NOFILL) == 0){
+        int xwid = xcrop[1] - xcrop[0];
+        ret_img.width = xwid;
+        int ywid = ycrop[1] - ycrop[0];
+        ret_img.height = ywid;
+        ret_img.image = (uint8_t *) malloc(xwid * ywid * image.channels);
+        for (int x = 0; x < xwid; x++){
+            for (int y = 0; y < ywid; y++){
+                for (int c = 0; c < image.channels; c++){
+                    ret_img.image[((y*xwid)+x)*image.channels+c] = image.image[((y+(int)ycrop[0])*image.width+(x+(int)xcrop[0]))*image.channels+c];
+                }
+            }
+        }
+    }
+    return ret_img;
+}
+
+K9_Image blend_img(K9_Image image, K9_Image b, float alpha){
+    if (alpha > 1){
+        alpha = 1;
+    }
+    float beta = 1 - alpha;
+    int totalpixels = image.width * image.height * image.channels;
+    K9_Image ret_img = {
+        .width = image.width,
+        .height = image.height,
+        .channels = image.channels,
+        .name = (char *) malloc(8),
+        .image = (uint8_t *) malloc(totalpixels),
+    };
+    strcpy(ret_img.name, "blended");
+    // same channels blend
+    if (image.channels == b.channels){
+        for (int x = 0; x < totalpixels; x++){
+            ret_img.image[x] = image.image[x] * alpha + b.image[x] * beta;
+        }
+    // multi-channel blended into single channel
+    } else if (image.channels < b.channels){
+        for (int x = 0; x < totalpixels; x++){
+            ret_img.image[x] = image.image[x] * alpha + b.image[x*b.channels] * beta;
+        }
+    // single channel blended into multi-channel
+    } else {
+        for (int x = 0; x < image.height; x++){
+            for (int y =0; y < image.width; y++){
+                for (int z = 0; z < image.channels; z++){
+                    ret_img.image[(y*image.width+x)*image.channels+z] = image.image[(y*image.width+x)*image.channels+z] * alpha + b.image[y*image.width+x] * beta;
+                }
+            }
+        }
+    }
+    return ret_img;
+}
+
 // @todo find a better way to do this
 void K9_free_split(K9_Split image){
     free(image.r.name);
@@ -126,3 +221,4 @@ void K9_free_split(K9_Split image){
     free(image.b.name);
     free(image.b.image);
 }
+
