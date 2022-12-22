@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
     K9_Image cropped = crop(new_img, (vec2){50, 450}, (vec2){250, 450}, K9_NOFILL);
     invert(chan.r);
     K9_Image merged = merge_channels(chan.r, hxm, chan.b);
-    K9_Image stc = blend_img(new_img, chan.r, 0.63254);
+    K9_Image stc = blend_img(chan.r, bin, 0.63254);
     float blend = 0;
 
     while (!should_quit)
