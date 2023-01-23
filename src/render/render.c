@@ -5,7 +5,8 @@
 #include <GLFW/glfw3.h>
 #include "../linmath.h"
 #include "render.h"
-#include "../tools/basic_tools.h"
+#include "../global.h"
+#include "../opencl_support/gpu_setup.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -92,10 +93,28 @@ K9_Image load_image(char *file){
     stbi_image_free(rgb_image);
     printf("\e[1;32mLoaded: \e[0m%s\n", image.name);
     printf("Dimensions:\n-->Width: %d, Height: %d, Channels: %d\n\n", image.width, image.height, image.channels);
+    if (global.enable_gpu == true){
+        init_gpu(image);
+    }
     return image;
 }
 
+void K9_free_gpu(){
+    global.gpu_values.ret = clFlush(global.gpu_values.command_queue);
+    global.gpu_values.ret = clFinish(global.gpu_values.command_queue);
+    global.gpu_values.ret = clReleaseKernel(global.gpu_values.kernel);
+    global.gpu_values.ret = clReleaseProgram(global.gpu_values.program);
+    global.gpu_values.ret = clReleaseMemObject(global.gpu_values.input_image);
+    global.gpu_values.ret = clReleaseMemObject(global.gpu_values.output_image);
+    global.gpu_values.ret = clReleaseCommandQueue(global.gpu_values.command_queue);
+    global.gpu_values.ret = clReleaseContext(global.gpu_values.context);
+}
+
 void K9_free(K9_Image image){
+    if (global.enable_gpu == true){
+        K9_free_gpu();
+        global.enable_gpu == false;
+    }
     free(image.name);
     free(image.image);
 }

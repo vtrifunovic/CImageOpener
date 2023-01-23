@@ -14,3 +14,4 @@ void show_image(GLFWwindow *window, K9_Image image, bool show_fps);
 GLFWwindow *init_window(K9_Image image);
 K9_Image load_image(char *file);
 void K9_free(K9_Image image);
+void K9_free_gpu();
