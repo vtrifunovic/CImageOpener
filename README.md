@@ -4,9 +4,12 @@ Basic Image Processing engine written in C, used to be the CImageOpener.c file, 
 # Build
 - STB_Image.h
 - OpenGL
+- OpenCL
 - GLFW
 
 # Features
+- Processing
+    - GPU Processing (in progress)
 - Rendering
     - Read & Display Images
 - Masks
