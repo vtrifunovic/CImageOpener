@@ -9,7 +9,7 @@ Basic Image Processing engine written in C, used to be the CImageOpener.c file, 
 
 # Features
 - Processing
-    - GPU Processing (in progress)
+    - CPU & GPU Processing (in progress)
 - Rendering
     - Read & Display Images
 - Masks
@@ -29,13 +29,11 @@ Basic Image Processing engine written in C, used to be the CImageOpener.c file, 
     - Crop/Zoom w/ fill & no fill
 
 # To-do Features
-- Grayscale Dilation
-- Create contrast-stretching method
-- Image convolution??
+- Finish adding OpenCL functions for rest of current features
+- Keep improving performance when GPU is enabled
 
 # To-do Fixes
 - Add better debugging/error messages (more detail)
 - Add & fix up resizing methods
-- Find better way to free splits
 - Create more dynamic kernels
 
