@@ -111,10 +111,6 @@ void K9_free_gpu(){
 }
 
 void K9_free(K9_Image image){
-    if (global.enable_gpu == true){
-        K9_free_gpu();
-        global.enable_gpu == false;
-    }
     free(image.name);
     free(image.image);
 }

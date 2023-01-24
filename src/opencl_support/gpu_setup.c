@@ -6,6 +6,10 @@
 #define MAX_SOURCE_SIZE (0x100000)
 
 void init_gpu(K9_Image image){
+    char prog[] = "init";
+    strcpy(global.past_prog, prog);
+    strcpy(global.past_func, prog);
+    global.channels = image.channels;
     cl_platform_id platform_id = NULL;
     global.gpu_values.device_id = NULL;
     cl_uint ret_num_devices;
@@ -19,6 +23,7 @@ void init_gpu(K9_Image image){
     global.gpu_values.output_image = clCreateBuffer(global.gpu_values.context, CL_MEM_WRITE_ONLY, totalpixels * sizeof(uint8_t), NULL, &global.gpu_values.ret);
     global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, global.gpu_values.input_image, CL_TRUE, 0, totalpixels * sizeof(uint8_t), image.image, 0, NULL, NULL);
 }
+
 void read_cl_program(char *path){
     FILE *fp;
     char *source_str;
@@ -30,11 +35,20 @@ void read_cl_program(char *path){
     }
     source_str = (char *)malloc(MAX_SOURCE_SIZE);
     source_size = fread(source_str, 1, MAX_SOURCE_SIZE, fp);
-    source_str = realloc(source_str, strlen(source_str) * sizeof(char));
+    source_str = realloc(source_str, strlen(source_str) * sizeof(char)+1);
     fclose(fp);
-
     global.gpu_values.program = clCreateProgramWithSource(global.gpu_values.context, 1, (const char **)&source_str, (const size_t *)&source_size, &global.gpu_values.ret);
     global.gpu_values.ret = clBuildProgram(global.gpu_values.program, 1, &global.gpu_values.device_id, NULL, NULL, NULL);
-    global.gpu_values.kernel = clCreateKernel(global.gpu_values.program, "rgb_mask", &global.gpu_values.ret);
     free(source_str);
+}
+
+void bind_cl_function(char *function){
+    global.gpu_values.kernel = clCreateKernel(global.gpu_values.program, function, &global.gpu_values.ret);
+}
+
+void update_gpu_channels(K9_Image image, int totalpixels){
+    global.gpu_values.ret = clReleaseMemObject(global.gpu_values.input_image);
+    global.gpu_values.input_image = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, totalpixels * sizeof(uint8_t), NULL, &global.gpu_values.ret);
+    
+    global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, global.gpu_values.input_image, CL_TRUE, 0, totalpixels * sizeof(uint8_t), image.image, 0, NULL, NULL);
 }

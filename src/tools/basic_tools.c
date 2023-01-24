@@ -212,7 +212,6 @@ K9_Image blend_img(K9_Image image, K9_Image b, float alpha){
     return ret_img;
 }
 
-// @todo find a better way to do this
 void K9_free_split(K9_Split image){
     free(image.r.name);
     free(image.r.image);

@@ -4,6 +4,9 @@
 
 typedef struct global {
     bool enable_gpu;
+    char past_prog[50];
+    char past_func[20];
+    int channels;
     GPU_Values gpu_values;
 } Global;
 

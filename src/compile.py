@@ -7,7 +7,8 @@ def main():
     if platform.system() != "Linux":
         print("lol")
         return
-    compilation = "gcc main.c render/render.c masks/masks.c conversions/conversions.c binaryproc/binaryproc.c tools/basic_tools.c -lGL -lglfw -lm -Werror"
+    main_file = "main.c"
+    compilation = "gcc " +main_file+" global.c render/render.c masks/masks.c conversions/conversions.c binaryproc/binaryproc.c tools/basic_tools.c opencl_support/gpu_setup.c -lGL -lglfw -lm -Werror -lOpenCL"
     ret_code = subprocess.call(compilation, shell = True)
     if ret_code != 0:
         print("Code could not compile... Terminating")
@@ -21,9 +22,8 @@ def main():
     for i in all_files:
         if ".png" in i or ".jpg" in i or ".JPG" in i:
             test_files.append(i)
-    # Currently not needed
-    #for image in test_files:
-    #    subprocess.call(["./a.out", image])
+    for image in test_files:
+        subprocess.call(["./a.out", image])
 
 if __name__ == "__main__":
     main()

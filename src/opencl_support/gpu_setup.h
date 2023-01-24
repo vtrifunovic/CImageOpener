@@ -17,3 +17,5 @@ typedef struct gpu_values {
 
 void init_gpu(K9_Image image);
 void read_cl_program(char *path);
+void bind_cl_function(char *function);
+void update_gpu_channels(K9_Image image, int totalpixels);

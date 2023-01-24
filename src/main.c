@@ -47,13 +47,14 @@ int main(int argc, char *argv[])
     int lower[] = {150, 150, 150};
     int higher[] = {255, 255, 255};
     kern = create_kernel(a, sizeof(a)/sizeof(int));
-    GLFWwindow *window = init_window(new_img);
     K9_Image mask = rgb_mask(new_img, lower, higher);
-    K9_Image gray_img = rgb_to_gray(new_img);
-    K9_Image bin = bin_dilation(mask, kern);
-    K9_Image hxm = hit_x_miss(mask, kern);
-    K9_Image smaller = resize_img(new_img, (vec2){0.5, 0.5}, K9_NEAREST);
-    K9_Image cropped = crop(new_img, (vec2){50, 450}, (vec2){250, 450}, K9_NOFILL);
+    K9_Image combine = bitwiseAnd(new_img, mask);
+    K9_Image gray = rgb_to_gray(new_img);
+    K9_Image gmask = grayscale_mask(gray, 50, 150);
+    K9_Image inv1 = invert(gray);
+    K9_Image inv2 = invert(new_img);
+    K9_Image conv = rgb_to_hsv(new_img);
+    GLFWwindow *window = init_window(new_img);
 
     while (!should_quit)
     {
@@ -71,29 +72,22 @@ int main(int argc, char *argv[])
         else if (count == 1)
             show_image(window, mask, false);
         else if (count == 2)
-            show_image(window, bin, false);
+            show_image(window, combine, false);
         else if (count == 3)
-            show_image(window, cropped, false);
-        else if (count == 4){
-            show_image(window, smaller, false);
-        }
-        else if (count == 5){
-            bitwiseAnd(gray_img, mask);
-            show_image(window, gray_img, true);
-        } else {
-            if (count == 6){
-                invert(new_img);
-                count++;
-            }
-            show_image(window, hxm, false);
-        }
+            show_image(window, gray, false);
+        else if (count == 4)
+            show_image(window, gmask, false);
+        else if (count == 5)
+            show_image(window, inv1, false);
+        else if (count == 6)
+            show_image(window, inv2, false);
+        else if (count == 7)
+            show_image(window, conv, false);
         glfwPollEvents();
     }
+    K9_free_gpu();
     K9_free(mask);
-    K9_free(gray_img);
     K9_free(new_img);
-    K9_free(smaller);
-    K9_free(hxm);
     free(kern.kernel);
     return 0;
 }
