@@ -31,6 +31,7 @@ Basic Image Processing engine written in C, used to be the CImageOpener.c file, 
 # To-do Features
 - Finish adding OpenCL functions for rest of current features
 - Keep improving performance when GPU is enabled
+- Save output images
 
 # To-do Fixes
 - Add better debugging/error messages (more detail)
