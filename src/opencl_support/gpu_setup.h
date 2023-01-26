@@ -13,9 +13,12 @@ typedef struct gpu_values {
     cl_command_queue command_queue;
     cl_kernel kernel;
     cl_program program;
+    size_t localsize;
 } GPU_Values;
 
 void init_gpu(K9_Image image);
 void read_cl_program(char *path);
 void bind_cl_function(char *function);
 void update_gpu_channels(K9_Image image, int totalpixels);
+void set_main_args();
+uint8_t *run_kernel(size_t global_item_size, K9_Image ret_img, uint8_t divisor);

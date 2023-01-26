@@ -28,10 +28,9 @@ K9_Image rgb_to_gray(K9_Image image){
         char prog[] = "./conversions/conversions.cl";
         char func[] = "rgb_to_gray";
         size_t global_item_size = image.width * image.height * image.channels;
-        size_t local_item_size = 128;
-        if (image.channels != global.channels){
+        if (global_item_size != global.totalsize){
             update_gpu_channels(image, global_item_size);
-            global.channels = image.channels;
+            global.totalsize = global_item_size;
         }
         if (strcmp(global.past_prog, prog) != 0){
             strcpy(global.past_prog, prog);
@@ -41,11 +40,9 @@ K9_Image rgb_to_gray(K9_Image image){
             bind_cl_function(func);
             strcpy(global.past_func, func);
         }
-        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 0, sizeof(cl_mem), (void *)&global.gpu_values.input_image);
-        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 1, sizeof(cl_mem), (void *)&global.gpu_values.output_image);
+        set_main_args();
+        gray.image = run_kernel(global_item_size, gray, 1);
 
-        global.gpu_values.ret = clEnqueueNDRangeKernel(global.gpu_values.command_queue, global.gpu_values.kernel, 1, NULL, &global_item_size, &local_item_size, 0, NULL, NULL);
-        global.gpu_values.ret = clEnqueueReadBuffer(global.gpu_values.command_queue, global.gpu_values.output_image, CL_TRUE, 0, global_item_size * sizeof(uint8_t), gray.image, 0, NULL, NULL);
     } else {
         for (int g = 0; g < totalpixels; g++){
             int avg = (image.image[g*3] + image.image[g*3+1] + image.image[g*3+2])/3;
@@ -66,17 +63,16 @@ K9_Image rgb_to_hsv(K9_Image image){
         .height = image.height,
         .width = image.width,
         .channels = image.channels,
-        .image = (uint8_t *) malloc(totalpixels * 3),
+        .image = (uint8_t *) malloc(totalpixels*3),
     };
     strcpy(hsv.name, "hsv");
     if (global.enable_gpu == true){
         char prog[] = "./conversions/conversions.cl";
         char func[] = "rgb_to_hsv";
         size_t global_item_size = image.width * image.height * image.channels;
-        size_t local_item_size = 128;
-        if (image.channels != global.channels){
+        if (global_item_size != global.totalsize){
             update_gpu_channels(image, global_item_size);
-            global.channels = image.channels;
+            global.totalsize = global_item_size;
         }
         if (strcmp(global.past_prog, prog) != 0){
             strcpy(global.past_prog, prog);
@@ -86,18 +82,16 @@ K9_Image rgb_to_hsv(K9_Image image){
             bind_cl_function(func);
             strcpy(global.past_func, func);
         }
-        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 0, sizeof(cl_mem), (void *)&global.gpu_values.input_image);
-        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 1, sizeof(cl_mem), (void *)&global.gpu_values.output_image);
+        set_main_args();
+        hsv.image = run_kernel(global_item_size, hsv, 1);
 
-        global.gpu_values.ret = clEnqueueNDRangeKernel(global.gpu_values.command_queue, global.gpu_values.kernel, 1, NULL, &global_item_size, &local_item_size, 0, NULL, NULL);
-        global.gpu_values.ret = clEnqueueReadBuffer(global.gpu_values.command_queue, global.gpu_values.output_image, CL_TRUE, 0, global_item_size * sizeof(uint8_t), hsv.image, 0, NULL, NULL);
     } else {
-        double r, g, b, cmax, cmin, cdiff;
-        double h = -1, s = -1, v;
+        float r, g, b, cmax, cmin, cdiff;
+        float h = -1, s = -1, v;
         for (int a = 0; a < totalpixels; a++){
-            r = (double) image.image[a*3]/255.0;
-            g = (double) image.image[a*3+1]/255.0;
-            b = (double) image.image[a*3+2]/255.0;
+            r = (float) image.image[a*3]/255.0;
+            g = (float) image.image[a*3+1]/255.0;
+            b = (float) image.image[a*3+2]/255.0;
             cmax = MAX(r, MAX(g, b));
             cmin = MIN(r, MIN(g, b));
             cdiff = cmax - cmin;
@@ -113,8 +107,7 @@ K9_Image rgb_to_hsv(K9_Image image){
                 s = 0;
             else
                 s = (1 - cmin/cmax)*255;
-            // OpenCV stores images as BGR so image is displayed as VSH
-            // This stores images as RGB so image is displayed as HSV
+            // Storing image as V,S,H
             hsv.image[a*3+2] = h/2;
             hsv.image[a*3+1] = s;
             hsv.image[a*3] = cmax * 255;
@@ -130,17 +123,16 @@ K9_Image invert(K9_Image image){
         .height = image.height,
         .width = image.width,
         .channels = image.channels,
-        .image = (uint8_t *)malloc(totalpixels * 3),
+        .image = (uint8_t *)malloc(totalpixels),
     };
     strcpy(ret_img.name, "inverted");
     if (global.enable_gpu == true){
         char prog[] = "./conversions/conversions.cl";
         char func[] = "invert";
         size_t global_item_size = image.width * image.height * image.channels;
-        size_t local_item_size = 128;
-        if (image.channels != global.channels){
+        if (global_item_size != global.totalsize){
             update_gpu_channels(image, global_item_size);
-            global.channels = image.channels;
+            global.totalsize = global_item_size;
         }
         if (strcmp(global.past_prog, prog) != 0){
             strcpy(global.past_prog, prog);
@@ -150,11 +142,9 @@ K9_Image invert(K9_Image image){
             bind_cl_function(func);
             strcpy(global.past_func, func);
         }
-        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 0, sizeof(cl_mem), (void *)&global.gpu_values.input_image);
-        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 1, sizeof(cl_mem), (void *)&global.gpu_values.output_image);
+        set_main_args();
+        ret_img.image = run_kernel(global_item_size, ret_img, 1);
 
-        global.gpu_values.ret = clEnqueueNDRangeKernel(global.gpu_values.command_queue, global.gpu_values.kernel, 1, NULL, &global_item_size, &local_item_size, 0, NULL, NULL);
-        global.gpu_values.ret = clEnqueueReadBuffer(global.gpu_values.command_queue, global.gpu_values.output_image, CL_TRUE, 0, global_item_size * sizeof(uint8_t), ret_img.image, 0, NULL, NULL);
     } else {
         for (int i = 0; i < totalpixels; i++){
             ret_img.image[i] = 255 - image.image[i];
@@ -163,7 +153,7 @@ K9_Image invert(K9_Image image){
     return ret_img;
 }
 
-// Last function in conversions.c to add OpenCL function for
+
 K9_Image resize_img(K9_Image image, vec2 scale, char *type){
     if (image.channels > 3)
         image.channels = 3;
@@ -171,13 +161,44 @@ K9_Image resize_img(K9_Image image, vec2 scale, char *type){
         .channels = image.channels,
         .width = image.width*scale[0],
         .height = image.height*scale[1],
-        .name = (char *) malloc(strlen(image.name)+4),
+        .name = (char *) malloc(8),
         .image = (uint8_t *) malloc(image.width * scale[0] * image.height * scale[1] * image.channels),
     };
-    strcpy(ret_img.name, "re_");
-    strcat(ret_img.name, image.name);
+    strcpy(ret_img.name, "resized");
     double sizex = image.height/(double)ret_img.height;
     double sizey = image.width/(double)ret_img.width;
+    if (global.enable_gpu == true){
+        char prog[] = "./conversions/conversions.cl";
+        char func[] = "resize_img_nearest";
+        size_t global_item_size = ret_img.width * ret_img.height * ret_img.channels;
+        if (global_item_size != global.totalsize){
+            update_gpu_channels(image, global_item_size);
+            global.totalsize = global_item_size;
+        }
+        if (strcmp(global.past_prog, prog) != 0){
+            strcpy(global.past_prog, prog);
+            read_cl_program(prog);
+        }
+        if (strcmp(global.past_func, func) != 0){
+            bind_cl_function(func);
+            strcpy(global.past_func, func);
+        }
+        double scales[] = {sizex, sizey};
+        double sizes[] = {ret_img.width, ret_img.height, ret_img.channels};
+
+        cl_mem scale_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, 2 * sizeof(int), NULL, &global.gpu_values.ret);
+        cl_mem sizes_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, 3 * sizeof(int), NULL, &global.gpu_values.ret);
+
+        global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, scale_mem_obj, CL_TRUE, 0, 2 * sizeof(int), scales, 0, NULL, NULL);
+        global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, sizes_mem_obj, CL_TRUE, 0, 3 * sizeof(int), sizes, 0, NULL, NULL);
+
+        set_main_args();
+
+        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_mem), (void *)&scale_mem_obj);
+        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_mem), (void *)&sizes_mem_obj);
+
+        ret_img.image = run_kernel(global_item_size, ret_img, 1);
+    }
     // nearest neighbor interpolation :: still has issues
     if (strcmp(type, K9_NEAREST) == 0){
         for (int x = 0; x < ret_img.height; x++){

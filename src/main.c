@@ -52,7 +52,8 @@ int main(int argc, char *argv[])
     K9_Image gray = rgb_to_gray(new_img);
     K9_Image gmask = grayscale_mask(gray, 50, 150);
     K9_Image inv1 = invert(gray);
-    K9_Image inv2 = invert(new_img);
+    K9_Image resz = resize_img(new_img, (vec2){0.5, 0.5}, K9_NEAREST);
+    K9_Image resz2 = resize_img(mask, (vec2){0.5, 0.5}, K9_NEAREST);
     K9_Image conv = rgb_to_hsv(new_img);
     GLFWwindow *window = init_window(new_img);
 
@@ -80,8 +81,10 @@ int main(int argc, char *argv[])
         else if (count == 5)
             show_image(window, inv1, false);
         else if (count == 6)
-            show_image(window, inv2, false);
+            show_image(window, resz, false);
         else if (count == 7)
+            show_image(window, resz2, false);
+        else if (count == 8)
             show_image(window, conv, false);
         glfwPollEvents();
     }
