@@ -70,15 +70,15 @@ void update_gpu_channels(K9_Image image, int totalpixels){
     global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, g.input_image, CL_TRUE, 0, totalpixels * sizeof(uint8_t), image.image, 0, NULL, NULL);
 }
 
-void set_main_args(){
+void set_main_args(void){
     global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 0, sizeof(cl_mem), (void *)&g.input_image);
     global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 1, sizeof(cl_mem), (void *)&g.output_image);
 }
 
-uint8_t *run_kernel(size_t global_item_size, K9_Image ret_img, uint8_t divisor){
+uint8_t *run_kernel(size_t global_item_size, K9_Image ret_img, size_t return_size){
     global.gpu_values.ret = clEnqueueNDRangeKernel(global.gpu_values.command_queue, global.gpu_values.kernel, 1, NULL, &global_item_size, &g.localsize, 0, NULL, NULL);
 
-    global.gpu_values.ret = clEnqueueReadBuffer(global.gpu_values.command_queue, g.output_image, CL_TRUE, 0, global_item_size/divisor * sizeof(uint8_t), ret_img.image, 0, NULL, NULL);
+    global.gpu_values.ret = clEnqueueReadBuffer(global.gpu_values.command_queue, g.output_image, CL_TRUE, 0, return_size * sizeof(uint8_t), ret_img.image, 0, NULL, NULL);
 
     return ret_img.image;
 }

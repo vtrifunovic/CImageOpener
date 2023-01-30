@@ -4,7 +4,7 @@
 typedef struct kernel {
     int height;
     int width;
-    int *kernel;
+    uint8_t *kernel;
 } Kernel;
 
 K9_Image hit_x_miss(K9_Image, Kernel kern);

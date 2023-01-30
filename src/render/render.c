@@ -78,7 +78,7 @@ GLFWwindow *init_window(K9_Image image){
 K9_Image load_image(char *file){
     K9_Image image;
     // load image using stbi
-    uint8_t *rgb_image = stbi_load(file, &image.width, &image.height, &image.channels, 3);
+    uint8_t *rgb_image = stbi_load(file, &image.width, &image.height, &image.channels, 0);
     // Check that image exists
     if (!rgb_image){
         fprintf(stderr, "\e[1;31mError!\e[0m In function call load_image(), valid file was not given.\n");
@@ -88,13 +88,17 @@ K9_Image load_image(char *file){
     image.name = (char *) malloc(strlen(file));
     // ^ allocating memory for the name and image data
     // ⌄ copying data into our image struct
-    memcpy(image.image, rgb_image, image.width*image.height*3);
+    memcpy(image.image, rgb_image, image.width*image.height*image.channels);
     strcpy(image.name, file);
     stbi_image_free(rgb_image);
     printf("\e[1;32mLoaded: \e[0m%s\n", image.name);
-    printf("Dimensions:\n-->Width: %d, Height: %d, Channels: %d\n\n", image.width, image.height, image.channels);
+    printf("Dimensions:\n-->Width: %d, Height: %d, Channels: %d\n", image.width, image.height, image.channels);
+    printf("GPU Enabled: ");
     if (global.enable_gpu == true){
+        printf("\e[1;32mYes.\e[0m\n\n");
         init_gpu(image);
+    } else {
+        printf("\e[1;31mNo.\e[0m\n\n");
     }
     return image;
 }

@@ -44,17 +44,18 @@ int main(int argc, char *argv[])
     {1, 1, 1,
     1, 1, 1,
     1, 1, 1};
-    int lower[] = {150, 150, 150};
+    int lower[] = {210, 200, 175};
     int higher[] = {255, 255, 255};
     kern = create_kernel(a, sizeof(a)/sizeof(int));
     K9_Image mask = rgb_mask(new_img, lower, higher);
-    K9_Image combine = bitwiseAnd(new_img, mask);
-    K9_Image gray = rgb_to_gray(new_img);
-    K9_Image gmask = grayscale_mask(gray, 50, 150);
-    K9_Image inv1 = invert(gray);
-    K9_Image resz = resize_img(new_img, (vec2){0.5, 0.5}, K9_NEAREST);
-    K9_Image resz2 = resize_img(mask, (vec2){0.5, 0.5}, K9_NEAREST);
-    K9_Image conv = rgb_to_hsv(new_img);
+    //mask = resize_img(mask, (vec2){0.5, 0.5}, K9_NEAREST);
+    K9_Image dil = bin_dilation(mask, kern);
+    K9_Image hxm = hit_x_miss(mask, kern);
+    //hxm = resize_img(hxm, (vec2){2, 2}, K9_NEAREST);
+    K9_Image and = bitwiseAnd(new_img, dil);
+    K9_Image gray = rgb_to_gray(and);
+    K9_Image gray2 = grayscale_mask(gray, 150, 255);
+    K9_Image blr = blur(gray, kern, 2);
     GLFWwindow *window = init_window(new_img);
 
     while (!should_quit)
@@ -73,19 +74,17 @@ int main(int argc, char *argv[])
         else if (count == 1)
             show_image(window, mask, false);
         else if (count == 2)
-            show_image(window, combine, false);
+            show_image(window, dil, false);
         else if (count == 3)
-            show_image(window, gray, false);
+            show_image(window, hxm, false);
         else if (count == 4)
-            show_image(window, gmask, false);
+            show_image(window, and, false);
         else if (count == 5)
-            show_image(window, inv1, false);
+            show_image(window, gray, false);
         else if (count == 6)
-            show_image(window, resz, false);
-        else if (count == 7)
-            show_image(window, resz2, false);
-        else if (count == 8)
-            show_image(window, conv, false);
+            show_image(window, gray2, false);
+        else if (count >= 7)
+            show_image(window, blr, false);
         glfwPollEvents();
     }
     K9_free_gpu();

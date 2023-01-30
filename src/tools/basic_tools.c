@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include "../global.h"
 
 K9_Image blur(K9_Image image, Kernel kern, int iterations){
     iterations = abs(iterations);
@@ -12,10 +13,37 @@ K9_Image blur(K9_Image image, Kernel kern, int iterations){
         .width = image.width,
         .channels = image.channels,
         .image = (uint8_t *) malloc(totalpixels),
-        .name = (char *) malloc(strlen(image.name)+6),
+        .name = (char *) malloc(5),
     };
-    strcpy(ret_img.name, "blur_");
-    strcat(ret_img.name, image.name);
+    uint8_t kernelsize = kern.width * kern.height;
+    strcpy(ret_img.name, "blur");
+    if (global.enable_gpu == true){
+        char prog[] = "./tools/basic_tools.cl";
+        char func[] = "blur";
+        size_t global_item_size = image.width * image.height * image.channels;
+        if (global_item_size != global.totalsize){
+            update_gpu_channels(image, global_item_size);
+            global.totalsize = global_item_size;
+        }
+        if (strcmp(global.past_prog, prog) != 0){
+            strcpy(global.past_prog, prog);
+            read_cl_program(prog);
+        }
+        if (strcmp(global.past_func, func) != 0){
+            bind_cl_function(func);
+            strcpy(global.past_func, func);
+        }
+
+        set_main_args();
+
+        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_uchar), (void *)&kernelsize);
+        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_int), (void *)&image.width);
+
+        for (int i = 0; i < iterations; i ++){
+            ret_img.image = run_kernel(global_item_size, ret_img, global_item_size);
+            update_gpu_channels(ret_img, global_item_size);
+        }
+    }
     // creating temporary image to store data so we can do multiple iterations
     K9_Image tmpimg = { 
         .width = image.width,

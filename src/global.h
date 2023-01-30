@@ -6,7 +6,7 @@ typedef struct global {
     bool enable_gpu;
     char past_prog[50];
     char past_func[20];
-    int totalsize;
+    size_t totalsize;
     GPU_Values gpu_values;
 } Global;
 

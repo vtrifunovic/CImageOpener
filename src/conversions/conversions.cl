@@ -75,7 +75,7 @@ __kernel void resize_img_nearest(__global const uchar *in_image, __global uchar 
         int y_loc = calculate_pos_y(x, sizes[0]);
         double posx = floor(y_loc*scale[0]);
         double posy = floor(x_loc*scale[1]);
-        for (int z = 0; z < sizes[2]; z++){
+        for (uchar z = 0; z < sizes[2]; z++){
             out_image[((x_loc*sizes[0])+y_loc)*sizes[2]+z] = 
             in_image[((int)(posy*sizes[0])+(int)posx)*sizes[2]+z];
         }

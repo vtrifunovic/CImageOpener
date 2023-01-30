@@ -47,8 +47,7 @@ K9_Image rgb_mask(K9_Image image, int *lower_bound, int *higher_bound){
 		global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_mem), (void *)&lower_mem_obj);
 		global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_mem), (void *)&upper_mem_obj);
 
-		mask.image = run_kernel(global_item_size, mask, 3);
-
+		mask.image = run_kernel(global_item_size, mask, global_item_size/3);
 		} else {
 		for (int x = 0; x < psize; x++){
 			for (int c = 0; c < 3; c++){
@@ -98,7 +97,7 @@ K9_Image bitwiseAnd(K9_Image image, K9_Image mask){
 
 		global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_mem), (void *)&mask_mem_obj);
 
-		ret_img.image = run_kernel(global_item_size, ret_img, 1);
+		ret_img.image = run_kernel(global_item_size, ret_img, global_item_size);
 	} else {
 		if (image.channels == 3){
 			for (int x = 0; x < size; x++){
@@ -158,7 +157,7 @@ K9_Image bitwiseNot(K9_Image image, K9_Image mask){
 
 		global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_mem), (void *)&mask_mem_obj);
 
-		ret_img.image = run_kernel(global_item_size, ret_img, 1);
+		ret_img.image = run_kernel(global_item_size, ret_img, global_item_size);
 	} else {
 		if (image.channels == 3){
 			for (int x = 0; x < size; x++){
@@ -215,7 +214,7 @@ K9_Image grayscale_mask(K9_Image image, uint8_t lower_bound, uint8_t higher_boun
 		global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_uchar), (void *)&lower_bound);
 		global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_uchar), (void *)&higher_bound);
 
-		ret_img.image = run_kernel(global_item_size, ret_img, 1);
+		ret_img.image = run_kernel(global_item_size, ret_img, global_item_size);
 	} else {
 		for (int g = 0; g < totalpixels; g++){
 			if (lower_bound <= image.image[g] && higher_bound >= image.image[g])

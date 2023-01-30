@@ -41,8 +41,7 @@ K9_Image rgb_to_gray(K9_Image image){
             strcpy(global.past_func, func);
         }
         set_main_args();
-        gray.image = run_kernel(global_item_size, gray, 1);
-
+        gray.image = run_kernel(global_item_size, gray, global_item_size/3);
     } else {
         for (int g = 0; g < totalpixels; g++){
             int avg = (image.image[g*3] + image.image[g*3+1] + image.image[g*3+2])/3;
@@ -83,8 +82,7 @@ K9_Image rgb_to_hsv(K9_Image image){
             strcpy(global.past_func, func);
         }
         set_main_args();
-        hsv.image = run_kernel(global_item_size, hsv, 1);
-
+        hsv.image = run_kernel(global_item_size, hsv, global_item_size);
     } else {
         float r, g, b, cmax, cmin, cdiff;
         float h = -1, s = -1, v;
@@ -143,8 +141,7 @@ K9_Image invert(K9_Image image){
             strcpy(global.past_func, func);
         }
         set_main_args();
-        ret_img.image = run_kernel(global_item_size, ret_img, 1);
-
+        ret_img.image = run_kernel(global_item_size, ret_img, global_item_size);
     } else {
         for (int i = 0; i < totalpixels; i++){
             ret_img.image[i] = 255 - image.image[i];
@@ -153,7 +150,7 @@ K9_Image invert(K9_Image image){
     return ret_img;
 }
 
-
+// skews image weirdly, need 2 fix
 K9_Image resize_img(K9_Image image, vec2 scale, char *type){
     if (image.channels > 3)
         image.channels = 3;
@@ -170,7 +167,8 @@ K9_Image resize_img(K9_Image image, vec2 scale, char *type){
     if (global.enable_gpu == true){
         char prog[] = "./conversions/conversions.cl";
         char func[] = "resize_img_nearest";
-        size_t global_item_size = ret_img.width * ret_img.height * ret_img.channels;
+        size_t global_item_size = image.width * image.height * image.channels;
+        size_t return_item_size = ret_img.width * ret_img.height * ret_img.channels;
         if (global_item_size != global.totalsize){
             update_gpu_channels(image, global_item_size);
             global.totalsize = global_item_size;
@@ -197,7 +195,7 @@ K9_Image resize_img(K9_Image image, vec2 scale, char *type){
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_mem), (void *)&scale_mem_obj);
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_mem), (void *)&sizes_mem_obj);
 
-        ret_img.image = run_kernel(global_item_size, ret_img, 1);
+        ret_img.image = run_kernel(global_item_size, ret_img, return_item_size);
     }
     // nearest neighbor interpolation :: still has issues
     if (strcmp(type, K9_NEAREST) == 0){
