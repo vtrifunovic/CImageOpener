@@ -12,6 +12,8 @@ typedef struct k9_image{
 
 void show_image(GLFWwindow *window, K9_Image image, bool show_fps);
 GLFWwindow *init_window(K9_Image image);
-K9_Image load_image(char *file);
-void K9_free(K9_Image image);
+K9_Image *load_image(char *file);
+K9_Image *create_img(int width, int height, int channels, char *name);
+K9_Image *create_img_template(K9_Image *image);
+void K9_free(K9_Image *image);
 void K9_free_gpu();

@@ -5,18 +5,13 @@
 #include <stdio.h>
 #include "../global.h"
 
-K9_Image blur(K9_Image image, Kernel kern, int iterations){
+// OCL
+K9_Image *blur(K9_Image *ret_img, K9_Image image, Kernel kern, int iterations){
     iterations = abs(iterations);
     int totalpixels = image.width * image.height * image.channels;
-    K9_Image ret_img = {
-        .height = image.height,
-        .width = image.width,
-        .channels = image.channels,
-        .image = (uint8_t *) malloc(totalpixels),
-        .name = (char *) malloc(5),
-    };
+    ret_img->name = (char *) realloc(ret_img->name, 5);
     uint8_t kernelsize = kern.width * kern.height;
-    strcpy(ret_img.name, "blur");
+    strcpy(ret_img->name, "blur");
     if (global.enable_gpu == true){
         char prog[] = "./tools/basic_tools.cl";
         char func[] = "blur";
@@ -40,8 +35,8 @@ K9_Image blur(K9_Image image, Kernel kern, int iterations){
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_int), (void *)&image.width);
 
         for (int i = 0; i < iterations; i ++){
-            ret_img.image = run_kernel(global_item_size, ret_img, global_item_size);
-            update_gpu_channels(ret_img, global_item_size);
+            ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
+            update_gpu_channels(*ret_img, global_item_size);
         }
     }
     // creating temporary image to store data so we can do multiple iterations
@@ -70,20 +65,70 @@ K9_Image blur(K9_Image image, Kernel kern, int iterations){
                 }
             }
             if (loops == 0)
-                ret_img.image[x] = 0;
+                ret_img->image[x] = 0;
             else
-                ret_img.image[x] = avg_col/loops;
+                ret_img->image[x] = avg_col/loops;
         }
         if (comp_iters != iterations)
-            memcpy(tmpimg.image, ret_img.image, totalpixels);
+            memcpy(tmpimg.image, ret_img->image, totalpixels);
         comp_iters++;
     }
-    K9_free(tmpimg);
+    free(tmpimg.name);
+    free(tmpimg.image);
     return ret_img;
 }
 
+// OCL
+K9_Image *subtract(K9_Image *ret_img, K9_Image *img1, K9_Image *img2){
+    int totalpixels = img1->width * img1->height * img1->channels;
+    ret_img->name = (char *)realloc(ret_img->name, 9);
+    strcpy(ret_img->name, "subtract");
+    for (int x = 0; x < totalpixels; x++){
+        ret_img->image[x] = img1->image[x] - img2->image[x];
+    }
+    return ret_img;
+}
 
+// OCL
+K9_Image *add(K9_Image *ret_img, K9_Image img1, K9_Image img2){
+    int totalpixels = img1.width * img1.height * img1.channels;
+    ret_img->name = (char *)realloc(ret_img->name, 4);
+    strcpy(ret_img->name, "add");
+    if (global.enable_gpu == true){
+        char prog[] = "./tools/basic_tools.cl";
+        char func[] = "add";
+        size_t global_item_size = img1.width * img1.height * img1.channels;
+        // if (global_item_size != global.totalsize){
+        update_gpu_channels(img1, global_item_size);
+        global.totalsize = global_item_size;
+        //}
+        if (strcmp(global.past_prog, prog) != 0){
+            strcpy(global.past_prog, prog);
+            read_cl_program(prog);
+        }
+        if (strcmp(global.past_func, func) != 0){
+            bind_cl_function(func);
+            strcpy(global.past_func, func);
+        }
+        cl_mem img2_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, totalpixels * sizeof(uint8_t), NULL, &global.gpu_values.ret);
 
+        global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, img2_mem_obj, CL_TRUE, 0, totalpixels * sizeof(uint8_t), img2.image, 0, NULL, NULL);
+
+        set_main_args();
+
+        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_mem), (void *)&img2_mem_obj);
+
+        ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
+    } else {
+        for (int x = 0; x < totalpixels; x++){
+            ret_img->image[x] = img1.image[x] + img2.image[x];
+        }
+    }
+    return ret_img;
+}
+
+// Fix this to be compatible with 2/2 updates
+// NO OCL
 K9_Split split_channels(K9_Image image){
     int totalpixels = image.width*image.height;
     if (image.channels < 3){
@@ -125,6 +170,8 @@ K9_Split split_channels(K9_Image image){
     return ret_img;
 }
 
+// Fix this to be compatible with 2/2 updates
+// NO OCL
 K9_Image merge_channels(K9_Image r, K9_Image g, K9_Image b){
     if (r.height != g.height || g.height != b.height || r.width != g.width || g.width != b.width)
         fprintf(stderr,"\e[1;33mWarning!\e[0m In function call merge_channels() channel sizes do not match.\n");
@@ -153,7 +200,8 @@ static int checkbounds(vec2 xcrop, vec2 ycrop, int x, int y){
     return (x > xcrop[0] && x < xcrop[1] && y > ycrop[0] && y < ycrop[1]);
 }
 
-K9_Image crop(K9_Image image, vec2 xcrop, vec2 ycrop, char *type){
+// OCL
+K9_Image *crop(K9_Image *ret_img, K9_Image image, vec2 xcrop, vec2 ycrop, char *type){
     // needs warning to not crop oob memory
     if (xcrop[1] - xcrop[0] > image.width){
         fprintf(stderr, "\e[1;33mWarning!!!\e[0m In function call crop() x-axis is larger than image width. X-axis will not be cropped\n");
@@ -165,37 +213,32 @@ K9_Image crop(K9_Image image, vec2 xcrop, vec2 ycrop, char *type){
         ycrop[0] = 0;
         ycrop[1] = image.height;
     }
-    K9_Image ret_img = {
-        .channels = image.channels,
-        .name = (char *) malloc(strlen(image.name)+6),
-    };
-    strcpy(ret_img.name, "crop_");
-    strcat(ret_img.name, image.name);
+    ret_img->name = (char *) realloc(ret_img->name, 5);
+    strcpy(ret_img->name, "crop");
     if (strcmp(type, K9_FILL) == 0){
-        ret_img.height = image.height;
-        ret_img.width = image.width;
-        ret_img.image = (uint8_t *) malloc(image.height * image.width * image.channels);
+        ret_img->height = image.height;
+        ret_img->width = image.width;
         for (int x = 0; x < image.width; x++){
             for (int y = 0; y < image.height; y++){
                 for (int c = 0; c < image.channels; c++){
                     if (checkbounds(xcrop, ycrop, x, y))
-                        ret_img.image[(y*image.width+x)*image.channels+c] = image.image[(y*image.width+x)*image.channels+c];
+                        ret_img->image[(y*image.width+x)*image.channels+c] = image.image[(y*image.width+x)*image.channels+c];
                     else
-                        ret_img.image[(y*image.width+x)*image.channels+c] = 0;
+                        ret_img->image[(y*image.width+x)*image.channels+c] = 0;
                 }
             }
         }
     }
     if (strcmp(type, K9_NOFILL) == 0){
         int xwid = xcrop[1] - xcrop[0];
-        ret_img.width = xwid;
+        ret_img->width = xwid;
         int ywid = ycrop[1] - ycrop[0];
-        ret_img.height = ywid;
-        ret_img.image = (uint8_t *) malloc(xwid * ywid * image.channels);
+        ret_img->height = ywid;
+        ret_img->image = (uint8_t *) realloc(ret_img->image, xwid * ywid * image.channels);
         for (int x = 0; x < xwid; x++){
             for (int y = 0; y < ywid; y++){
                 for (int c = 0; c < image.channels; c++){
-                    ret_img.image[((y*xwid)+x)*image.channels+c] = image.image[((y+(int)ycrop[0])*image.width+(x+(int)xcrop[0]))*image.channels+c];
+                    ret_img->image[((y*xwid)+x)*image.channels+c] = image.image[((y+(int)ycrop[0])*image.width+(x+(int)xcrop[0]))*image.channels+c];
                 }
             }
         }
@@ -203,6 +246,8 @@ K9_Image crop(K9_Image image, vec2 xcrop, vec2 ycrop, char *type){
     return ret_img;
 }
 
+// Fix this to be compatible with 2/2 updates
+// OCL
 K9_Image blend_img(K9_Image image, K9_Image b, float alpha){
     if (alpha > 1){
         alpha = 1;
@@ -238,6 +283,21 @@ K9_Image blend_img(K9_Image image, K9_Image b, float alpha){
         }
     }
     return ret_img;
+}
+
+bool compare(K9_Image img1, K9_Image img2){
+    if (img1.channels != img2.channels)
+        return false;
+    if (img1.height != img2.height)
+        return false;
+    if (img1.width != img2.width)
+        return false;
+    int totalpixels = img1.width * img1.height * img1.channels;
+    for (int i = 0; i < totalpixels; i++){
+        if (img1.image[i] != img2.image[i])
+            return false;
+    }
+    return true;
 }
 
 void K9_free_split(K9_Split image){

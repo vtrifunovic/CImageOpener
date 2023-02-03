@@ -77,8 +77,6 @@ void set_main_args(void){
 
 uint8_t *run_kernel(size_t global_item_size, K9_Image ret_img, size_t return_size){
     global.gpu_values.ret = clEnqueueNDRangeKernel(global.gpu_values.command_queue, global.gpu_values.kernel, 1, NULL, &global_item_size, &g.localsize, 0, NULL, NULL);
-
     global.gpu_values.ret = clEnqueueReadBuffer(global.gpu_values.command_queue, g.output_image, CL_TRUE, 0, return_size * sizeof(uint8_t), ret_img.image, 0, NULL, NULL);
-
     return ret_img.image;
 }

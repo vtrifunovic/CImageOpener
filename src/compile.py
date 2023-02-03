@@ -12,7 +12,7 @@ def main():
     if platform.system() != "Linux":
         print("lol")
         return
-    comp_file = "main.c"
+    comp_file = "solvemazes.c"
     compilation = "gcc " +comp_file+" global.c render/render.c masks/masks.c conversions/conversions.c binaryproc/binaryproc.c tools/basic_tools.c opencl_support/gpu_setup.c -lGL -lglfw -lm -Werror -lOpenCL"
     ret_code = subprocess.call(compilation, shell = True)
     if ret_code != 0:
@@ -27,11 +27,12 @@ def main():
         comp_file = "speedtest.c"
     compilation = "gcc -o speedtest " +comp_file+" global.c render/render.c masks/masks.c conversions/conversions.c binaryproc/binaryproc.c tools/basic_tools.c opencl_support/gpu_setup.c -lGL -lglfw -lm -Werror -lOpenCL"
     ret_code = subprocess.call(compilation, shell = True)
-    all_files = os.listdir()
+    all_files = os.listdir("./mazes")
     test_files = []
     for i in all_files:
         if ".png" in i or ".jpg" in i.lower()  or ".jpeg" in i:
-            test_files.append(i)
+            test_files.append("./mazes/" + i)
+    test_files.sort()
     for image in test_files:
         if test_run.lower() == "s":
             start = time.time()

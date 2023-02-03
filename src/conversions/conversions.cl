@@ -3,7 +3,7 @@
 
 __kernel void rgb_to_gray(__global const uchar *in_image, __global uchar *out_image){
     int x = get_global_id(0);
-
+    
     out_image[x/3] = (in_image[x]+in_image[x+1]+in_image[x+2])/3;
 }
 
