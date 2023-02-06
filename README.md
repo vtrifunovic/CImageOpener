@@ -23,9 +23,11 @@ Basic Image Processing engine written in C, used to be the CImageOpener.c file, 
     - Creating kernel
     - Hit-Miss
     - Binary Dilation & Erosion
+    - Thinning (GuoHall)
 - Tools
     - Blur
     - Channel split & Re-Merge
+    - Adding & Subtracting Images
     - Crop/Zoom w/ fill & no fill
 
 # To-do Features
