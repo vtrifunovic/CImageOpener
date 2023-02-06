@@ -2,10 +2,12 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <sys/time.h>
 #include "linmath.h"
 #include "global.h"
 #include "render/render.h"
 #include "masks/masks.h"
+#include "conversions/conversions.h"
 #include "binaryproc/binaryproc.h"
 #include "tools/basic_tools.h"
 #include "typename.h"
@@ -23,6 +25,8 @@ static bool check_close(GLFWwindow *window){
 }
 
 int main(int argc, char *argv[]){
+    struct timeval start, stop;
+    gettimeofday(&start, NULL);
     global.enable_gpu = true;
     int count = 0;
     K9_Image *new_img = load_image(argv[1]);
@@ -96,6 +100,11 @@ int main(int argc, char *argv[]){
     rgb_mask(past_mask, *new_img, lower, higher);
 
     K9_Image *dil_img = create_img_template(mask);
+    memset(dil_img->image, 255, dil_img->height*dil_img->width);
+    dil_img = crop(dil_img, *dil_img, (vec2){5, dil_img->width - 5}, (vec2){5, dil_img->height - 5}, K9_FILL);
+    invert(dil_img, *dil_img);
+    add(mask, *dil_img, *mask);
+
     K9_Image *m1 = create_img_template(mask);
     GLFWwindow *window = init_window(*new_img);
 
@@ -105,12 +114,12 @@ int main(int argc, char *argv[]){
     while (!should_quit){
         should_quit = check_close(window);
         if (loops == 0){
-            show_image(window, *new_img, false);
+            show_image(window, new_img, false);
             usleep(500000);
             loops++;
         }
         if (!show_result){
-            show_image(window, *mask, false);
+            show_image(window, mask, false);
             hit_x_miss(m1, mask, kern_x);
             subtract(mask, mask, m1);
 
@@ -134,12 +143,13 @@ int main(int argc, char *argv[]){
 
             hit_x_miss(m1, mask, kern_e);
             subtract(mask, mask, m1);
-            
-        } else {
-            show_image(window, *new_img, false);
-        }
-        if (!show_result)
+
             show_result = compare(*mask, *past_mask);
+
+            memcpy(past_mask->image, mask->image, mask->width * mask->height);
+        } else {
+            show_image(window, new_img, false);
+        }
         if (show_result == true && rs == 0){
             dil_img = bin_dilation(dil_img, *mask, kern_dil);
             dil_img = bin_dilation(dil_img, *dil_img, kern_dil);
@@ -153,20 +163,17 @@ int main(int argc, char *argv[]){
             free(kern_c.kernel);
             free(kern_d.kernel);
             free(kern_e.kernel);
-            rs++;
             free(kern_dil.kernel);
             free(fix.kernel);
             K9_free(dil_img);
             K9_free(m1);
             K9_free(past_mask);
             K9_free(mask);
-            
-        }
-        if (!show_result){
-            memcpy(past_mask->image, mask->image, mask->width * mask->height);
-            past_mask->channels = 1;
-            past_mask->width = mask->width;
-            past_mask->height = mask->height;
+            gettimeofday(&stop, NULL);
+            double sec = (double)(stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec;
+            sec = sec / 1000000 - 0.5; // -0.5 for the half second usleep()
+            printf("Solved in: %f sec\n\n", sec);
+            rs++;
         }
         glfwPollEvents();
     }

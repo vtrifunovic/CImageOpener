@@ -3,17 +3,17 @@ import subprocess
 import platform
 import os
 import time
+import argparse
 
 class colors:
     ULINE = "\033[4m"
     RESET = "\033[0m"
 
-def main():
+def main(extra, comp_file):
     if platform.system() != "Linux":
         print("lol")
         return
-    comp_file = "solvemazes.c"
-    compilation = "gcc " +comp_file+" global.c render/render.c masks/masks.c conversions/conversions.c binaryproc/binaryproc.c tools/basic_tools.c opencl_support/gpu_setup.c -lGL -lglfw -lm -Werror -lOpenCL"
+    compilation = "gcc " +comp_file+" global.c render/render.c masks/masks.c conversions/conversions.c binaryproc/binaryproc.c tools/basic_tools.c opencl_support/gpu_setup.c -lGL -lglfw -lm -Werror -lOpenCL " +extra
     ret_code = subprocess.call(compilation, shell = True)
     if ret_code != 0:
         print("Code could not compile... Terminating")
@@ -25,7 +25,7 @@ def main():
     test_run = input("Speed or view? (S/V): ")
     if test_run.lower() == "s":
         comp_file = "speedtest.c"
-    compilation = "gcc -o speedtest " +comp_file+" global.c render/render.c masks/masks.c conversions/conversions.c binaryproc/binaryproc.c tools/basic_tools.c opencl_support/gpu_setup.c -lGL -lglfw -lm -Werror -lOpenCL"
+    compilation = "gcc -o speedtest " +comp_file+" global.c render/render.c masks/masks.c conversions/conversions.c binaryproc/binaryproc.c tools/basic_tools.c opencl_support/gpu_setup.c -lGL -lglfw -lGLU -lm -Werror -lOpenCL " +extra
     ret_code = subprocess.call(compilation, shell = True)
     all_files = os.listdir("./mazes")
     test_files = []
@@ -49,4 +49,12 @@ def main():
         print("Removed.")
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--o', dest="extr", required=False)
+    parser.add_argument('--f', dest="file", required=True)
+    args = parser.parse_args()
+    extra = ""
+    file = ""
+    if args.extr:
+        extra = "-" +args.extr
+    main(extra, args.file)

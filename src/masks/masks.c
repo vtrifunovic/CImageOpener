@@ -17,6 +17,7 @@ K9_Image *rgb_mask(K9_Image *mask, K9_Image image, int *lower_bound, int *higher
 	if (global.enable_gpu == true){
 		char prog[] = "./masks/rgb_mask_kernel.cl"; 
 		char func[] = "rgb_mask";
+		uint16_t mask_id = 340;
 		size_t global_item_size = image.width * image.height * image.channels;
 		if (global_item_size != global.totalsize){
 			update_gpu_channels(image, global_item_size);
@@ -24,10 +25,10 @@ K9_Image *rgb_mask(K9_Image *mask, K9_Image image, int *lower_bound, int *higher
 		}
 		if (strcmp(global.past_prog, prog) != 0){
 			strcpy(global.past_prog, prog);
-			read_cl_program(prog);
+			read_cl_program(prog, mask_id);
 		}
 		if (strcmp(global.past_func, func) != 0){
-			bind_cl_function(func);
+			bind_cl_function(func, mask_id);
 			strcpy(global.past_func, func);
 		}
 		cl_mem lower_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, 3 * sizeof(int), NULL, &global.gpu_values.ret);
@@ -41,8 +42,10 @@ K9_Image *rgb_mask(K9_Image *mask, K9_Image image, int *lower_bound, int *higher
 		global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_mem), (void *)&lower_mem_obj);
 		global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_mem), (void *)&upper_mem_obj);
 
-		mask->image = run_kernel(global_item_size, *mask, global_item_size/3);
-		} else {
+		mask->image = run_kernel(global_item_size, *mask, global_item_size / 3);
+		global.gpu_values.ret = clReleaseMemObject(upper_mem_obj);
+		global.gpu_values.ret = clReleaseMemObject(lower_mem_obj);
+	} else {
 		for (int x = 0; x < psize; x++){
 			for (int c = 0; c < 3; c++){
 				if (lower_bound[c] <= image.image[x*3+c] && higher_bound[c] >= image.image[x*3+c])
@@ -63,6 +66,7 @@ K9_Image *bitwiseAnd(K9_Image *ret_img, K9_Image image, K9_Image mask){
 	ret_img->name = (char *) realloc(ret_img->name, 6);
 	strcpy(ret_img->name, "bwAnd");
 	if (global.enable_gpu == true){
+		uint16_t mask_id = 340;
 		char prog[] = "./masks/rgb_mask_kernel.cl";
 		char func[] = "bitwiseAnd";
 		size_t global_item_size = image.width * image.height * image.channels;
@@ -72,10 +76,10 @@ K9_Image *bitwiseAnd(K9_Image *ret_img, K9_Image image, K9_Image mask){
 		}
 		if (strcmp(global.past_prog, prog) != 0){
 			strcpy(global.past_prog, prog);
-			read_cl_program(prog);
+			read_cl_program(prog, mask_id);
 		}
 		if (strcmp(global.past_func, func) != 0){
-			bind_cl_function(func);
+			bind_cl_function(func, mask_id);
 			strcpy(global.past_func, func);
 		}
 		cl_mem mask_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, size * sizeof(uint8_t), NULL, &global.gpu_values.ret);
@@ -114,10 +118,10 @@ K9_Image *bitwiseNot(K9_Image *ret_img, K9_Image image, K9_Image mask){
 	int size = image.width * image.height;
 	ret_img->name = (char *)realloc(ret_img->name, 6);
 	strcpy(ret_img->name, "bwNot");
-	if (global.enable_gpu == true)
-	{
+	if (global.enable_gpu == true){
 		char prog[] = "./masks/rgb_mask_kernel.cl";
 		char func[] = "bitwiseNot";
+		uint16_t mask_id = 340;
 		size_t global_item_size = image.width * image.height * image.channels;
 		if (global_item_size != global.totalsize){
 			update_gpu_channels(image, global_item_size);
@@ -125,10 +129,10 @@ K9_Image *bitwiseNot(K9_Image *ret_img, K9_Image image, K9_Image mask){
 		}
 		if (strcmp(global.past_prog, prog) != 0){
 			strcpy(global.past_prog, prog);
-			read_cl_program(prog);
+			read_cl_program(prog, mask_id);
 		}
 		if (strcmp(global.past_func, func) != 0){
-			bind_cl_function(func);
+			bind_cl_function(func, mask_id);
 			strcpy(global.past_func, func);
 		}
 		cl_mem mask_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, size * sizeof(uint8_t), NULL, &global.gpu_values.ret);
@@ -170,6 +174,7 @@ K9_Image *grayscale_mask(K9_Image *ret_img, K9_Image image, uint8_t lower_bound,
 	if (global.enable_gpu == true){
 		char prog[] = "./masks/rgb_mask_kernel.cl";
 		char func[] = "grayscale_mask";
+		uint16_t mask_id = 340;
 		size_t global_item_size = image.width * image.height;
 		if (global_item_size != global.totalsize){
 			update_gpu_channels(image, global_item_size);
@@ -177,10 +182,10 @@ K9_Image *grayscale_mask(K9_Image *ret_img, K9_Image image, uint8_t lower_bound,
 		}
 		if (strcmp(global.past_prog, prog) != 0){
 			strcpy(global.past_prog, prog);
-			read_cl_program(prog);
+			read_cl_program(prog, mask_id);
 		}
 		if (strcmp(global.past_func, func) != 0){
-			bind_cl_function(func);
+			bind_cl_function(func, mask_id);
 			strcpy(global.past_func, func);
 		}
 

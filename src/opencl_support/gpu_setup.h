@@ -12,13 +12,21 @@ typedef struct gpu_values {
     cl_device_id device_id;
     cl_command_queue command_queue;
     cl_kernel kernel;
-    cl_program program;
     size_t localsize;
 } GPU_Values;
 
+struct node {
+    uint16_t id;
+    cl_program prog;
+    struct node *next;
+};
+
 void init_gpu(K9_Image image);
-void read_cl_program(char *path);
-void bind_cl_function(char *function);
+void read_cl_program(char *path, uint16_t sid);
+void bind_cl_function(char *function, uint16_t sid);
 void update_gpu_channels(K9_Image image, int totalpixels);
 void set_main_args(void);
 uint8_t *run_kernel(size_t global_item_size, K9_Image ret_img, size_t divisor);
+
+// Frees the stored gpu values. Include at the end of program.
+void K9_free_gpu(void);

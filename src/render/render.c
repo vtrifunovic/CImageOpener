@@ -17,45 +17,49 @@ static void fps_count(GLFWwindow *window){
     gettimeofday(&stop, NULL);
     double sec = (double)(stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec;
     int fps = 1 / (sec / 1000000);
+    char dfps[20];
+    sprintf(dfps, "%d", fps);
+    glfwSetWindowTitle(window, dfps);
     gettimeofday(&start, NULL);
 }
 
-static void show_gray(GLFWwindow *window, K9_Image image){
-    glClearColor (0.1, 0.1, 0.1, 0.1);
-    glClear(GL_COLOR_BUFFER_BIT);
-    GLubyte displayimg[image.height][image.width];
-    for (int i = 0; i < image.height; i++) {
-        for (int j = 0; j < image.width; j++) {
-         	displayimg[i][j] = image.image[((image.width*image.height-image.width+j)-(i*image.width))];
+static void show_gray(GLFWwindow *window, K9_Image *image){
+    GLubyte displayimg[image->height][image->width];
+    for (int i = 0; i < image->height; i++) {
+        for (int j = 0; j < image->width; j++) {
+         	displayimg[i][j] = image->image[((image->width*image->height-image->width+j)-(i*image->width))];
         }
     }
-    glDrawPixels(image.width, image.height, GL_LUMINANCE, GL_UNSIGNED_BYTE, displayimg);
+    glDrawPixels(image->width, image->height, GL_LUMINANCE, GL_UNSIGNED_BYTE, displayimg);
+    glFinish();
     glfwSwapBuffers(window);
 }
 
-void show_image(GLFWwindow *window, K9_Image image, bool show_fps){
+
+void show_image(GLFWwindow *window, K9_Image *image, bool show_fps){
     //fps_count(window);
-    //glfwSetWindowSize(window, image.width, image.height);
-    glfwSetWindowTitle(window, image.name);
-    if (image.channels == 1){
+    glfwMakeContextCurrent(window);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(0.1, 0.1, 0.1, 0.1);
+    if (image->channels == 1){
         show_gray(window, image);
         return;
     }
-    glClearColor (0.1, 0.1, 0.1, 0.1);
-    GLubyte checkimg[image.height][image.width][image.channels];
-    glClear(GL_COLOR_BUFFER_BIT);
-    for (int i = 0; i < image.height; i++) {
-        for (int j = 0; j < image.width; j++) {
-	        for(int c = 0; c < image.channels; c++){
-         	    checkimg[i][j][c] = image.image[((image.width*image.height-image.width+j)-(i*image.width))*3+c];
+    GLubyte checkimg[image->height][image->width][image->channels];
+    for (int i = 0; i < image->height; i++) {
+        for (int j = 0; j < image->width; j++) {
+	        for(int c = 0; c < image->channels; c++){
+         	    checkimg[i][j][c] = image->image[((image->width*image->height-image->width+j)-(i*image->width))*3+c];
             }
         }
     }
-    if (image.channels == 4){
-        glDrawPixels(image.width, image.height, GL_RGBA, GL_UNSIGNED_BYTE, checkimg);
+    if (image->channels == 4){
+        glDrawPixels(image->width, image->height, GL_RGBA, GL_UNSIGNED_BYTE, checkimg);
     } else {
-	    glDrawPixels(image.width, image.height, GL_RGB, GL_UNSIGNED_BYTE, checkimg);
+	    glDrawPixels(image->width, image->height, GL_RGB, GL_UNSIGNED_BYTE, checkimg);
     }
+    glfwSetWindowTitle(window, image->name);
+    glFinish();
     glfwSwapBuffers(window);
 }
 
@@ -71,8 +75,8 @@ GLFWwindow *init_window(K9_Image image){
         fprintf(stderr, "\e[1;31mWindow could not be created! \e[0m\n");
         exit(0);
     }
-    glfwMakeContextCurrent(window);
     gettimeofday(&start, NULL);
+    glfwMakeContextCurrent(window);
     return window;
 }
 
@@ -125,17 +129,6 @@ K9_Image *create_img_template(K9_Image *image){
     strcpy(ret_img->name, image->name);
     ret_img->image = (uint8_t *)malloc(image->width * image->height * image->channels);
     return ret_img;
-}
-
-void K9_free_gpu(){
-    global.gpu_values.ret = clFlush(global.gpu_values.command_queue);
-    global.gpu_values.ret = clFinish(global.gpu_values.command_queue);
-    global.gpu_values.ret = clReleaseKernel(global.gpu_values.kernel);
-    global.gpu_values.ret = clReleaseProgram(global.gpu_values.program);
-    global.gpu_values.ret = clReleaseMemObject(global.gpu_values.input_image);
-    global.gpu_values.ret = clReleaseMemObject(global.gpu_values.output_image);
-    global.gpu_values.ret = clReleaseCommandQueue(global.gpu_values.command_queue);
-    global.gpu_values.ret = clReleaseContext(global.gpu_values.context);
 }
 
 void K9_free(K9_Image *image){

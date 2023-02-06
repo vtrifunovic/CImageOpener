@@ -15,6 +15,7 @@ K9_Image *blur(K9_Image *ret_img, K9_Image image, Kernel kern, int iterations){
     if (global.enable_gpu == true){
         char prog[] = "./tools/basic_tools.cl";
         char func[] = "blur";
+        uint16_t tool_id = 540;
         size_t global_item_size = image.width * image.height * image.channels;
         if (global_item_size != global.totalsize){
             update_gpu_channels(image, global_item_size);
@@ -22,10 +23,10 @@ K9_Image *blur(K9_Image *ret_img, K9_Image image, Kernel kern, int iterations){
         }
         if (strcmp(global.past_prog, prog) != 0){
             strcpy(global.past_prog, prog);
-            read_cl_program(prog);
+            read_cl_program(prog, tool_id);
         }
         if (strcmp(global.past_func, func) != 0){
-            bind_cl_function(func);
+            bind_cl_function(func, tool_id);
             strcpy(global.past_func, func);
         }
 
@@ -78,18 +79,45 @@ K9_Image *blur(K9_Image *ret_img, K9_Image image, Kernel kern, int iterations){
     return ret_img;
 }
 
-// OCL
 K9_Image *subtract(K9_Image *ret_img, K9_Image *img1, K9_Image *img2){
     int totalpixels = img1->width * img1->height * img1->channels;
     ret_img->name = (char *)realloc(ret_img->name, 9);
     strcpy(ret_img->name, "subtract");
-    for (int x = 0; x < totalpixels; x++){
-        ret_img->image[x] = img1->image[x] - img2->image[x];
+    if (global.enable_gpu == true){
+        char prog[] = "./tools/basic_tools.cl";
+        char func[] = "subtract";
+        uint16_t tool_id = 540;
+        size_t global_item_size = img1->width * img1->height * img1->channels;
+        if (global_item_size != global.totalsize){
+            update_gpu_channels(*img1, global_item_size);
+            global.totalsize = global_item_size;
+        }
+        if (strcmp(global.past_prog, prog) != 0){
+            strcpy(global.past_prog, prog);
+            read_cl_program(prog, tool_id);
+        }
+        if (strcmp(global.past_func, func) != 0){
+            bind_cl_function(func, tool_id);
+            strcpy(global.past_func, func);
+        }
+        cl_mem img2_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, totalpixels * sizeof(uint8_t), NULL, &global.gpu_values.ret);
+
+        global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, img2_mem_obj, CL_TRUE, 0, totalpixels * sizeof(uint8_t), img2->image, 0, NULL, NULL);
+
+        set_main_args();
+
+        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_mem), (void *)&img2_mem_obj);
+
+        ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
+        global.gpu_values.ret = clReleaseMemObject(img2_mem_obj);
+    }else{
+        for (int x = 0; x < totalpixels; x++){
+            ret_img->image[x] = img1->image[x] - img2->image[x];
+        }
     }
     return ret_img;
 }
 
-// OCL
 K9_Image *add(K9_Image *ret_img, K9_Image img1, K9_Image img2){
     int totalpixels = img1.width * img1.height * img1.channels;
     ret_img->name = (char *)realloc(ret_img->name, 4);
@@ -97,6 +125,7 @@ K9_Image *add(K9_Image *ret_img, K9_Image img1, K9_Image img2){
     if (global.enable_gpu == true){
         char prog[] = "./tools/basic_tools.cl";
         char func[] = "add";
+        uint16_t tool_id = 540;
         size_t global_item_size = img1.width * img1.height * img1.channels;
         // if (global_item_size != global.totalsize){
         update_gpu_channels(img1, global_item_size);
@@ -104,10 +133,10 @@ K9_Image *add(K9_Image *ret_img, K9_Image img1, K9_Image img2){
         //}
         if (strcmp(global.past_prog, prog) != 0){
             strcpy(global.past_prog, prog);
-            read_cl_program(prog);
+            read_cl_program(prog, tool_id);
         }
         if (strcmp(global.past_func, func) != 0){
-            bind_cl_function(func);
+            bind_cl_function(func, tool_id);
             strcpy(global.past_func, func);
         }
         cl_mem img2_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, totalpixels * sizeof(uint8_t), NULL, &global.gpu_values.ret);

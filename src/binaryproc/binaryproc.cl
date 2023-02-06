@@ -11,7 +11,7 @@ __kernel void hit_x_miss(__global const uchar *in_image, __global uchar *out_ima
             if (i == 0 && j == h)
                 continue;
             else if (x-(i*width-i)-j < 0)
-                continue;
+                return;
             if (kern[dim/2-i*h-j] != in_image[x-(i*width-i)-j] && kern[dim/2-i*h-j] >= 0)
                 return;
             if (kern[dim/2+i*h+j] != in_image[x+(i*width-i)+j] && kern[dim/2+i*h+j] >= 0)
@@ -92,3 +92,21 @@ __kernel void gh_thin(__global const uchar *in_image, __global uchar *out_image,
     }
     out_image[x] = in_image[x];
 }
+
+__kernel void add(__global const uchar *in_image, __global uchar *out_image, __global const uchar *img2){
+    int x = get_global_id(0);
+    out_image[x] = 0;
+    if (in_image[x] + img2[x] > 255)
+        out_image[x] = 255;
+    else
+        out_image[x] = in_image[x] + img2[x];
+}
+
+__kernel void subtract(__global const uchar *in_image, __global uchar *out_image, __global const uchar *img2){
+    int x = get_global_id(0);
+    if (in_image[x] - img2[x] < 0)
+        out_image[x] = 0;
+    else
+        out_image[x] = in_image[x] - img2[x];
+}
+

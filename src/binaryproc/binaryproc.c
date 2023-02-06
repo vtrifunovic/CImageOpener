@@ -17,6 +17,7 @@ K9_Image *hit_x_miss(K9_Image *ret_img, K9_Image *image, Kernel kern){
     if (global.enable_gpu == true){
         char prog[] = "./binaryproc/binaryproc.cl";
         char func[] = "hit_x_miss";
+        uint16_t bin_id = 640;
         size_t global_item_size = image->width * image->height * image->channels;
         //if (global_item_size != global.totalsize){
         update_gpu_channels(*image, global_item_size);
@@ -24,10 +25,10 @@ K9_Image *hit_x_miss(K9_Image *ret_img, K9_Image *image, Kernel kern){
         //}
         if (strcmp(global.past_prog, prog) != 0){
             strcpy(global.past_prog, prog);
-            read_cl_program(prog);
+            read_cl_program(prog, bin_id);
         }
         if (strcmp(global.past_func, func) != 0){
-            bind_cl_function(func);
+            bind_cl_function(func, bin_id);
             strcpy(global.past_func, func);
         }
 
@@ -44,6 +45,7 @@ K9_Image *hit_x_miss(K9_Image *ret_img, K9_Image *image, Kernel kern){
         ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
         global.gpu_values.ret = clReleaseMemObject(kern_mem_obj);
     } else {
+        // need to fix, doesn't hxm correctly
         int length = image->width * image->height;
         int count_trues = 0, nxtline = 0;
         for (int x = 0; x < length; x++){
@@ -77,6 +79,7 @@ K9_Image *bin_dilation(K9_Image *ret_img, K9_Image image, Kernel kern){
     if (global.enable_gpu == true){
         char prog[] = "./binaryproc/binaryproc.cl";
         char func[] = "bin_dilation";
+        uint16_t bin_id = 640;
         size_t global_item_size = image.width * image.height;
         if (global_item_size != global.totalsize){
             update_gpu_channels(image, global_item_size);
@@ -84,10 +87,10 @@ K9_Image *bin_dilation(K9_Image *ret_img, K9_Image image, Kernel kern){
         }
         if (strcmp(global.past_prog, prog) != 0){
             strcpy(global.past_prog, prog);
-            read_cl_program(prog);
+            read_cl_program(prog, bin_id);
         }
         if (strcmp(global.past_func, func) != 0){
-            bind_cl_function(func);
+            bind_cl_function(func, bin_id);
             strcpy(global.past_func, func);
         }
         cl_mem kern_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, kernelsize * sizeof(int16_t), NULL, &global.gpu_values.ret);
@@ -101,6 +104,7 @@ K9_Image *bin_dilation(K9_Image *ret_img, K9_Image image, Kernel kern){
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 4, sizeof(cl_int), (void *)&image.width);
 
         ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
+        global.gpu_values.ret = clReleaseMemObject(kern_mem_obj);
     } else {
         int center = kern.width * kern.height/ 2;
         int length = image.width * image.height;
@@ -158,9 +162,7 @@ K9_Image *bin_dilation(K9_Image *ret_img, K9_Image image, Kernel kern){
 }
 
 K9_Image *bin_erosion(K9_Image *ret_img, K9_Image image, Kernel kern){
-    // still has an issue w/ malloc() overwriting other memory slots
-    if (image.channels > 1)
-    {
+    if (image.channels > 1){
         fprintf(stderr, "\e[1;31mError!\e[0m Function bin_erosion() needs single channel image\n");
         return ret_img;
     }
@@ -170,6 +172,7 @@ K9_Image *bin_erosion(K9_Image *ret_img, K9_Image image, Kernel kern){
     if (global.enable_gpu == true){
         char prog[] = "./binaryproc/binaryproc.cl";
         char func[] = "bin_erosion";
+        uint16_t bin_id = 640;
         size_t global_item_size = image.width * image.height * image.channels;
         if (global_item_size != global.totalsize){
             update_gpu_channels(image, global_item_size);
@@ -177,10 +180,10 @@ K9_Image *bin_erosion(K9_Image *ret_img, K9_Image image, Kernel kern){
         }
         if (strcmp(global.past_prog, prog) != 0){
             strcpy(global.past_prog, prog);
-            read_cl_program(prog);
+            read_cl_program(prog, bin_id);
         }
         if (strcmp(global.past_func, func) != 0){
-            bind_cl_function(func);
+            bind_cl_function(func, bin_id);
             strcpy(global.past_func, func);
         }
         cl_mem kern_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, kernelsize * sizeof(int16_t), NULL, &global.gpu_values.ret);
@@ -194,6 +197,7 @@ K9_Image *bin_erosion(K9_Image *ret_img, K9_Image image, Kernel kern){
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 4, sizeof(cl_int), (void *)&image.width);
 
         ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
+        global.gpu_values.ret = clReleaseMemObject(kern_mem_obj);
     }
     memcpy(ret_img->image, image.image, image.width * image.height);
     int center = kern.width * kern.height / 2;
@@ -278,6 +282,7 @@ K9_Image *thinning(K9_Image *ret_img, K9_Image image){
     if (global.enable_gpu == true){
         char prog[] = "./binaryproc/binaryproc.cl";
         char func[] = "gh_thin";
+        uint16_t bin_id = 640;
         size_t global_item_size = image.width * image.height * image.channels;
         // if (global_item_size != global.totalsize){
         update_gpu_channels(image, global_item_size);
@@ -285,10 +290,10 @@ K9_Image *thinning(K9_Image *ret_img, K9_Image image){
         //}
         if (strcmp(global.past_prog, prog) != 0){
             strcpy(global.past_prog, prog);
-            read_cl_program(prog);
+            read_cl_program(prog, bin_id);
         }
         if (strcmp(global.past_func, func) != 0){
-            bind_cl_function(func);
+            bind_cl_function(func, bin_id);
             strcpy(global.past_func, func);
         }
         uint8_t iter = 0;
