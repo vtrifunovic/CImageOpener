@@ -29,4 +29,3 @@ __kernel void subtract(__global const uchar *in_image, __global uchar *out_image
     else
         out_image[x] = in_image[x] - img2[x];
 }
-

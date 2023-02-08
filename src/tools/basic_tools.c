@@ -21,10 +21,7 @@ K9_Image *blur(K9_Image *ret_img, K9_Image image, Kernel kern, int iterations){
             update_gpu_channels(image, global_item_size);
             global.totalsize = global_item_size;
         }
-        if (strcmp(global.past_prog, prog) != 0){
-            strcpy(global.past_prog, prog);
-            read_cl_program(prog, tool_id);
-        }
+        read_cl_program(prog, tool_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, tool_id);
             strcpy(global.past_func, func);
@@ -92,10 +89,7 @@ K9_Image *subtract(K9_Image *ret_img, K9_Image *img1, K9_Image *img2){
             update_gpu_channels(*img1, global_item_size);
             global.totalsize = global_item_size;
         }
-        if (strcmp(global.past_prog, prog) != 0){
-            strcpy(global.past_prog, prog);
-            read_cl_program(prog, tool_id);
-        }
+        read_cl_program(prog, tool_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, tool_id);
             strcpy(global.past_func, func);
@@ -131,10 +125,7 @@ K9_Image *add(K9_Image *ret_img, K9_Image img1, K9_Image img2){
         update_gpu_channels(img1, global_item_size);
         global.totalsize = global_item_size;
         //}
-        if (strcmp(global.past_prog, prog) != 0){
-            strcpy(global.past_prog, prog);
-            read_cl_program(prog, tool_id);
-        }
+        read_cl_program(prog, tool_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, tool_id);
             strcpy(global.past_func, func);
@@ -321,12 +312,24 @@ bool compare(K9_Image img1, K9_Image img2){
         return false;
     if (img1.width != img2.width)
         return false;
-    int totalpixels = img1.width * img1.height * img1.channels;
-    for (int i = 0; i < totalpixels; i++){
-        if (img1.image[i] != img2.image[i])
-            return false;
+    if (global.enable_gpu == false){
+        char prog[] = "./tools/basic_tools.cl";
+        char func[] = "compare";
+        uint16_t bin_id = 640;
+        size_t global_item_size = img1.width * img1.height * img1.channels;
+        update_gpu_channels(img1, global_item_size);
+        global.totalsize = global_item_size;
+        read_cl_program(prog, bin_id);
+        bind_cl_function(func, bin_id);
+        // Find way to make comparisons on the gpu
+    } else{
+        int totalpixels = img1.width * img1.height * img1.channels;
+        for (int i = 0; i < totalpixels; i++){
+            if (img1.image[i] != img2.image[i])
+                return false;
+        }
+        return true;
     }
-    return true;
 }
 
 void K9_free_split(K9_Split image){

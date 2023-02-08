@@ -114,12 +114,13 @@ int main(int argc, char *argv[]){
     while (!should_quit){
         should_quit = check_close(window);
         if (loops == 0){
-            show_image(window, new_img, false);
+            show_image(window, *new_img, false);
+            show_image(window, *new_img, false);
             usleep(500000);
             loops++;
         }
         if (!show_result){
-            show_image(window, mask, false);
+            show_image(window, *mask, false);
             hit_x_miss(m1, mask, kern_x);
             subtract(mask, mask, m1);
 
@@ -148,7 +149,7 @@ int main(int argc, char *argv[]){
 
             memcpy(past_mask->image, mask->image, mask->width * mask->height);
         } else {
-            show_image(window, new_img, false);
+            show_image(window, *new_img, true);
         }
         if (show_result == true && rs == 0){
             dil_img = bin_dilation(dil_img, *mask, kern_dil);

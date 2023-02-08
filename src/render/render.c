@@ -2,15 +2,22 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <stdbool.h>
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include "../linmath.h"
 #include "render.h"
+#include "render_internal/render_internal.h"
 #include "../global.h"
 #include "../opencl_support/gpu_setup.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 struct timeval start, stop;
+GLuint texture = 0;
+
+void framebuffer_size_callback(GLFWwindow *window, int width, int height){
+    glViewport(0, 0, width, height);
+}
 
 // prototype for future
 static void fps_count(GLFWwindow *window){
@@ -23,44 +30,11 @@ static void fps_count(GLFWwindow *window){
     gettimeofday(&start, NULL);
 }
 
-static void show_gray(GLFWwindow *window, K9_Image *image){
-    GLubyte displayimg[image->height][image->width];
-    for (int i = 0; i < image->height; i++) {
-        for (int j = 0; j < image->width; j++) {
-         	displayimg[i][j] = image->image[((image->width*image->height-image->width+j)-(i*image->width))];
-        }
-    }
-    glDrawPixels(image->width, image->height, GL_LUMINANCE, GL_UNSIGNED_BYTE, displayimg);
-    glFinish();
-    glfwSwapBuffers(window);
-}
-
-
-void show_image(GLFWwindow *window, K9_Image *image, bool show_fps){
-    //fps_count(window);
+void show_image(GLFWwindow *window, K9_Image image, bool show_fps){
     glfwMakeContextCurrent(window);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glClearColor(0.1, 0.1, 0.1, 0.1);
-    if (image->channels == 1){
-        show_gray(window, image);
-        return;
-    }
-    GLubyte checkimg[image->height][image->width][image->channels];
-    for (int i = 0; i < image->height; i++) {
-        for (int j = 0; j < image->width; j++) {
-	        for(int c = 0; c < image->channels; c++){
-         	    checkimg[i][j][c] = image->image[((image->width*image->height-image->width+j)-(i*image->width))*3+c];
-            }
-        }
-    }
-    if (image->channels == 4){
-        glDrawPixels(image->width, image->height, GL_RGBA, GL_UNSIGNED_BYTE, checkimg);
-    } else {
-	    glDrawPixels(image->width, image->height, GL_RGB, GL_UNSIGNED_BYTE, checkimg);
-    }
-    glfwSetWindowTitle(window, image->name);
-    glFinish();
-    glfwSwapBuffers(window);
+    render_begin(window);
+    main_render(image.image, image.width, image.height, image.channels);
+    render_end(window);
 }
 
 GLFWwindow *init_window(K9_Image image){
@@ -70,13 +44,22 @@ GLFWwindow *init_window(K9_Image image){
     }
     glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
     GLFWwindow *window = glfwCreateWindow(image.width, image.height, image.name, NULL, NULL);
-    //glfwSetWindowPos(window, 150, 100);
+    
     if (!window){
         fprintf(stderr, "\e[1;31mWindow could not be created! \e[0m\n");
         exit(0);
     }
-    gettimeofday(&start, NULL);
     glfwMakeContextCurrent(window);
+    glewExperimental = GL_TRUE;
+    if (glewInit()){
+        fprintf(stderr, "\e[1;31mGLEW Failed to initialize\e[0m\n");
+        exit(0);
+    }
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    create_shader();
+    render_init();
+    bind_texture(image.width, image.height);
+    gettimeofday(&start, NULL);
     return window;
 }
 

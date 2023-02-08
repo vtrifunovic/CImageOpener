@@ -23,10 +23,7 @@ K9_Image *hit_x_miss(K9_Image *ret_img, K9_Image *image, Kernel kern){
         update_gpu_channels(*image, global_item_size);
         global.totalsize = global_item_size;
         //}
-        if (strcmp(global.past_prog, prog) != 0){
-            strcpy(global.past_prog, prog);
-            read_cl_program(prog, bin_id);
-        }
+        read_cl_program(prog, bin_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, bin_id);
             strcpy(global.past_func, func);
@@ -85,10 +82,7 @@ K9_Image *bin_dilation(K9_Image *ret_img, K9_Image image, Kernel kern){
             update_gpu_channels(image, global_item_size);
             global.totalsize = global_item_size;
         }
-        if (strcmp(global.past_prog, prog) != 0){
-            strcpy(global.past_prog, prog);
-            read_cl_program(prog, bin_id);
-        }
+        read_cl_program(prog, bin_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, bin_id);
             strcpy(global.past_func, func);
@@ -178,10 +172,7 @@ K9_Image *bin_erosion(K9_Image *ret_img, K9_Image image, Kernel kern){
             update_gpu_channels(image, global_item_size);
             global.totalsize = global_item_size;
         }
-        if (strcmp(global.past_prog, prog) != 0){
-            strcpy(global.past_prog, prog);
-            read_cl_program(prog, bin_id);
-        }
+        read_cl_program(prog, bin_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, bin_id);
             strcpy(global.past_func, func);
@@ -288,10 +279,8 @@ K9_Image *thinning(K9_Image *ret_img, K9_Image image){
         update_gpu_channels(image, global_item_size);
         global.totalsize = global_item_size;
         //}
-        if (strcmp(global.past_prog, prog) != 0){
-            strcpy(global.past_prog, prog);
-            read_cl_program(prog, bin_id);
-        }
+
+        read_cl_program(prog, bin_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, bin_id);
             strcpy(global.past_func, func);

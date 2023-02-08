@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define MAX_SOURCE_SIZE (0x100000)
+#define MAX_SOURCE_SIZE (0x5000)
 
 GPU_Values g;
 struct node *head = NULL;
@@ -35,6 +35,21 @@ static struct node *find(uint16_t sid){
     return current;
 }
 
+static void free_progs(){
+    struct node *current = head;
+    if (head == NULL){
+        return;
+    }
+    while (1){
+        if (current->next == NULL){
+            return;
+        }else{
+            global.gpu_values.ret = clReleaseProgram(current->prog);
+            current = current->next;
+        }
+    }
+}
+
 static void set_local_workgroup(int siz){
     for (int i = CL_DEVICE_LOCAL_MEM_SIZE/16; i > 0; i--){
         if (siz % i == 0){
@@ -48,7 +63,6 @@ static void set_local_workgroup(int siz){
 
 void init_gpu(K9_Image image){
     char prog[] = "init";
-    strcpy(global.past_prog, prog);
     strcpy(global.past_func, prog);
     cl_platform_id platform_id = NULL;
     g.device_id = NULL;
@@ -107,6 +121,11 @@ void set_main_args(void){
     global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 1, sizeof(cl_mem), (void *)&g.output_image);
 }
 
+// Poor fix, will figure it out later
+void set_input_image_arg(void){
+    global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 0, sizeof(cl_mem), (void *)&g.input_image);
+}
+
 uint8_t *run_kernel(size_t global_item_size, K9_Image ret_img, size_t return_size){
     global.gpu_values.ret = clEnqueueNDRangeKernel(global.gpu_values.command_queue, global.gpu_values.kernel, 1, NULL, &global_item_size, &g.localsize, 0, NULL, NULL);
     global.gpu_values.ret = clEnqueueReadBuffer(global.gpu_values.command_queue, g.output_image, CL_TRUE, 0, return_size * sizeof(uint8_t), ret_img.image, 0, NULL, NULL);
@@ -117,7 +136,7 @@ void K9_free_gpu(void){
     global.gpu_values.ret = clFlush(global.gpu_values.command_queue);
     global.gpu_values.ret = clFinish(global.gpu_values.command_queue);
     global.gpu_values.ret = clReleaseKernel(global.gpu_values.kernel);
-    //global.gpu_values.ret = clReleaseProgram(g.program);
+    free_progs();
     global.gpu_values.ret = clReleaseMemObject(g.input_image);
     global.gpu_values.ret = clReleaseMemObject(g.output_image);
     global.gpu_values.ret = clReleaseCommandQueue(global.gpu_values.command_queue);

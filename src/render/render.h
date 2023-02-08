@@ -18,7 +18,7 @@ typedef struct k9_image{
  *  @param[in] show_fps Under construction. Will eventualy display the fps that the window is running at.
  *  
  */
-void show_image(GLFWwindow *window, K9_Image *image, bool show_fps);
+void show_image(GLFWwindow *window, K9_Image image, bool show_fps);
 /*! @brief Initializes a new window.
  *
  * This function performs the standard GLFW opening a window boilerplate.

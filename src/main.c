@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
     gray2 = grayscale_mask(gray2, *gray, 150, 255);
 
     K9_Image *blr = create_img_template(mask);
-    blr = blur(blr, *gray, kern, 2);
+    blr = blur(blr, *gray, kern, 10);
 
     K9_Image *thin = create_img_template(mask);
     thin = thinning(thin, *hxm);
@@ -84,23 +84,23 @@ int main(int argc, char *argv[])
             held = 0;
         }
         if (count == 0)
-            show_image(window, new_img, false);
+            show_image(window, *new_img, false);
         else if (count == 1)
-            show_image(window, mask, false);
+            show_image(window, *mask, false);
         else if (count == 2)
-            show_image(window, dil, false);
+            show_image(window, *dil, false);
         else if (count == 3)
-            show_image(window, hxm, false);
+            show_image(window, *hxm, false);
         else if (count == 4)
-            show_image(window, and, false);
+            show_image(window, *and, false);
         else if (count == 5)
-            show_image(window, gray, false);
+            show_image(window, *gray, false);
         else if (count == 6)
-            show_image(window, gray2, false);
+            show_image(window, *gray2, false);
         else if (count == 7)
-            show_image(window, blr, false);
+            show_image(window, *blr, false);
         else if (count >= 8)
-            show_image(window, thin, false);
+            show_image(window, *thin, false);
         glfwPollEvents();
     }
     K9_free_gpu();

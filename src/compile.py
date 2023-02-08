@@ -5,6 +5,9 @@ import os
 import time
 import argparse
 
+compiler = "gcc "
+includes = " global.c render/render.c render/render_internal/render_internal.c masks/masks.c conversions/conversions.c binaryproc/binaryproc.c tools/basic_tools.c opencl_support/gpu_setup.c -lGL -lglfw -lm -Werror -lOpenCL -lGLEW "
+
 class colors:
     ULINE = "\033[4m"
     RESET = "\033[0m"
@@ -13,7 +16,7 @@ def main(extra, comp_file):
     if platform.system() != "Linux":
         print("lol")
         return
-    compilation = "gcc " +comp_file+" global.c render/render.c masks/masks.c conversions/conversions.c binaryproc/binaryproc.c tools/basic_tools.c opencl_support/gpu_setup.c -lGL -lglfw -lm -Werror -lOpenCL " +extra
+    compilation = compiler + comp_file + includes + extra
     ret_code = subprocess.call(compilation, shell = True)
     if ret_code != 0:
         print("Code could not compile... Terminating")
@@ -25,7 +28,7 @@ def main(extra, comp_file):
     test_run = input("Speed or view? (S/V): ")
     if test_run.lower() == "s":
         comp_file = "speedtest.c"
-    compilation = "gcc -o speedtest " +comp_file+" global.c render/render.c masks/masks.c conversions/conversions.c binaryproc/binaryproc.c tools/basic_tools.c opencl_support/gpu_setup.c -lGL -lglfw -lGLU -lm -Werror -lOpenCL " +extra
+    compilation = compiler + "-o speedtest " + comp_file + includes + extra
     ret_code = subprocess.call(compilation, shell = True)
     all_files = os.listdir("./mazes")
     test_files = []

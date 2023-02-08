@@ -28,10 +28,7 @@ K9_Image *rgb_to_gray(K9_Image *gray, K9_Image image){
             update_gpu_channels(image, global_item_size);
             global.totalsize = global_item_size;
         }
-        if (strcmp(global.past_prog, prog) != 0){
-            strcpy(global.past_prog, prog);
-            read_cl_program(prog, conv_id);
-        }
+        read_cl_program(prog, conv_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, conv_id);
             strcpy(global.past_func, func);
@@ -64,10 +61,7 @@ K9_Image *rgb_to_hsv(K9_Image *hsv, K9_Image image){
             update_gpu_channels(image, global_item_size);
             global.totalsize = global_item_size;
         }
-        if (strcmp(global.past_prog, prog) != 0){
-            strcpy(global.past_prog, prog);
-            read_cl_program(prog, conv_id);
-        }
+        read_cl_program(prog, conv_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, conv_id);
             strcpy(global.past_func, func);
@@ -118,10 +112,7 @@ K9_Image *invert(K9_Image *ret_img, K9_Image image){
             update_gpu_channels(image, global_item_size);
             global.totalsize = global_item_size;
         }
-        if (strcmp(global.past_prog, prog) != 0){
-            strcpy(global.past_prog, prog);
-            read_cl_program(prog, conv_id);
-        }
+        read_cl_program(prog, conv_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, conv_id);
             strcpy(global.past_func, func);
@@ -152,10 +143,7 @@ K9_Image *resize_img(K9_Image *ret_img, K9_Image image, vec2 scale, char *type){
             update_gpu_channels(image, global_item_size);
             global.totalsize = global_item_size;
         }
-        if (strcmp(global.past_prog, prog) != 0){
-            strcpy(global.past_prog, prog);
-            read_cl_program(prog, conv_id);
-        }
+        read_cl_program(prog, conv_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, conv_id);
             strcpy(global.past_func, func);

@@ -23,10 +23,7 @@ K9_Image *rgb_mask(K9_Image *mask, K9_Image image, int *lower_bound, int *higher
 			update_gpu_channels(image, global_item_size);
 			global.totalsize = global_item_size;
 		}
-		if (strcmp(global.past_prog, prog) != 0){
-			strcpy(global.past_prog, prog);
-			read_cl_program(prog, mask_id);
-		}
+		read_cl_program(prog, mask_id);
 		if (strcmp(global.past_func, func) != 0){
 			bind_cl_function(func, mask_id);
 			strcpy(global.past_func, func);
@@ -74,10 +71,7 @@ K9_Image *bitwiseAnd(K9_Image *ret_img, K9_Image image, K9_Image mask){
 			update_gpu_channels(image, global_item_size);
 			global.totalsize = global_item_size;
 		}
-		if (strcmp(global.past_prog, prog) != 0){
-			strcpy(global.past_prog, prog);
-			read_cl_program(prog, mask_id);
-		}
+		read_cl_program(prog, mask_id);
 		if (strcmp(global.past_func, func) != 0){
 			bind_cl_function(func, mask_id);
 			strcpy(global.past_func, func);
@@ -127,10 +121,7 @@ K9_Image *bitwiseNot(K9_Image *ret_img, K9_Image image, K9_Image mask){
 			update_gpu_channels(image, global_item_size);
 			global.totalsize = global_item_size;
 		}
-		if (strcmp(global.past_prog, prog) != 0){
-			strcpy(global.past_prog, prog);
-			read_cl_program(prog, mask_id);
-		}
+		read_cl_program(prog, mask_id);
 		if (strcmp(global.past_func, func) != 0){
 			bind_cl_function(func, mask_id);
 			strcpy(global.past_func, func);
@@ -180,10 +171,7 @@ K9_Image *grayscale_mask(K9_Image *ret_img, K9_Image image, uint8_t lower_bound,
 			update_gpu_channels(image, global_item_size);
 			global.totalsize = global_item_size;
 		}
-		if (strcmp(global.past_prog, prog) != 0){
-			strcpy(global.past_prog, prog);
-			read_cl_program(prog, mask_id);
-		}
+		read_cl_program(prog, mask_id);
 		if (strcmp(global.past_func, func) != 0){
 			bind_cl_function(func, mask_id);
 			strcpy(global.past_func, func);
