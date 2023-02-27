@@ -28,7 +28,6 @@ int main(int argc, char *argv[]){
     struct timeval start, stop;
     gettimeofday(&start, NULL);
     global.enable_gpu = true;
-    int count = 0;
     K9_Image *new_img = load_image(argv[1]);
     int lower[] = {210, 200, 175};
     int higher[] = {255, 255, 255};
@@ -111,6 +110,9 @@ int main(int argc, char *argv[]){
     bool should_quit = false, show_result = false;
     int loops = 0, rs = 0;
 
+    hit_x_miss(m1, mask, fix);
+    add(mask, *mask, *m1);
+
     while (!should_quit){
         should_quit = check_close(window);
         if (loops == 0){
@@ -154,7 +156,7 @@ int main(int argc, char *argv[]){
         if (show_result == true && rs == 0){
             dil_img = bin_dilation(dil_img, *mask, kern_dil);
             dil_img = bin_dilation(dil_img, *dil_img, kern_dil);
-            dil_img = crop(dil_img, *dil_img, (vec2){10, dil_img->width-(dil_img->width/18)}, (vec2){10, dil_img->height-15}, K9_FILL);
+            dil_img = crop(dil_img, *dil_img, (vec2){10, dil_img->width-(dil_img->width/25)}, (vec2){10, dil_img->height-15}, K9_FILL);
             new_img = bitwiseNot(new_img, *new_img, *dil_img);
             free(kern_x.kernel);
             free(kern_y.kernel);

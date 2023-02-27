@@ -38,6 +38,7 @@ void show_image(GLFWwindow *window, K9_Image image, bool show_fps){
 }
 
 GLFWwindow *init_window(K9_Image image){
+    init_gpu(image);
     if (!glfwInit()){
         fprintf(stderr, "\e[1;31mGLFW did not initialize\e[0m");
         exit(0);

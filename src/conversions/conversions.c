@@ -24,10 +24,8 @@ K9_Image *rgb_to_gray(K9_Image *gray, K9_Image image){
         char func[] = "rgb_to_gray";
         uint16_t conv_id = 440;
         size_t global_item_size = image.width * image.height * image.channels;
-        if (global_item_size != global.totalsize){
-            update_gpu_channels(image, global_item_size);
-            global.totalsize = global_item_size;
-        }
+        update_gpu_channels(image, global_item_size);
+        global.totalsize = global_item_size;
         read_cl_program(prog, conv_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, conv_id);
@@ -128,7 +126,7 @@ K9_Image *invert(K9_Image *ret_img, K9_Image image){
 }
 
 // skews image weirdly, need 2 fix
-K9_Image *resize_img(K9_Image *ret_img, K9_Image image, vec2 scale, char *type){
+K9_Image *resize_img(K9_Image *ret_img, K9_Image image, vec2 scale, int type){
     ret_img->name = (char *) realloc(ret_img->name, 8);
     strcpy(ret_img->name, "resized");
     double sizex = image.height/(double)ret_img->height;
@@ -167,7 +165,7 @@ K9_Image *resize_img(K9_Image *ret_img, K9_Image image, vec2 scale, char *type){
         global.gpu_values.ret = clReleaseMemObject(sizes_mem_obj);
     }
     // nearest neighbor interpolation :: still has issues
-    if (strcmp(type, K9_NEAREST) == 0){
+    if (type == K9_NEAREST){
         for (int x = 0; x < ret_img->height; x++){
             for (int y = 0; y < ret_img->width; y++){
                 double posx = floor(y*sizex);

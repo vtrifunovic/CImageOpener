@@ -4,7 +4,7 @@
 __kernel void hit_x_miss(__global const uchar *in_image, __global uchar *out_image, __global const short *kern, uchar dim, int width){
     int x = get_global_id(0);
     out_image[x] = 0;
-    // assuming square kernel for now
+    // assuming square 3x3 kernel for now
     uchar h = sqrt((float)dim)-1;
     for (uchar i = 0; i < h; i++){
         for (uchar j = 0; j < h+1; j++){
@@ -57,7 +57,7 @@ __kernel void bin_erosion(__global const uchar *in_image, __global uchar *out_im
     }
 }
 
-char A(char a1, char a2){
+static char A(char a1, char a2){
     return (!a1 && a2);
 }
 

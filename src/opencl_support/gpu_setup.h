@@ -27,7 +27,6 @@ void bind_cl_function(char *function, uint16_t sid);
 void update_gpu_channels(K9_Image image, int totalpixels);
 void set_main_args(void);
 uint8_t *run_kernel(size_t global_item_size, K9_Image ret_img, size_t divisor);
-void set_input_image_arg(void);
 
 // Frees the stored gpu values. Include at the end of program.
 void K9_free_gpu(void);

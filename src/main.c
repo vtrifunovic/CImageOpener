@@ -62,15 +62,21 @@ int main(int argc, char *argv[])
     K9_Image *gray = create_img_template(mask);
     gray = rgb_to_gray(gray, *and);
 
-    K9_Image *gray2 = create_img_template(mask);
-    gray2 = grayscale_mask(gray2, *gray, 150, 255);
+    K9_Image *g_dil = create_img_template(gray);
+    g_dil = gray_morph(g_dil, gray, kern, K9_EROSION);
 
-    K9_Image *blr = create_img_template(mask);
-    blr = blur(blr, *gray, kern, 10);
+    K9_Image *gray2 = create_img_template(gray);
+    gray2 = gray_morph(gray2, gray, kern, K9_DILATION);
+
+    K9_Image *e_tec = create_img_template(gray);
+    e_tec = subtract(e_tec, gray2, g_dil);
+
+    K9_Image *blr = create_img_template(new_img);
+    blr = blur(blr, *new_img, kern, 10);
 
     K9_Image *thin = create_img_template(mask);
     thin = thinning(thin, *hxm);
-    //K9_Image closing = where_min(hxm, gray2);
+
     GLFWwindow *window = init_window(*new_img);
 
     while (!should_quit){
@@ -80,13 +86,12 @@ int main(int argc, char *argv[])
             count += 1;
             held = 1;
         }
-        else if (n_key == 0 && held == 1){
+        else if (n_key == 0 && held == 1)
             held = 0;
-        }
         if (count == 0)
             show_image(window, *new_img, false);
         else if (count == 1)
-            show_image(window, *mask, false);
+            show_image(window, *blr, false);            
         else if (count == 2)
             show_image(window, *dil, false);
         else if (count == 3)
@@ -96,11 +101,11 @@ int main(int argc, char *argv[])
         else if (count == 5)
             show_image(window, *gray, false);
         else if (count == 6)
-            show_image(window, *gray2, false);
+            show_image(window, *g_dil, false);
         else if (count == 7)
-            show_image(window, *blr, false);
+            show_image(window, *gray2, false);
         else if (count >= 8)
-            show_image(window, *thin, false);
+            show_image(window, *e_tec, false);
         glfwPollEvents();
     }
     K9_free_gpu();

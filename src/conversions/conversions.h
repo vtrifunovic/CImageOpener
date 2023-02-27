@@ -32,4 +32,4 @@ K9_Image *invert(K9_Image *ret_img, K9_Image image);
  * @param type Resizing method to be used
  * @return Resized image based on the scale & type given.
  */
-K9_Image *resize_img(K9_Image *ret_img, K9_Image image, vec2 scale, char *type);
+K9_Image *resize_img(K9_Image *ret_img, K9_Image image, vec2 scale, int type);

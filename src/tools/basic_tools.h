@@ -49,7 +49,7 @@ K9_Split split_channels(K9_Image image);
  * @return RGB image containing the r, g, & b images.
  */
 K9_Image merge_channels(K9_Image r, K9_Image g, K9_Image b);
-/*! @brief Crops image based on x1->x2 and y1-y1 pixels given.
+/*! @brief Crops image based on x1->x2 and y1-y2 pixels given.
  * Unlike @ref resize_img this takes pixel values and not relative values.
  *
  * Has two types of crops. K9_FILL which fills cropped values with 0's. K9_NOFILL which resizes the image to the cropped dimensions
@@ -61,7 +61,7 @@ K9_Image merge_channels(K9_Image r, K9_Image g, K9_Image b);
  * @param type The type of crop to be performed. 
  * @return Cropped image
  */
-K9_Image *crop(K9_Image *ret_img, K9_Image image, vec2 xcrop, vec2 ycrop, char *type);
+K9_Image *crop(K9_Image *ret_img, K9_Image image, vec2 xcrop, vec2 ycrop, int type);
 /*! @brief ((Under construction)) Blends two images based on the alpha value. The 1st image is the alpha image and the 2nd one is the beta value.
  *
  * @param image First image to be blended
@@ -80,3 +80,14 @@ bool compare(K9_Image img1, K9_Image img2);
 
 // Frees the image structure
 void K9_free_split(K9_Split image);
+
+/*! @brief Grayscale Morphological Processes, based on the type given will determine what will be used. (Will accept 3 channel images). 
+ * Check `type` param to see what acceptable values are.
+ *
+ * @param ret_img Return image, where output is stored
+ * @param image Input image, the image to be processed
+ * @param kern Kernel struct determining area of processing
+ * @param type K9_EROSION will perform Erosion operation. K9_DILATION will perform dilation.
+ * @return Image with requested type of processing.
+ */
+K9_Image *gray_morph(K9_Image *ret_img, K9_Image *image, Kernel kern, int type);

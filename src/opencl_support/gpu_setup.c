@@ -44,14 +44,16 @@ static void free_progs(){
         if (current->next == NULL){
             return;
         }else{
-            global.gpu_values.ret = clReleaseProgram(current->prog);
+            struct node *tmp = current;
+            global.gpu_values.ret = clReleaseProgram(tmp->prog);
             current = current->next;
+            free(tmp);
         }
     }
 }
 
 static void set_local_workgroup(int siz){
-    for (int i = CL_DEVICE_LOCAL_MEM_SIZE/16; i > 0; i--){
+    for (int i = CL_DEVICE_LOCAL_MEM_SIZE/8; i > 0; i--){
         if (siz % i == 0){
             g.localsize = i;
             return;
@@ -119,11 +121,6 @@ void update_gpu_channels(K9_Image image, int totalpixels){
 void set_main_args(void){
     global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 0, sizeof(cl_mem), (void *)&g.input_image);
     global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 1, sizeof(cl_mem), (void *)&g.output_image);
-}
-
-// Poor fix, will figure it out later
-void set_input_image_arg(void){
-    global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 0, sizeof(cl_mem), (void *)&g.input_image);
 }
 
 uint8_t *run_kernel(size_t global_item_size, K9_Image ret_img, size_t return_size){

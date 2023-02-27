@@ -67,10 +67,8 @@ K9_Image *bitwiseAnd(K9_Image *ret_img, K9_Image image, K9_Image mask){
 		char prog[] = "./masks/rgb_mask_kernel.cl";
 		char func[] = "bitwiseAnd";
 		size_t global_item_size = image.width * image.height * image.channels;
-		if (global_item_size != global.totalsize){
-			update_gpu_channels(image, global_item_size);
-			global.totalsize = global_item_size;
-		}
+		update_gpu_channels(image, global_item_size);
+		global.totalsize = global_item_size;
 		read_cl_program(prog, mask_id);
 		if (strcmp(global.past_func, func) != 0){
 			bind_cl_function(func, mask_id);
@@ -167,10 +165,8 @@ K9_Image *grayscale_mask(K9_Image *ret_img, K9_Image image, uint8_t lower_bound,
 		char func[] = "grayscale_mask";
 		uint16_t mask_id = 340;
 		size_t global_item_size = image.width * image.height;
-		if (global_item_size != global.totalsize){
-			update_gpu_channels(image, global_item_size);
-			global.totalsize = global_item_size;
-		}
+		update_gpu_channels(image, global_item_size);
+		global.totalsize = global_item_size;
 		read_cl_program(prog, mask_id);
 		if (strcmp(global.past_func, func) != 0){
 			bind_cl_function(func, mask_id);

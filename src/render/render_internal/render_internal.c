@@ -115,9 +115,7 @@ void render_init(void){
 void bind_texture(int width, int height){
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glGenerateMipmap(GL_TEXTURE_2D);
@@ -129,6 +127,7 @@ void main_render(uint8_t *data, int width, int height, int channels){
 
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
     if (channels > 1)
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
     else
@@ -136,8 +135,8 @@ void main_render(uint8_t *data, int width, int height, int channels){
 }
 
 void render_begin(GLFWwindow *window){
-    glClearColor(0.1, 0.1, 0.1, 0.1);
     glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(0.1, 0.1, 0.1, 0.1);
 }
 
 void render_end(GLFWwindow *window){
