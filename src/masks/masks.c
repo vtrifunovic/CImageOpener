@@ -135,8 +135,10 @@ K9_Image *bitwiseNot(K9_Image *ret_img, K9_Image image, K9_Image mask){
 	} else {
 		if (image.channels == 3){
 			for (int x = 0; x < size; x++){
-				if (mask.image[x] != 255){
-					ret_img->image[x * 3] = image.image[x * 3];
+				if (mask.image[x] == 255){
+					ret_img->image[x*3] = 0;
+				} else {
+					ret_img->image[x * 3] = 	image.image[x * 3];
 					ret_img->image[x * 3 + 1] = image.image[x * 3 + 1];
 					ret_img->image[x * 3 + 2] = image.image[x * 3 + 2];
 				}
@@ -144,7 +146,7 @@ K9_Image *bitwiseNot(K9_Image *ret_img, K9_Image image, K9_Image mask){
 		} else {
 			for (int x = 0; x < size; x++){
 				if (mask.image[x] != 255){
-					ret_img->image[x] = 0;
+					ret_img->image[x] = image.image[x];
 				}
 			}
 		}

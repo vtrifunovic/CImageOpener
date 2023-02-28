@@ -361,6 +361,44 @@ K9_Image *gray_morph(K9_Image *ret_img, K9_Image *image, Kernel kern, int type){
 
         ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
         global.gpu_values.ret = clReleaseMemObject(kern_mem_obj);
+    } else {
+        if (type == K9_EROSION){
+            for (int x = 0; x < global_item_size; x++){
+                uint8_t min = 255;
+                uint8_t h = sqrt((float)kernelsize-1);
+                for (uint8_t i = 0; i < h; i++){
+                    for (uint8_t j = 0; j < h+1; j++){
+                        if (i == 0 && j == h)
+                            continue;
+                        if (x-(i*image->width-i)*image->channels-j*image->channels < 0)
+                            continue;
+                        if (image->image[x-(i*image->width-i)*image->channels-j*image->channels] < min)
+                            min = image->image[x-(i*image->width-i)*image->channels-j*image->channels];
+                        if (image->image[x+(i*image->width-i)*image->channels+j*image->channels] < min)
+                            min = image->image[x+(i*image->width-i)*image->channels+j*image->channels];
+                    }
+                }
+                ret_img->image[x]  = min;
+            }   
+        } else {
+            for (int x = 0; x < global_item_size; x++){
+                uint8_t max = 0;
+                uint8_t h = sqrt((float)kernelsize-1);
+                for (uint8_t i = 0; i < h; i++){
+                    for (uint8_t j = 0; j < h+1; j++){
+                        if (i == 0 && j == h)
+                            continue;
+                        if (x-(i*image->width-i)*image->channels-j*image->channels < 0)
+                            continue;
+                        if (image->image[x-(i*image->width-i)*image->channels-j*image->channels] > max)
+                            max = image->image[x-(i*image->width-i)*image->channels-j*image->channels];
+                        if (image->image[x+(i*image->width-i)*image->channels+j*image->channels] > max)
+                            max = image->image[x+(i*image->width-i)*image->channels+j*image->channels];
+                    }
+                }
+                ret_img->image[x]  = max;
+            }   
+        }
     }
     return ret_img;
 }

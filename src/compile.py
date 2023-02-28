@@ -12,7 +12,7 @@ class colors:
     ULINE = "\033[4m"
     RESET = "\033[0m"
 
-def main(extra, comp_file):
+def main(extra, comp_file, folder):
     if platform.system() != "Linux":
         print("lol")
         return
@@ -30,11 +30,11 @@ def main(extra, comp_file):
         comp_file = "speedtest.c"
     compilation = compiler + "-o speedtest " + comp_file + includes + extra
     ret_code = subprocess.call(compilation, shell = True)
-    all_files = os.listdir("./mazes")
+    all_files = os.listdir(folder)
     test_files = []
     for i in all_files:
         if ".png" in i or ".jpg" in i.lower()  or ".jpeg" in i:
-            test_files.append("./mazes/" + i)
+            test_files.append(folder + i)
     test_files.sort()
     for image in test_files:
         if test_run.lower() == "s":
@@ -54,10 +54,13 @@ def main(extra, comp_file):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--o', dest="extr", required=False)
-    parser.add_argument('--f', dest="file", required=True)
+    parser.add_argument('--file', dest="file", required=True)
+    parser.add_argument('--folder', dest="folder", required=False)
     args = parser.parse_args()
     extra = ""
     file = ""
     if args.extr:
         extra = "-" +args.extr
-    main(extra, args.file)
+    if not args.folder:
+        args.folder = "./"
+    main(extra, args.file, args.folder)

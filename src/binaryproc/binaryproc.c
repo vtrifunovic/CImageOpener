@@ -42,24 +42,27 @@ K9_Image *hit_x_miss(K9_Image *ret_img, K9_Image *image, Kernel kern){
         ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
         global.gpu_values.ret = clReleaseMemObject(kern_mem_obj);
     } else {
-        // need to fix, doesn't hxm correctly
         int length = image->width * image->height;
         int count_trues = 0, nxtline = 0;
         for (int x = 0; x < length; x++){
-            for (int k = 0; k < kern.height*kern.width; k++){
-                if (k > kern.width)
-                    nxtline++;
-                if (x+k+image->width*nxtline > length) // out of bounds memory check
-                    continue;
-                if (image->image[x+k+image->width*nxtline] == kern.kernel[k] || kern.kernel[k] < 0){
-                    count_trues++;
+            uint8_t h = sqrt((float)kernelsize)-1;
+            bool r = false;
+            for (uint8_t i = 0; i < h; i++){
+                for (uint8_t j = 0; j < h+1; j++){
+                    if (i == 0 && j == h)
+                        continue;
+                    else if (x-(i*image->width-i)-j < 0)
+                        r = true;
+                    if (kern.kernel[kernelsize/2-i*h-j] != image->image[x-(i*image->width-i)-j] && kern.kernel[kernelsize/2-i*h-j] >= 0)
+                        r = true;
+                    if (kern.kernel[kernelsize/2+i*h+j] != image->image[x+(i*image->width-i)+j] && kern.kernel[kernelsize/2+i*h+j] >= 0)
+                        r = true;
                 }
             }
-            if (count_trues == kern.height*kern.width){       
-                ret_img->image[x+kern.width*kern.height/2+image->width*(kern.height/2)] = 255; // accessing center element
-            }
-            count_trues = 0;
-            nxtline = 0;
+            if (r)
+                ret_img->image[x] = 0;
+            else
+                ret_img->image[x] = 255;
         }
     }
     return ret_img;
@@ -260,6 +263,10 @@ static bool compare(K9_Image img1, K9_Image img2){
     return true;
 }
 
+static uint8_t A(uint8_t a1, uint8_t a2){
+    return(!a1 && a2);
+}
+
 K9_Image *thinning(K9_Image *ret_img, K9_Image image){
     int totalpixels = image.width * image.height * image.channels;
     ret_img->name = (char *)malloc(5);
@@ -305,6 +312,46 @@ K9_Image *thinning(K9_Image *ret_img, K9_Image image){
         }
         free(tmp.name);
         free(tmp.image);
+    } else {
+        int totalpixels = image.width * image.height;
+        bool stop = false;
+        memcpy(tmp.image, image.image, totalpixels);
+        while (!stop){
+            for (int x = 0; x <  totalpixels; x++){
+                for (uint8_t loops = 0; loops < 2; loops++){
+                    uint8_t p1 = tmp.image[x]/255;
+                    uint8_t p2 = tmp.image[x-image.width]/255;
+                    uint8_t p3 = tmp.image[x-image.width+1]/255;
+                    uint8_t p4 = tmp.image[x+1]/255;
+                    uint8_t p5 = tmp.image[x+1+image.width]/255;
+                    uint8_t p6 = tmp.image[x+image.width]/255;
+                    uint8_t p7 = tmp.image[x+image.width-1]/255;
+                    uint8_t p8 = tmp.image[x-1]/255;
+                    uint8_t p9 = tmp.image[x-1-image.width]/255;
+
+                    uint8_t check1 = p2+p3+p4+p5+p6+p7+p8+p9;
+                    check1 = check1 >= 2 ? check1 : 0;
+                    check1 = check1 <= 6 ? check1 : 0;
+                    uint8_t check2, check3;
+                    if (loops == 1){
+                        check2 = p2*p4*p8;
+                        check3 = p2*p6*p8;
+                    } else {
+                        check2 = p2*p4*p6;
+                        check3 = p4*p6*p8;
+                    }
+
+                    uint8_t check4 = A(p2, p3) + A(p3, p4) + A(p4, p5) + A(p5, p6) + A(p6, p7) + A(p7, p8) + A(p8, p9) + A(p9, p2);
+                    if (check1 != 0 && check2 == 0 && check3 == 0 && check4 == 1){
+                        ret_img->image[x] = 0;
+                    } else {
+                        ret_img->image[x] = tmp.image[x];
+                    }
+                }
+            }
+            stop = compare(*ret_img, tmp);
+            memcpy(tmp.image, ret_img->image, totalpixels);
+        }
     }
     return ret_img;
 }

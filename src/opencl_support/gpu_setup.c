@@ -71,6 +71,11 @@ void init_gpu(K9_Image image){
     cl_uint ret_num_devices;
     cl_uint ret_num_platforms;
     global.gpu_values.ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms);
+    if (global.gpu_values.ret != CL_SUCCESS){
+        fprintf(stderr, "\e[1;31mError!\e[0m Couldn't find any platform ID's\nDisabling GPU...\n");
+        global.enable_gpu = false;
+        return;
+    }
     global.gpu_values.ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &g.device_id, &ret_num_devices);
     global.gpu_values.context = clCreateContext(NULL, 1, &g.device_id, NULL, NULL, &global.gpu_values.ret);
     global.gpu_values.command_queue = clCreateCommandQueue(global.gpu_values.context,g.device_id, 0, &global.gpu_values.ret);

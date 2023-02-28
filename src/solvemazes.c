@@ -151,11 +151,10 @@ int main(int argc, char *argv[]){
 
             memcpy(past_mask->image, mask->image, mask->width * mask->height);
         } else {
-            show_image(window, *new_img, true);
+            show_image(window, *new_img, false);
         }
         if (show_result == true && rs == 0){
-            dil_img = bin_dilation(dil_img, *mask, kern_dil);
-            dil_img = bin_dilation(dil_img, *dil_img, kern_dil);
+            dil_img = gray_morph(dil_img, mask, kern_dil, K9_DILATION);
             dil_img = crop(dil_img, *dil_img, (vec2){10, dil_img->width-(dil_img->width/25)}, (vec2){10, dil_img->height-15}, K9_FILL);
             new_img = bitwiseNot(new_img, *new_img, *dil_img);
             free(kern_x.kernel);
@@ -168,10 +167,10 @@ int main(int argc, char *argv[]){
             free(kern_e.kernel);
             free(kern_dil.kernel);
             free(fix.kernel);
-            K9_free(dil_img);
+            //K9_free(dil_img);
             K9_free(m1);
             K9_free(past_mask);
-            K9_free(mask);
+            //K9_free(mask);
             gettimeofday(&stop, NULL);
             double sec = (double)(stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec;
             sec = sec / 1000000 - 0.5; // -0.5 for the half second usleep()

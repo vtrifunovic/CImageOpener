@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
     and = bitwiseAnd(and, *new_img, *dil);
 
     K9_Image *gray = create_img_template(mask);
-    gray = rgb_to_gray(gray, *and);
+    gray = rgb_to_gray(gray, *new_img);
 
     K9_Image *g_dil = create_img_template(gray);
     g_dil = gray_morph(g_dil, gray, kern, K9_EROSION);
@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
         if (count == 0)
             show_image(window, *new_img, false);
         else if (count == 1)
-            show_image(window, *blr, false);            
+            show_image(window, *thin, false);            
         else if (count == 2)
             show_image(window, *dil, false);
         else if (count == 3)
