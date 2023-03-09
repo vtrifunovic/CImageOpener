@@ -7,17 +7,20 @@ Basic Image Processing engine written in C, used to be the CImageOpener.c file, 
     - GLEW
 - OpenCL
 - GLFW
+- FFMPEG
 
 # Features
 - Processing
     - CPU & GPU Processing (in progress)
 - Rendering
     - Read & Display Images
+    - Read & Display Videos
 - Masks
     - RGB & Grayscale/single-channel mask
     - BitwiseAnd & BitwiseNot
 - Conversions
     - RGB to HSV and back
+    - RGB to Gray
     - Inversion
     - Resizing (Nearest Neighbor)
 - Binary
@@ -30,6 +33,7 @@ Basic Image Processing engine written in C, used to be the CImageOpener.c file, 
     - Channel split & Re-Merge
     - Adding & Subtracting Images
     - Crop/Zoom w/ fill & no fill
+    - Dilation & Erosion
 
 # To-do Features
 - Finish adding OpenCL functions for rest of current features
