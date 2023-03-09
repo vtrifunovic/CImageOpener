@@ -21,7 +21,13 @@ struct node {
     struct node *next;
 };
 
+/*! @brief Initializes gpu processing. Uses any type of K9_Image struct (can be empty one) to run OpenCL boilerplate and initialize some buffers. These buffers will later self-readjust, but this gets them started.
+ * 
+ * @param[in] image Needs any type of image to initialize the buffers.
+ */
 void init_gpu(K9_Image image);
+
+
 void read_cl_program(char *path, uint16_t sid);
 void bind_cl_function(char *function, uint16_t sid);
 void update_gpu_channels(K9_Image image, int totalpixels);

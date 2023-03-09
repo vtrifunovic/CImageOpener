@@ -64,6 +64,7 @@ static void set_local_workgroup(int siz){
 }
 
 void init_gpu(K9_Image image){
+    global.enable_gpu = true;
     char prog[] = "init";
     strcpy(global.past_func, prog);
     cl_platform_id platform_id = NULL;
@@ -76,6 +77,9 @@ void init_gpu(K9_Image image){
         global.enable_gpu = false;
         return;
     }
+    printf("GPU Enabled: ");
+    if (global.enable_gpu == true)
+        printf("\e[1;32mYes.\e[0m\n\n");
     global.gpu_values.ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &g.device_id, &ret_num_devices);
     global.gpu_values.context = clCreateContext(NULL, 1, &g.device_id, NULL, NULL, &global.gpu_values.ret);
     global.gpu_values.command_queue = clCreateCommandQueue(global.gpu_values.context,g.device_id, 0, &global.gpu_values.ret);

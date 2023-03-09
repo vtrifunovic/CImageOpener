@@ -8,7 +8,7 @@
 // OCL
 K9_Image *blur(K9_Image *ret_img, K9_Image image, Kernel kern, int iterations){
     iterations = abs(iterations);
-    int totalpixels = image.width * image.height * image.channels;
+    size_t totalpixels = image.width * image.height * image.channels;
     ret_img->name = (char *) realloc(ret_img->name, 5);
     uint8_t kernelsize = kern.width * kern.height;
     strcpy(ret_img->name, "blur");
@@ -16,9 +16,8 @@ K9_Image *blur(K9_Image *ret_img, K9_Image image, Kernel kern, int iterations){
         char prog[] = "./tools/basic_tools.cl";
         char func[] = "blur";
         uint16_t tool_id = 540;
-        size_t global_item_size = image.width * image.height * image.channels;
-        update_gpu_channels(image, global_item_size);
-        global.totalsize = global_item_size;
+        update_gpu_channels(image, totalpixels);
+        global.totalsize = totalpixels;
         read_cl_program(prog, tool_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, tool_id);
@@ -31,8 +30,8 @@ K9_Image *blur(K9_Image *ret_img, K9_Image image, Kernel kern, int iterations){
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 4, sizeof(cl_uchar), (void *)&image.channels);
 
         for (int i = 0; i < iterations; i ++){
-            ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
-            update_gpu_channels(*ret_img, global_item_size);
+            ret_img->image = run_kernel(totalpixels, *ret_img, totalpixels);
+            update_gpu_channels(*ret_img, totalpixels);
         }
     } else {
         // creating temporary image to store data so we can do multiple iterations

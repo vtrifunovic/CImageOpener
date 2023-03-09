@@ -27,8 +27,8 @@ static bool check_close(GLFWwindow *window){
 int main(int argc, char *argv[]){
     struct timeval start, stop;
     gettimeofday(&start, NULL);
-    global.enable_gpu = true;
     K9_Image *new_img = load_image(argv[1]);
+    init_gpu(*new_img);
     int lower[] = {210, 200, 175};
     int higher[] = {255, 255, 255};
     int dil[] =

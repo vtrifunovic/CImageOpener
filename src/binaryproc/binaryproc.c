@@ -45,6 +45,10 @@ K9_Image *hit_x_miss(K9_Image *ret_img, K9_Image *image, Kernel kern){
         int length = image->width * image->height;
         int count_trues = 0, nxtline = 0;
         for (int x = 0; x < length; x++){
+            if (image->image[x] != kern.kernel[kernelsize/2]){
+                ret_img->image[x] = 0;
+                continue;
+            }
             uint8_t h = sqrt((float)kernelsize)-1;
             bool r = false;
             for (uint8_t i = 0; i < h; i++){
@@ -310,15 +314,16 @@ K9_Image *thinning(K9_Image *ret_img, K9_Image image){
             iter = 0;
             stop = compare(*ret_img, tmp);
         }
-        free(tmp.name);
-        free(tmp.image);
     } else {
-        int totalpixels = image.width * image.height;
         bool stop = false;
         memcpy(tmp.image, image.image, totalpixels);
         while (!stop){
-            for (int x = 0; x <  totalpixels; x++){
-                for (uint8_t loops = 0; loops < 2; loops++){
+            for (uint8_t loops = 0; loops < 2; loops++){
+                for (int x = 0; x < totalpixels; x++){
+                    if (tmp.image[x] == 0){
+                        ret_img->image[x] = 0;
+                        continue;
+                    }
                     uint8_t p1 = tmp.image[x]/255;
                     uint8_t p2 = tmp.image[x-image.width]/255;
                     uint8_t p3 = tmp.image[x-image.width+1]/255;
@@ -348,11 +353,13 @@ K9_Image *thinning(K9_Image *ret_img, K9_Image image){
                         ret_img->image[x] = tmp.image[x];
                     }
                 }
+                stop = compare(*ret_img, tmp);
+                memcpy(tmp.image, ret_img->image, totalpixels);
             }
-            stop = compare(*ret_img, tmp);
-            memcpy(tmp.image, ret_img->image, totalpixels);
         }
     }
+    free(tmp.name);
+    free(tmp.image);
     return ret_img;
 }
 

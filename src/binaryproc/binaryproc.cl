@@ -4,6 +4,8 @@
 __kernel void hit_x_miss(__global const uchar *in_image, __global uchar *out_image, __global const short *kern, uchar dim, int width){
     int x = get_global_id(0);
     out_image[x] = 0;
+    if (in_image[x] != kern[dim/2])
+        return;
     // assuming square 3x3 kernel for now
     uchar h = sqrt((float)dim)-1;
     for (uchar i = 0; i < h; i++){
@@ -63,7 +65,10 @@ static char A(char a1, char a2){
 
 __kernel void gh_thin(__global const uchar *in_image, __global uchar *out_image, int width, uchar iteration){
     int x = get_global_id(0);
-
+    if (in_image[x] == 0){
+        out_image[x] = 0;
+        return;
+    }
     char p1 = in_image[x]/255;
     char p2 = in_image[x-width]/255;
     char p3 = in_image[x-width+1]/255;
