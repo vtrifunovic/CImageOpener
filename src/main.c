@@ -106,7 +106,7 @@ int main(int argc, char *argv[]){
         if (count == 0)
             show_image(window, *new_img, false);
         else if (count == 1)
-            show_image(window, *blr, false);            
+            show_image(window, *thin, false);            
         else if (count == 2)
             show_image(window, *dil, false);
         else if (count == 3)

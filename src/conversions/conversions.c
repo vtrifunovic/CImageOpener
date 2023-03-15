@@ -25,7 +25,6 @@ K9_Image *rgb_to_gray(K9_Image *gray, K9_Image image){
         uint16_t conv_id = 440;
         size_t global_item_size = image.width * image.height * image.channels;
         update_gpu_channels(image, global_item_size);
-        global.totalsize = global_item_size;
         read_cl_program(prog, conv_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, conv_id);
@@ -55,10 +54,9 @@ K9_Image *rgb_to_hsv(K9_Image *hsv, K9_Image image){
         char prog[] = "./conversions/conversions.cl";
         char func[] = "rgb_to_hsv";
         size_t global_item_size = image.width * image.height * image.channels;
-        if (global_item_size != global.totalsize){
-            update_gpu_channels(image, global_item_size);
-            global.totalsize = global_item_size;
-        }
+        //if (global_item_size != global.totalsize){
+        update_gpu_channels(image, global_item_size);
+        //}
         read_cl_program(prog, conv_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, conv_id);
@@ -106,10 +104,7 @@ K9_Image *invert(K9_Image *ret_img, K9_Image image){
         char func[] = "invert";
         uint16_t conv_id = 440;
         size_t global_item_size = image.width * image.height * image.channels;
-        if (global_item_size != global.totalsize){
-            update_gpu_channels(image, global_item_size);
-            global.totalsize = global_item_size;
-        }
+        update_gpu_channels(image, global_item_size);
         read_cl_program(prog, conv_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, conv_id);
@@ -129,6 +124,9 @@ K9_Image *invert(K9_Image *ret_img, K9_Image image){
 K9_Image *resize_img(K9_Image *ret_img, K9_Image image, vec2 scale, int type){
     ret_img->name = (char *) realloc(ret_img->name, 8);
     strcpy(ret_img->name, "resized");
+    ret_img->width = scale[0] * image.width;
+    ret_img->height = scale[1] * image.height;
+    ret_img->image = (uint8_t* ) realloc(ret_img->image, ret_img->width*ret_img->height*ret_img->channels);
     double sizex = image.height/(double)ret_img->height;
     double sizey = image.width/(double)ret_img->width;
     if (global.enable_gpu == true){
@@ -137,10 +135,7 @@ K9_Image *resize_img(K9_Image *ret_img, K9_Image image, vec2 scale, int type){
         uint16_t conv_id = 440;
         size_t global_item_size = image.width * image.height * image.channels;
         size_t return_item_size = ret_img->width * ret_img->height * ret_img->channels;
-        if (global_item_size != global.totalsize){
-            update_gpu_channels(image, global_item_size);
-            global.totalsize = global_item_size;
-        }
+        update_gpu_channels(image, global_item_size);
         read_cl_program(prog, conv_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, conv_id);

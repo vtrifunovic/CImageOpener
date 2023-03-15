@@ -143,6 +143,10 @@ void render_end(GLFWwindow *window){
     glfwSwapBuffers(window);
 }
 
+void unbind_texture(void){
+    glDeleteTextures(1, &texture);
+}
+
 void render_kill(void){
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);

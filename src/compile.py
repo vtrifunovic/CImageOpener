@@ -6,7 +6,7 @@ import time
 import argparse
 
 compiler = "gcc "
-includes = " global.c render/render.c render/render_internal/render_internal.c masks/masks.c conversions/conversions.c binaryproc/binaryproc.c tools/basic_tools.c opencl_support/gpu_setup.c -lGL -lglfw -lm -Werror -lOpenCL -lGLEW "
+includes = " global.c render/render.c render/render_internal/render_internal.c masks/masks.c conversions/conversions.c binaryproc/binaryproc.c tools/basic_tools.c opencl_support/gpu_setup.c -lGL -lglfw -lm -Werror -lOpenCL -lGLEW -lpthread "
 
 class colors:
     ULINE = "\033[4m"
@@ -30,6 +30,9 @@ def main(extra, comp_file, folder):
         comp_file = "speedtest.c"
     compilation = compiler + "-o speedtest " + comp_file + includes + extra
     ret_code = subprocess.call(compilation, shell = True)
+    if ret_code != 0:
+        print("Could not compile... Terminating")
+        return
     all_files = os.listdir(folder)
     test_files = []
     for i in all_files:

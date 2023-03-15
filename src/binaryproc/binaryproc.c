@@ -21,7 +21,6 @@ K9_Image *hit_x_miss(K9_Image *ret_img, K9_Image *image, Kernel kern){
         size_t global_item_size = image->width * image->height * image->channels;
         //if (global_item_size != global.totalsize){
         update_gpu_channels(*image, global_item_size);
-        global.totalsize = global_item_size;
         //}
         read_cl_program(prog, bin_id);
         if (strcmp(global.past_func, func) != 0){
@@ -85,10 +84,7 @@ K9_Image *bin_dilation(K9_Image *ret_img, K9_Image image, Kernel kern){
         char func[] = "bin_dilation";
         uint16_t bin_id = 640;
         size_t global_item_size = image.width * image.height;
-        if (global_item_size != global.totalsize){
-            update_gpu_channels(image, global_item_size);
-            global.totalsize = global_item_size;
-        }
+        update_gpu_channels(image, global_item_size);
         read_cl_program(prog, bin_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, bin_id);
@@ -164,21 +160,18 @@ K9_Image *bin_dilation(K9_Image *ret_img, K9_Image image, Kernel kern){
 
 K9_Image *bin_erosion(K9_Image *ret_img, K9_Image image, Kernel kern){
     if (image.channels > 1){
-        fprintf(stderr, "\e[1;31mError!\e[0m Function bin_erosion() needs single channel image\n");
+        fprintf(stderr, "\e[1;31mError!\e[0m Function bin_dilation() needs single channel image\n");
         return ret_img;
     }
-    ret_img->name = (char *)realloc(ret_img, 6);
-    strcpy(ret_img->name, "erode");
     uint8_t kernelsize = kern.width * kern.height;
+    ret_img->name = (char *) realloc(ret_img->name, 4);
+    strcpy(ret_img->name, "dil");
     if (global.enable_gpu == true){
         char prog[] = "./binaryproc/binaryproc.cl";
         char func[] = "bin_erosion";
         uint16_t bin_id = 640;
-        size_t global_item_size = image.width * image.height * image.channels;
-        if (global_item_size != global.totalsize){
-            update_gpu_channels(image, global_item_size);
-            global.totalsize = global_item_size;
-        }
+        size_t global_item_size = image.width * image.height;
+        update_gpu_channels(image, global_item_size);
         read_cl_program(prog, bin_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, bin_id);
@@ -196,62 +189,53 @@ K9_Image *bin_erosion(K9_Image *ret_img, K9_Image image, Kernel kern){
 
         ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
         global.gpu_values.ret = clReleaseMemObject(kern_mem_obj);
-    }
-    memcpy(ret_img->image, image.image, image.width * image.height);
-    int center = kern.width * kern.height / 2;
-    int length = image.width * image.height;
-    for (int j = 0; j < length; j++)
-    {
-        if (kern.kernel[center] != image.image[j])
-        {
-            ret_img->image[j] = 0;
-            int inc = 1;
-            while (j - inc >= 0 && kern.kernel[center - inc] == 255 && inc <= kern.width/2)
-            {
-                ret_img->image[j - inc] = 0;
-                inc++;
-            }
-            inc = 0;
-            while (j + inc <= length && kern.kernel[center + inc] == 255 && inc <= kern.width/2)
-            {
-                ret_img->image[j + inc] = 0;
-                inc++;
-            }
-            inc = 1;
-            int side = 1;
-            while (j - inc * image.width >= 0 && kern.kernel[center + inc * kern.width] == 255)
-            {
-                ret_img->image[j - inc * image.width] = 0;
-                while (j - inc * image.width - side >= 0 && kern.kernel[center - inc - side * kern.width] == 255)
-                {
-                    ret_img->image[j - side - inc * image.width] = 0;
-                    side++;
+    } else {
+        memcpy(ret_img->image, image.image, image.width * image.height);
+        int center = kern.width * kern.height / 2;
+        int length = image.width * image.height;
+        for (int j = 0; j < length; j++){
+            if (kern.kernel[center] != image.image[j]){
+                ret_img->image[j] = 0;
+                int inc = 1;
+                while (j - inc >= 0 && kern.kernel[center - inc] == 255 && inc <= kern.width/2){
+                    ret_img->image[j - inc] = 0;
+                    inc++;
+                }
+                inc = 0;
+                while (j + inc <= length && kern.kernel[center + inc] == 255 && inc <= kern.width/2){
+                    ret_img->image[j + inc] = 0;
+                    inc++;
+                }
+                inc = 1;
+                int side = 1;
+                while (j - inc * image.width >= 0 && kern.kernel[center + inc * kern.width] == 255){
+                    ret_img->image[j - inc * image.width] = 0;
+                    while (j - inc * image.width - side >= 0 && kern.kernel[center - inc - side * kern.width] == 255){
+                        ret_img->image[j - side - inc * image.width] = 0;
+                        side++;
+                    }
+                    side = 1;
+                    while (j - inc * image.width - side >= 0 && kern.kernel[center - inc + side * kern.width] == 255){
+                        ret_img->image[j + side - inc * image.width] = 0;
+                        side++;
+                    }
+                    inc++;
                 }
                 side = 1;
-                while (j - inc * image.width - side >= 0 && kern.kernel[center - inc + side * kern.width] == 255)
-                {
-                    ret_img->image[j + side - inc * image.width] = 0;
-                    side++;
+                inc = 1;
+                while (j + inc * image.width <= length && kern.kernel[center - inc * kern.width] == 255){
+                    ret_img->image[j + inc * image.width] = 0;
+                    while (j + inc * image.width - side >= 0 && kern.kernel[center - inc - side * kern.width] == 255){
+                        ret_img->image[j - side + inc * image.width] = 0;
+                        side++;
+                    }
+                    side = 1;
+                    while (j + inc * image.width - side >= 0 && kern.kernel[center - inc + side * kern.width] == 255){
+                        ret_img->image[j + side + inc * image.width] = 0;
+                        side++;
+                    }
+                    inc++;
                 }
-                inc++;
-            }
-            side = 1;
-            inc = 1;
-            while (j + inc * image.width <= length && kern.kernel[center - inc * kern.width] == 255)
-            {
-                ret_img->image[j + inc * image.width] = 0;
-                while (j + inc * image.width - side >= 0 && kern.kernel[center - inc - side * kern.width] == 255)
-                {
-                    ret_img->image[j - side + inc * image.width] = 0;
-                    side++;
-                }
-                side = 1;
-                while (j + inc * image.width - side >= 0 && kern.kernel[center - inc + side * kern.width] == 255)
-                {
-                    ret_img->image[j + side + inc * image.width] = 0;
-                    side++;
-                }
-                inc++;
             }
         }
     }
@@ -286,10 +270,7 @@ K9_Image *thinning(K9_Image *ret_img, K9_Image image){
         char func[] = "gh_thin";
         uint16_t bin_id = 640;
         size_t global_item_size = image.width * image.height * image.channels;
-        // if (global_item_size != global.totalsize){
         update_gpu_channels(image, global_item_size);
-        global.totalsize = global_item_size;
-        //}
 
         read_cl_program(prog, bin_id);
         if (strcmp(global.past_func, func) != 0){

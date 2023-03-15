@@ -14,8 +14,8 @@
 #include "stb_image.h"
 
 struct timeval start, stop;
-GLuint texture = 0;
 float added_delay;
+int pastsize = 0;
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height){
     glViewport(0, 0, width, height);
@@ -33,10 +33,16 @@ static void fps_count(GLFWwindow *window){
 }
 
 void show_image(GLFWwindow *window, K9_Image image, bool show_fps){
+    if (pastsize != image.width * image.height){
+        unbind_texture();
+        bind_texture(image.width, image.height);
+        glfwSetWindowSize(window, image.width, image.height);
+    }
     glfwMakeContextCurrent(window);
     render_begin(window);
     main_render(image.image, image.width, image.height, image.channels);
     render_end(window);
+    pastsize = image.width * image.height;
 }
 
 int show_video(GLFWwindow *window, K9_Image image, K9_Video video){
@@ -50,10 +56,6 @@ int show_video(GLFWwindow *window, K9_Image image, K9_Video video){
         return 0;
     }
     return 1;
-    //printf("Vid time: %f :: Current time %f\n", vid_tim, sec);
-    //usleep(vid_tim - sec - added_delay);
-    //gettimeofday(&start, NULL);
-    //show_image(window, image, false);
 }
 
 GLFWwindow *init_window(K9_Image image){
@@ -63,7 +65,7 @@ GLFWwindow *init_window(K9_Image image){
     }
     glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
     GLFWwindow *window = glfwCreateWindow(image.width, image.height, image.name, NULL, NULL);
-    
+
     if (!window){
         fprintf(stderr, "\e[1;31mWindow could not be created! \e[0m\n");
         exit(0);

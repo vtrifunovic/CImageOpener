@@ -117,6 +117,7 @@ void bind_cl_function(char *function, uint16_t sid){
     struct node *found_id = find(sid);
     global.gpu_values.ret = clReleaseKernel(global.gpu_values.kernel);
     global.gpu_values.kernel = clCreateKernel(found_id->prog, function, &global.gpu_values.ret);
+    strcpy(global.past_func, function);
 }
 
 void update_gpu_channels(K9_Image image, int totalpixels){

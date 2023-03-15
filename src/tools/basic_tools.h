@@ -34,21 +34,23 @@ K9_Image *subtract(K9_Image *ret_img, K9_Image *img1, K9_Image *img2);
  * @return Output of img1 + img2
  */
 K9_Image *add(K9_Image *ret_img, K9_Image img1, K9_Image img2);
-/*! @brief ((Under Re-Construction)) Splits the image into a K9_Split structure, which holds 3 K9_Images within it.
- * One for each channel. Each channel can be accessed by splitvariable.r for the red channel for example.
+/*! @brief Splits the image into its red, green, and blue channels.
  * 
+ * @param r The image that will hold the "red" or 1st channel.
+ * @param g The image that will hold the "green" or 2nd channel.
+ * @param b The image that will hold the "blue" or 3rd channel.
  * @param image The image that will be split into its independent channels.
- * @return K9_Split structure containing K9_Images for each channel.
  */
-K9_Split split_channels(K9_Image image);
-/*! @brief ((Under Re-Construction)) Takes three single channel images and merges them into a singular image.
+void split_channels(K9_Image *r, K9_Image *g, K9_Image *b, K9_Image image);
+/*! @brief Takes three single channel images and merges them into a singular image.
  *
  * @param r Image to be merged into the red channel
  * @param g Image to be merged into the green channel
  * @param b Image to be merged into the blue channel
+ * @param destroy Boolean value on whether to free r, g, & b images.
  * @return RGB image containing the r, g, & b images.
  */
-K9_Image merge_channels(K9_Image r, K9_Image g, K9_Image b);
+K9_Image *merge_channels(K9_Image *ret_img, K9_Image *r, K9_Image *g, K9_Image *b, bool destroy);
 /*! @brief Crops image based on x1->x2 and y1-y2 pixels given.
  * Unlike @ref resize_img this takes pixel values and not relative values.
  *
@@ -62,14 +64,14 @@ K9_Image merge_channels(K9_Image r, K9_Image g, K9_Image b);
  * @return Cropped image
  */
 K9_Image *crop(K9_Image *ret_img, K9_Image image, vec2 xcrop, vec2 ycrop, int type);
-/*! @brief ((Under construction)) Blends two images based on the alpha value. The 1st image is the alpha image and the 2nd one is the beta value.
+/*! @brief Blends two images based on the alpha value. The 1st image is the alpha image and the 2nd one is the beta value.
  *
  * @param image First image to be blended
  * @param b Second image to be blended
  * @param alpha The alpha value to mix the two images
  * @return Output image containing image*alpha + b*(1-alpha)
  */
-K9_Image blend_img(K9_Image image, K9_Image b, float alpha);
+K9_Image *blend_img(K9_Image *ret_img, K9_Image *image, K9_Image b, float alpha);
 /*! @brief Checks to see if two images are the same or not.
  *
  * @param img1 First image for comparison
