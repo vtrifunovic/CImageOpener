@@ -6,7 +6,7 @@ import time
 import argparse
 
 compiler = "gcc "
-includes = " global.c render/render.c render/render_internal/render_internal.c masks/masks.c conversions/conversions.c binaryproc/binaryproc.c tools/basic_tools.c opencl_support/gpu_setup.c -lGL -lglfw -lm -Werror -lOpenCL -lGLEW -lpthread "
+includes = " global.c render/render.c render/render_internal/render_internal.c masks/masks.c binaryproc/binaryproc.c conversions/conversions.c tools/basic_tools.c opencl_support/gpu_setup.c -lGL -lglfw -lm -Werror -lOpenCL -lGLEW -lpthread "
 
 class colors:
     ULINE = "\033[4m"

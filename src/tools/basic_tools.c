@@ -5,44 +5,51 @@
 #include <stdio.h>
 #include "../global.h"
 
-// OCL
-K9_Image *blur(K9_Image *ret_img, K9_Image image, Kernel kern, int iterations){
+// TLC Needed
+K9_Image *blur(K9_Image *ret_img, K9_Image *image, Kernel kern, int iterations, bool read){
     iterations = abs(iterations);
-    size_t totalpixels = image.width * image.height * image.channels;
-    ret_img->name = (char *) realloc(ret_img->name, 5);
+    size_t totalpixels = image->width * image->height * image->channels;
     uint8_t kernelsize = kern.width * kern.height;
-    strcpy(ret_img->name, "blur");
     if (global.enable_gpu == true){
         char prog[] = "./tools/basic_tools.cl";
         char func[] = "blur";
         uint16_t tool_id = 540;
-        update_gpu_channels(image, totalpixels);
+        if (image->mem_id == NULL)
+            update_input_buffer(image, totalpixels);
+        if (ret_img->mem_id == NULL)
+            update_output_buffer(ret_img, ret_img->height * ret_img->width * ret_img->channels);
         read_cl_program(prog, tool_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, tool_id);
             strcpy(global.past_func, func);
-        }
-        set_main_args();
-        
+		}
+        set_main_args(image->mem_id, ret_img->mem_id);
+
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_uchar), (void *)&kernelsize);
-        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_int), (void *)&image.width);
-        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 4, sizeof(cl_uchar), (void *)&image.channels);
+        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_int), (void *)&image->width);
+        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 4, sizeof(cl_uchar), (void *)&image->channels);
+
+        if (read)
+            iterations -= 1;
 
         for (int i = 0; i < iterations; i ++){
-            ret_img->image = run_kernel(totalpixels, *ret_img, totalpixels);
-            update_gpu_channels(*ret_img, totalpixels);
+            run_kernel_no_return(totalpixels);
+            //if (i%2==0)
+            //    set_main_args(ret_img->mem_id, image->mem_id);
+            //else
+            //    set_main_args(image->mem_id, ret_img->mem_id);
         }
+        if (read)
+            ret_img->image = run_kernel(totalpixels, *ret_img, totalpixels);
     } else {
         // creating temporary image to store data so we can do multiple iterations
-        K9_Image tmpimg = { 
-            .width = image.width,
-            .height = image.height,
-            .channels = image.channels,
-            .name = (char *) malloc(4),
-            .image = (uint8_t *) malloc(totalpixels),
+        K9_Image tmpimg = {
+            .width = image->width,
+            .height = image->height,
+            .channels = image->channels,
+            .image = (uint8_t *)malloc(totalpixels),
         };
-        strcpy(tmpimg.name, "tmp");
-        memcpy(tmpimg.image, image.image, totalpixels);
+        memcpy(tmpimg.image, image->image, totalpixels);
         if (tmpimg.channels > 3)
             tmpimg.channels = 3;
         int comp_iters = 0;
@@ -67,37 +74,39 @@ K9_Image *blur(K9_Image *ret_img, K9_Image image, Kernel kern, int iterations){
                 memcpy(tmpimg.image, ret_img->image, totalpixels);
             comp_iters++;
         }
-        free(tmpimg.name);
         free(tmpimg.image);
     }
     return ret_img;
 }
 
-K9_Image *subtract(K9_Image *ret_img, K9_Image *img1, K9_Image *img2){
+K9_Image *subtract(K9_Image *ret_img, K9_Image *img1, K9_Image *img2, bool read){
     int totalpixels = img1->width * img1->height * img1->channels;
-    ret_img->name = (char *)realloc(ret_img->name, 9);
-    strcpy(ret_img->name, "subtract");
     if (global.enable_gpu == true){
         char prog[] = "./tools/basic_tools.cl";
         char func[] = "subtract";
         uint16_t tool_id = 540;
         size_t global_item_size = img1->width * img1->height * img1->channels;
-        update_gpu_channels(*img1, global_item_size);
+        if (img1->mem_id == NULL)
+            update_input_buffer(img1, totalpixels);
+        if (img2->mem_id == NULL)
+            update_input_buffer(img2, totalpixels);
+        if (ret_img->mem_id == NULL)
+            update_output_buffer(ret_img, ret_img->height * ret_img->width * ret_img->channels);
         read_cl_program(prog, tool_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, tool_id);
             strcpy(global.past_func, func);
-        }
-        cl_mem img2_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, totalpixels * sizeof(uint8_t), NULL, &global.gpu_values.ret);
+		}
 
-        global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, img2_mem_obj, CL_TRUE, 0, totalpixels * sizeof(uint8_t), img2->image, 0, NULL, NULL);
+        set_main_args(img1->mem_id, ret_img->mem_id);
 
-        set_main_args();
+        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_mem), (void *)&img2->mem_id);
+        
+        if (read)
+           ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
+        else
+            run_kernel_no_return(global_item_size);
 
-        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_mem), (void *)&img2_mem_obj);
-
-        ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
-        global.gpu_values.ret = clReleaseMemObject(img2_mem_obj);
     }else{
         for (int x = 0; x < totalpixels; x++){
             ret_img->image[x] = img1->image[x] - img2->image[x];
@@ -106,35 +115,39 @@ K9_Image *subtract(K9_Image *ret_img, K9_Image *img1, K9_Image *img2){
     return ret_img;
 }
 
-K9_Image *add(K9_Image *ret_img, K9_Image img1, K9_Image img2){
-    int totalpixels = img1.width * img1.height * img1.channels;
-    ret_img->name = (char *)realloc(ret_img->name, 4);
-    strcpy(ret_img->name, "add");
+K9_Image *add(K9_Image *ret_img, K9_Image *img1, K9_Image *img2, bool read){
+    int totalpixels = img1->width * img1->height * img1->channels;
     if (global.enable_gpu == true){
         char prog[] = "./tools/basic_tools.cl";
         char func[] = "add";
         uint16_t tool_id = 540;
-        size_t global_item_size = img1.width * img1.height * img1.channels;
-        // if (global_item_size != global.totalsize){
-        update_gpu_channels(img1, global_item_size);
-        //}
+        size_t global_item_size = img1->width * img1->height * img1->channels;
+        if (img1->mem_id == NULL)
+            update_input_buffer(img1, totalpixels);
+        if (ret_img->mem_id == NULL)
+            update_output_buffer(ret_img, ret_img->height * ret_img->width * ret_img->channels);
         read_cl_program(prog, tool_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, tool_id);
             strcpy(global.past_func, func);
-        }
+		}
         cl_mem img2_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, totalpixels * sizeof(uint8_t), NULL, &global.gpu_values.ret);
 
-        global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, img2_mem_obj, CL_TRUE, 0, totalpixels * sizeof(uint8_t), img2.image, 0, NULL, NULL);
+        global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, img2_mem_obj, CL_TRUE, 0, totalpixels * sizeof(uint8_t), img2->image, 0, NULL, NULL);
 
-        set_main_args();
+        set_main_args(img1->mem_id, ret_img->mem_id);
 
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_mem), (void *)&img2_mem_obj);
 
-        ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
+        if (read)
+            ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
+        else
+            run_kernel_no_return(global_item_size);
+
+        global.gpu_values.ret = clReleaseMemObject(img2_mem_obj);
     } else {
         for (int x = 0; x < totalpixels; x++){
-            ret_img->image[x] = img1.image[x] + img2.image[x];
+            ret_img->image[x] = img1->image[x] + img2->image[x];
         }
     }
     return ret_img;
@@ -146,12 +159,6 @@ void split_channels(K9_Image *r, K9_Image *g, K9_Image *b, K9_Image image){
         fprintf(stderr, "\e[1;31mError!\e[0m Function split_channels() cannot split less than 3 channels.\n");
         exit(0);
     }
-    r->name = realloc(r->name, 2);
-    strcpy(r->name, "r");
-    g->name = realloc(g->name, 2);
-    strcpy(g->name, "g");
-    b->name = realloc(b->name, 2);
-    strcpy(b->name, "b");
     for (int x = 0; x < totalpixels; x++){
         r->image[x] = image.image[x*3];
         g->image[x] = image.image[x*3+1];
@@ -167,8 +174,6 @@ K9_Image *merge_channels(K9_Image *ret_img, K9_Image *r, K9_Image *g, K9_Image *
         exit(0);
     }
     int totalpixels = r->height * r->width;
-    ret_img->name = realloc(ret_img->name, 7);
-    strcpy(ret_img->name, "Merged");
     for (int x = 0; x < totalpixels; x++){
         ret_img->image[x*3] = r->image[x];
         ret_img->image[x*3+1] = g->image[x];
@@ -199,8 +204,6 @@ K9_Image *crop(K9_Image *ret_img, K9_Image image, vec2 xcrop, vec2 ycrop, int ty
         ycrop[0] = 0;
         ycrop[1] = image.height;
     }
-    ret_img->name = (char *) realloc(ret_img->name, 5);
-    strcpy(ret_img->name, "crop");
     if (type == K9_FILL){
         ret_img->height = image.height;
         ret_img->width = image.width;
@@ -239,8 +242,6 @@ K9_Image *blend_img(K9_Image *ret_img, K9_Image *image, K9_Image b, float alpha)
     }
     float beta = 1 - alpha;
     int totalpixels = image->width * image->height * image->channels;
-    ret_img->name = realloc(ret_img->name, 8);
-    strcpy(ret_img->name, "blended");
     // same channels blend
     if (image->channels == b.channels){
         for (int x = 0; x < totalpixels; x++){
@@ -279,44 +280,41 @@ bool compare(K9_Image img1, K9_Image img2){
     return true;
 }
 
-void K9_free_split(K9_Split image){
-    free(image.r.name);
-    free(image.r.image);
-    free(image.g.name);
-    free(image.g.image);
-    free(image.b.name);
-    free(image.b.image);
-}
-
-K9_Image *gray_morph(K9_Image *ret_img, K9_Image *image, Kernel kern, int type){
+K9_Image *gray_morph(K9_Image *ret_img, K9_Image *image, Kernel kern, int type, bool read){
     size_t global_item_size = image->width * image->height * image->channels;
     size_t kernelsize = kern.width * kern.height;
-    ret_img->name = (char *)realloc(ret_img->name, 6);
-    strcpy(ret_img->name, "grmph");
     if (global.enable_gpu == true){
         char prog[] = "./tools/basic_tools.cl";
         char func[] = "g_dilated";
         if (type == K9_EROSION)
             strcpy(func, "g_eroded");
         uint16_t tool_id = 540;
-        update_gpu_channels(*image, global_item_size);
+        if (image->mem_id == NULL)
+            update_input_buffer(image, global_item_size);
+        if (ret_img->mem_id == NULL)
+            update_output_buffer(ret_img, ret_img->height * ret_img->width * ret_img->channels);
         read_cl_program(prog, tool_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, tool_id);
             strcpy(global.past_func, func);
-        }
+		}
+
         cl_mem kern_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, kernelsize * sizeof(int16_t), NULL, &global.gpu_values.ret);
 
         global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, kern_mem_obj, CL_TRUE, 0, kernelsize * sizeof(int16_t), kern.kernel, 0, NULL, NULL);
 
-        set_main_args();
+        set_main_args(image->mem_id, ret_img->mem_id);
 
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_mem), (void *)&kern_mem_obj);
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_uchar), (void *)&kernelsize);
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 4, sizeof(cl_int), (void *)&image->width);
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 5, sizeof(cl_uchar), (void *)&image->channels);
 
-        ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
+        if (read)
+            ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
+        else
+            run_kernel_no_return(global_item_size);
+            
         global.gpu_values.ret = clReleaseMemObject(kern_mem_obj);
     } else {
         if (type == K9_EROSION){

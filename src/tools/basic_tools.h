@@ -3,12 +3,6 @@
 #include "../render/render.h"
 #include "../binaryproc/binaryproc.h"
 
-typedef struct k9_split {
-    K9_Image r;
-    K9_Image g;
-    K9_Image b;
-} K9_Split;
-
 /*! @brief Blurs an image, with pixel mixing depending on the size of the kernel.
  * 
  * @param ret_img Return image, blurred output image is stored here
@@ -17,7 +11,7 @@ typedef struct k9_split {
  * @param iterations How many times the blurring operation should take place, more iterations, more blurry
  * @return Blurred image stored in the ret_img structure
  */
-K9_Image *blur(K9_Image *ret_img, K9_Image image, Kernel kern, int iterations);
+K9_Image *blur(K9_Image *ret_img, K9_Image *image, Kernel kern, int iterations, bool read);
 /*! @brief Subracts one image from another
  *
  * @param ret_img Return image where the output gets stored
@@ -25,7 +19,7 @@ K9_Image *blur(K9_Image *ret_img, K9_Image image, Kernel kern, int iterations);
  * @param img2 Second image, one that is subtracting
  * @return Output of img1 - img2
  */
-K9_Image *subtract(K9_Image *ret_img, K9_Image *img1, K9_Image *img2);
+K9_Image *subtract(K9_Image *ret_img, K9_Image *img1, K9_Image *img2, bool read);
 /*! @brief Adds two images together
  *
  * @param ret_img Return image where the output gets stored
@@ -33,7 +27,7 @@ K9_Image *subtract(K9_Image *ret_img, K9_Image *img1, K9_Image *img2);
  * @param img2 Second image in addition process
  * @return Output of img1 + img2
  */
-K9_Image *add(K9_Image *ret_img, K9_Image img1, K9_Image img2);
+K9_Image *add(K9_Image *ret_img, K9_Image *img1, K9_Image *img2, bool read);
 /*! @brief Splits the image into its red, green, and blue channels.
  * 
  * @param r The image that will hold the "red" or 1st channel.
@@ -79,10 +73,6 @@ K9_Image *blend_img(K9_Image *ret_img, K9_Image *image, K9_Image b, float alpha)
  * @return Boolean value of true if images are the same, false if they differ
  */
 bool compare(K9_Image img1, K9_Image img2);
-
-// Frees the image structure
-void K9_free_split(K9_Split image);
-
 /*! @brief Grayscale Morphological Processes, based on the type given will determine what will be used. (Will accept 3 channel images). 
  * Check `type` param to see what acceptable values are.
  *
@@ -92,4 +82,4 @@ void K9_free_split(K9_Split image);
  * @param type K9_EROSION will perform Erosion operation. K9_DILATION will perform dilation.
  * @return Image with requested type of processing.
  */
-K9_Image *gray_morph(K9_Image *ret_img, K9_Image *image, Kernel kern, int type);
+K9_Image *gray_morph(K9_Image *ret_img, K9_Image *image, Kernel kern, int type, bool read);

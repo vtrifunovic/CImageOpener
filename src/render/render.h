@@ -2,6 +2,9 @@
 #include <GLFW/glfw3.h>
 #include <stdbool.h>
 #include <stdio.h>
+#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
+#define CL_TARGET_OPENCL_VERSION 220
+#include <CL/cl.h>
 
 // Image struct
 typedef struct k9_image{
@@ -9,7 +12,7 @@ typedef struct k9_image{
     int height;
     int channels;
     uint8_t *image;
-    char *name;
+    cl_mem mem_id;
 } K9_Image;
 
 // Video data struct
@@ -42,16 +45,18 @@ int show_video(GLFWwindow *window, K9_Image image, K9_Video video);
  * This function performs the standard GLFW opening a window boilerplate.
  *
  * @param[in] image Doesn't have to be one that will be displayed, just a general K9_Image for the window to be created around
+ * @param[in] name Window Title
  * @return The created GLFW window
  */
-GLFWwindow *init_window(K9_Image image);
+GLFWwindow *init_window(K9_Image image, char *name);
 /*! @brief Create a image stored in memory as a K9_Image struct.
  * 
  * @param[in] file Path to the file relative to the main file
+ * @param[in] debug Whether the image metadata should be printed to terminal.
  * @return K9_Image struct that contains the width, height, channels and image data
  * 
  */
-K9_Image *load_image(char *file);
+K9_Image *load_image(char *file, bool debug);
 /*! @brief Loads the next frame in the K9_Video struct and returns it as an K9_Image struct.
  * 
  * @param[in] ret_img The image that the frame will be saved in
@@ -74,11 +79,10 @@ K9_Video *load_video(char *file);
  * @param[in] width The width (in pixels) of the image
  * @param[in] height The height (in pixels) of the image
  * @param[in] channels The number of channels the image will have
- * @param[in] name (May be removed) What the name of the structure should be
  * @return K9_Image created with the specified parameters, containing no useful image data.
  */
-K9_Image *create_img(int width, int height, int channels, char *name);
-/*! @brief Similar to the @ref create_img function, this function creates a new image, but takes in less parameters. It creates a new image "object" based on the dimensions stored in the input struct.
+K9_Image *create_img(int width, int height, int channels);
+/*! @brief Similar to the @ref create_img function, this function creates a new image, but uses a pre-existing K9_Image as a template to copy metadata from. It creates a new image "object" based on the dimensions stored in the input struct.
  * 
  * @param[in] image The image whose parameters will be copied into a new structure.
  * @returns New K9_Image struct with same dimensions as the given image. Image data will contain no useful information.

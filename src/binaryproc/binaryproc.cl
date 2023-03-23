@@ -100,7 +100,6 @@ __kernel void gh_thin(__global const uchar *in_image, __global uchar *out_image,
 
 __kernel void add(__global const uchar *in_image, __global uchar *out_image, __global const uchar *img2){
     int x = get_global_id(0);
-    out_image[x] = 0;
     if (in_image[x] + img2[x] > 255)
         out_image[x] = 255;
     else

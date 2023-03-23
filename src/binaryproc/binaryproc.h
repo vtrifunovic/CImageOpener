@@ -14,7 +14,7 @@ typedef struct kernel {
  * @param kern Input kernel, this determines what pixels are hits and which are miss
  * @return Single channel image where 255's are hits and 0's are misses.
  */
-K9_Image *hit_x_miss(K9_Image *ret_img, K9_Image *image, Kernel kern);
+K9_Image *hit_x_miss(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read);
 /*! @brief Performs binary dilation. Dilates based on the shape of the kernel. Values > 0 dilation is performed, values < 0 are ignored, values = 0 the original value of the image is preserved.
  *
  * @param ret_img Return image, stores the output of the dilation
@@ -22,7 +22,7 @@ K9_Image *hit_x_miss(K9_Image *ret_img, K9_Image *image, Kernel kern);
  * @param kern The input kernel used for dilation
  * @return Single channel image of 255's and 0's.
  */
-K9_Image *bin_dilation(K9_Image *ret_img, K9_Image image, Kernel kern);
+K9_Image *bin_dilation(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read);
 /*! @brief Performs binary erosion. Erodes based on the shape of the kernel.
  * Values >= 0 are set to 0, values < 0 are ignored.
  *
@@ -31,7 +31,7 @@ K9_Image *bin_dilation(K9_Image *ret_img, K9_Image image, Kernel kern);
  * @param kern The input kernel used for erosion
  * @return Single channel image of 255's and 0's.
  */
-K9_Image *bin_erosion(K9_Image *ret_img, K9_Image image, Kernel kern);
+K9_Image *bin_erosion(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read);
 /*! @brief Performs the thinning operation. Currently only uses the GuoHall method.
  * More info on GuoHall thinning: https://dl.acm.org/doi/10.1145/62065.62074
  *
@@ -39,7 +39,7 @@ K9_Image *bin_erosion(K9_Image *ret_img, K9_Image image, Kernel kern);
  * @param image Input image for thinning, must be a binary image 
  * @return Single channel image thinned to one pixel paths.
  */
-K9_Image *thinning(K9_Image *ret_img, K9_Image image);
+K9_Image *thinning(K9_Image *ret_img, K9_Image *image, bool read);
 /*! @brief Creates a kernel/structuring element. 
  * When creating input array use 1's, 0's and -1's. 
  *

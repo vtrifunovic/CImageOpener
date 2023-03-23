@@ -8,21 +8,21 @@
  * @param image The input RGB image. Must be 3 channels
  * @return A single channel grayscaled image.
  */
-K9_Image *rgb_to_gray(K9_Image *gray, K9_Image image);
+K9_Image *rgb_to_gray(K9_Image *gray, K9_Image *image, bool read);
 /*! @brief Converts a RGB Image into its HSV (hue/saturation/value) values.
  *
  * @param hsv Output HSV image
  * @param image Input RGB image to be converted to HSV
  * @return HSV image. The values will be stored in VSH order.
  */
-K9_Image *rgb_to_hsv(K9_Image *hsv, K9_Image image);
+K9_Image *rgb_to_hsv(K9_Image *hsv, K9_Image *image, bool read);
 /*! @brief Inverts the image. Negative effect in most editing software.
  *
  * @param ret_img Return image where inverted image will be stored.
  * @param image Input image that will be inverted
  * @return Inverted image, 255-(current pixel value).
  */
-K9_Image *invert(K9_Image *ret_img, K9_Image image);
+K9_Image *invert(K9_Image *ret_img, K9_Image *image, bool read);
 /*! @brief Resizes a given image based on a scaling value.
  * Given types: K9_NEAREST (Nearest Neighbor)
  * 
@@ -32,4 +32,4 @@ K9_Image *invert(K9_Image *ret_img, K9_Image image);
  * @param type Resizing method to be used
  * @return Resized image based on the scale & type given.
  */
-K9_Image *resize_img(K9_Image *ret_img, K9_Image image, vec2 scale, int type);
+K9_Image *resize_img(K9_Image *ret_img, K9_Image *image, vec2 scale, int type, bool read);
