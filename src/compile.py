@@ -4,9 +4,51 @@ import platform
 import os
 import time
 import argparse
+import re
 
 compiler = "gcc "
-includes = " global.c render/render.c render/render_internal/render_internal.c masks/masks.c binaryproc/binaryproc.c conversions/conversions.c tools/basic_tools.c opencl_support/gpu_setup.c -lGL -lglfw -lm -Werror -lOpenCL -lGLEW -lpthread "
+link_files = " -lGL -lglfw -lm -Werror -lOpenCL -lGLEW"
+
+def extract_headers(cfile):
+    possible_files = []
+    for text in cfile.readlines():
+        if re.search("#include", text):
+            if not re.search("<", text):
+                possible_files.append(text)
+    return possible_files
+
+def clean_headers(fil):
+    fil = re.sub("#include ", "", fil)
+    fil = re.sub("\n", "", fil)
+    fil = re.sub(".h", ".c", fil)
+    fil = re.sub('"', "", fil)
+    return fil
+
+def extract_project_files(comp_file):
+    f = open(comp_file, "r")
+    possible_files = extract_headers(f)
+    f.close()
+    valid_files = []
+    for fil in possible_files:
+        fil = clean_headers(fil)
+        if os.path.isfile(fil):
+            valid_files.append(fil)
+    for x in valid_files:
+        g = open(x, "r")
+        mpath = x.split("/")[0]
+        ph = extract_headers(g)
+        for p in ph:
+            p = clean_headers(p)
+            q = re.sub(r"^../", "", p)
+            p = mpath + "/" + p
+            if p not in valid_files and os.path.isfile(p) and "/../" not in p:
+                valid_files.append(p)
+            if q not in valid_files and os.path.isfile(q):
+                valid_files.append(q)
+        g.close()
+    # DO NOT FUCKING MOVE AGAIN
+    return " ".join(valid_files)
+
 
 class colors:
     ULINE = "\033[4m"
@@ -16,7 +58,8 @@ def main(extra, comp_file, folder):
     if platform.system() != "Linux":
         print("lol")
         return
-    compilation = compiler + comp_file + includes + extra
+    valid_files = extract_project_files(comp_file)
+    compilation = compiler + comp_file +" "+ valid_files + link_files + extra
     ret_code = subprocess.call(compilation, shell = True)
     if ret_code != 0:
         print("Code could not compile... Terminating")
@@ -28,7 +71,7 @@ def main(extra, comp_file, folder):
     test_run = input("Speed or view? (S/V): ")
     if test_run.lower() == "s":
         comp_file = "speedtest.c"
-    compilation = compiler + "-o speedtest " + comp_file + includes + extra
+    compilation = compiler + "-o speedtest " + comp_file +" "+ valid_files + link_files + extra
     ret_code = subprocess.call(compilation, shell = True)
     if ret_code != 0:
         print("Could not compile... Terminating")
