@@ -82,11 +82,9 @@ void init_gpu(K9_Image *image){
     global.gpu_values.ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &g.device_id, &ret_num_devices);
     global.gpu_values.context = clCreateContext(NULL, 1, &g.device_id, NULL, NULL, &global.gpu_values.ret);
     global.gpu_values.command_queue = clCreateCommandQueue(global.gpu_values.context,g.device_id, 0, &global.gpu_values.ret);
-    int totalsize = image->width * image->height * image->channels;
+    g.totalpixels = image->width * image->height * image->channels;
     // Note to self: There's two of these in use
-    set_local_workgroup(totalsize);
-    image->mem_id = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_WRITE, totalsize * sizeof(uint8_t), NULL, &global.gpu_values.ret);
-    global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, image->mem_id, CL_TRUE, 0, totalsize * sizeof(uint8_t), image->image, 0, NULL, NULL);
+    set_local_workgroup(g.totalpixels);
 }
 
 void read_cl_program(char *path, uint16_t sid){
@@ -123,6 +121,8 @@ void update_output_buffer(K9_Image *image, size_t totalsize){
 }
 
 void update_input_buffer(K9_Image *image, int totalpixels){
+    if (totalpixels != g.totalpixels)
+        set_local_workgroup(totalpixels);
     image->mem_id = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_WRITE, totalpixels * sizeof(uint8_t), NULL, &global.gpu_values.ret);
     global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, image->mem_id, CL_TRUE, 0, totalpixels * sizeof(uint8_t), image->image, 0, NULL, NULL);
 }
@@ -140,6 +140,17 @@ uint8_t *run_kernel(size_t global_item_size, K9_Image ret_img, size_t return_siz
 
 void run_kernel_no_return(size_t global_item_size){
     global.gpu_values.ret = clEnqueueNDRangeKernel(global.gpu_values.command_queue, global.gpu_values.kernel, 1, NULL, &global_item_size, &g.localsize, 0, NULL, NULL);
+}
+
+uint8_t *read_mem_buffer(K9_Image *image){
+    if (image->image == NULL)
+        image->image = (uint8_t *) malloc(image->width*image->height*image->channels);
+    global.gpu_values.ret = clEnqueueReadBuffer(global.gpu_values.command_queue, image->mem_id, CL_TRUE, 0, image->width*image->channels*image->height, image->image, 0, NULL, NULL);
+    return image->image;
+}
+
+void recalculate_local_workgroups(size_t size){
+    set_local_workgroup(size);
 }
 
 void K9_free_gpu(void){

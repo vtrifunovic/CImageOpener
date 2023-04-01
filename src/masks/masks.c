@@ -6,7 +6,6 @@
 #include "../global.h"
 
 K9_Image *rgb_mask(K9_Image *mask, K9_Image *image, int *lower_bound, int *higher_bound, bool read){
-	// Similar to OpenCV's inRange() function
 	if (image->channels == 1){
 		fprintf(stderr, "\e[1;33mWarning!\e[0m Function rgb_mask() needs 3 channels, returning unmasked image.\n");
 		return mask;
@@ -21,6 +20,8 @@ K9_Image *rgb_mask(K9_Image *mask, K9_Image *image, int *lower_bound, int *highe
 			update_input_buffer(image, global_item_size);
 		if (mask->mem_id == NULL)
 			update_output_buffer(mask, psize);
+		if (mask->image == NULL && read)
+			mask->image = (uint8_t *)malloc(psize);
 		read_cl_program(prog, mask_id);
 		if (strcmp(global.past_func, func) != 0){
 			bind_cl_function(func, mask_id);
@@ -74,6 +75,8 @@ K9_Image *bitwiseAnd(K9_Image *ret_img, K9_Image *image, K9_Image *mask, bool re
 			update_output_buffer(ret_img, ret_img->height * ret_img->width * ret_img->channels);
 		if (mask->mem_id == NULL)
 			update_input_buffer(mask, size);
+		if (ret_img->image == NULL && read)
+			ret_img->image = (uint8_t *)malloc(global_item_size);
 		read_cl_program(prog, mask_id);
 		if (strcmp(global.past_func, func) != 0){
 			bind_cl_function(func, mask_id);
@@ -125,6 +128,8 @@ K9_Image *bitwiseNot(K9_Image *ret_img, K9_Image *image, K9_Image *mask, bool re
 			update_input_buffer(mask, size);
 		if (ret_img->mem_id == NULL)
 			update_output_buffer(ret_img, ret_img->height * ret_img->width * ret_img->channels);
+		if (ret_img->image == NULL && read)
+			ret_img->image = (uint8_t *)malloc(global_item_size);
 		read_cl_program(prog, mask_id);
 		if (strcmp(global.past_func, func) != 0){
 			bind_cl_function(func, mask_id);
@@ -177,6 +182,8 @@ K9_Image *grayscale_mask(K9_Image *ret_img, K9_Image *image, uint8_t lower_bound
 			update_input_buffer(image, global_item_size);
 		if (ret_img->mem_id == NULL)
 			update_output_buffer(ret_img, ret_img->height * ret_img->width * ret_img->channels);
+		if (ret_img->image == NULL && read)
+			ret_img->image = (uint8_t *)malloc(global_item_size);
 		read_cl_program(prog, mask_id);
 		if (strcmp(global.past_func, func) != 0){
 			bind_cl_function(func, mask_id);

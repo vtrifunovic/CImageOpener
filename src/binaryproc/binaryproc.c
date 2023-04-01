@@ -20,8 +20,10 @@ K9_Image *hit_x_miss(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read)
 		if (image->mem_id == NULL)
 			update_input_buffer(image, global_item_size);
 		if (ret_img->mem_id == NULL)
-			update_output_buffer(ret_img, ret_img->height * ret_img->width * ret_img->channels);
-		read_cl_program(prog, bin_id);
+            update_output_buffer(ret_img, global_item_size);
+        if (ret_img->image == NULL && read)
+            ret_img->image = (uint8_t *)malloc(global_item_size);
+        read_cl_program(prog, bin_id);
 		if (strcmp(global.past_func, func) != 0){
 			bind_cl_function(func, bin_id);
 			strcpy(global.past_func, func);
@@ -35,7 +37,7 @@ K9_Image *hit_x_miss(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read)
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_mem), (void *)&kern_mem_obj);
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_uchar), (void *)&kernelsize);
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 4, sizeof(cl_int), (void *)&image->width);
-
+        
         if (read)
             ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
         else 
@@ -88,7 +90,9 @@ K9_Image *bin_dilation(K9_Image *ret_img, K9_Image *image, Kernel kern, bool rea
 			update_input_buffer(image, global_item_size);
 		if (ret_img->mem_id == NULL)
 			update_output_buffer(ret_img, ret_img->height * ret_img->width * ret_img->channels);
-		read_cl_program(prog, bin_id);
+        if (ret_img->image == NULL && read)
+            ret_img->image = (uint8_t *)malloc(global_item_size);
+        read_cl_program(prog, bin_id);
 		if (strcmp(global.past_func, func) != 0){
 			bind_cl_function(func, bin_id);
 			strcpy(global.past_func, func);
@@ -180,7 +184,9 @@ K9_Image *bin_erosion(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read
 			update_input_buffer(image, global_item_size);
 		if (ret_img->mem_id == NULL)
 			update_output_buffer(ret_img, ret_img->height * ret_img->width * ret_img->channels);
-		read_cl_program(prog, bin_id);
+        if (ret_img->image == NULL && read)
+            ret_img->image = (uint8_t *)malloc(global_item_size);
+        read_cl_program(prog, bin_id);
 		if (strcmp(global.past_func, func) != 0){
 			bind_cl_function(func, bin_id);
 			strcpy(global.past_func, func);
@@ -270,12 +276,12 @@ static uint8_t A(uint8_t a1, uint8_t a2){
 // This might need some TLC soon
 K9_Image *thinning(K9_Image *ret_img, K9_Image *image, bool read){
     int totalpixels = image->width * image->height * image->channels;
-    K9_Image tmp = {
-        .width = image->width,
-        .height = image->height,
-        .channels = image->channels,
-        .image = (uint8_t *)malloc(totalpixels)
-    };
+    K9_Image *tmp = malloc(sizeof(K9_Image)); 
+    tmp->channels = image->channels;
+    tmp->height = image->height;
+    tmp->width = image->width;
+    tmp->mem_id = NULL;
+    tmp->image = (uint8_t *)malloc(totalpixels);
     if (global.enable_gpu == true){
         char prog[] = "./binaryproc/binaryproc.cl";
         char func[] = "gh_thin";
@@ -285,19 +291,22 @@ K9_Image *thinning(K9_Image *ret_img, K9_Image *image, bool read){
 			update_input_buffer(image, global_item_size);
 		if (ret_img->mem_id == NULL)
 			update_output_buffer(ret_img, ret_img->height * ret_img->width * ret_img->channels);
-		read_cl_program(prog, bin_id);
+        if (ret_img->image == NULL && read)
+            ret_img->image = (uint8_t *)malloc(global_item_size);
+        read_cl_program(prog, bin_id);
 		if (strcmp(global.past_func, func) != 0){
 			bind_cl_function(func, bin_id);
 			strcpy(global.past_func, func);
 		}
         uint8_t iter = 0;
         bool stop = false;
+        // tmp use didn't work cuz there was nothing in image memory (all in VRAM)
         while (!stop){
-            memcpy(tmp.image, ret_img->image, totalpixels);
+            memcpy(tmp->image, ret_img->image, totalpixels);
             set_main_args(image->mem_id, ret_img->mem_id);
             global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_int), (void *)&image->width);
             global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_uchar), (void *)&iter);
-            ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
+            run_kernel_no_return(global_item_size);
             iter++;
 
             set_main_args(ret_img->mem_id, image->mem_id);
@@ -306,27 +315,28 @@ K9_Image *thinning(K9_Image *ret_img, K9_Image *image, bool read){
             ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
 
             iter = 0;
-            stop = compare(*ret_img, tmp);
+            stop = compare(*ret_img, *tmp);
         }
+        global.gpu_values.ret = clReleaseMemObject(tmp->mem_id);
     } else {
         bool stop = false;
-        memcpy(tmp.image, image->image, totalpixels);
+        memcpy(tmp->image, image->image, totalpixels);
         while (!stop){
             for (uint8_t loops = 0; loops < 2; loops++){
                 for (int x = 0; x < totalpixels; x++){
-                    if (tmp.image[x] == 0){
+                    if (tmp->image[x] == 0){
                         ret_img->image[x] = 0;
                         continue;
                     }
-                    uint8_t p1 = tmp.image[x]/255;
-                    uint8_t p2 = tmp.image[x-image->width]/255;
-                    uint8_t p3 = tmp.image[x-image->width+1]/255;
-                    uint8_t p4 = tmp.image[x+1]/255;
-                    uint8_t p5 = tmp.image[x+1+image->width]/255;
-                    uint8_t p6 = tmp.image[x+image->width]/255;
-                    uint8_t p7 = tmp.image[x+image->width-1]/255;
-                    uint8_t p8 = tmp.image[x-1]/255;
-                    uint8_t p9 = tmp.image[x-1-image->width]/255;
+                    uint8_t p1 = tmp->image[x]/255;
+                    uint8_t p2 = tmp->image[x-image->width]/255;
+                    uint8_t p3 = tmp->image[x-image->width+1]/255;
+                    uint8_t p4 = tmp->image[x+1]/255;
+                    uint8_t p5 = tmp->image[x+1+image->width]/255;
+                    uint8_t p6 = tmp->image[x+image->width]/255;
+                    uint8_t p7 = tmp->image[x+image->width-1]/255;
+                    uint8_t p8 = tmp->image[x-1]/255;
+                    uint8_t p9 = tmp->image[x-1-image->width]/255;
 
                     uint8_t check1 = p2+p3+p4+p5+p6+p7+p8+p9;
                     check1 = check1 >= 2 ? check1 : 0;
@@ -344,15 +354,16 @@ K9_Image *thinning(K9_Image *ret_img, K9_Image *image, bool read){
                     if (check1 != 0 && check2 == 0 && check3 == 0 && check4 == 1){
                         ret_img->image[x] = 0;
                     } else {
-                        ret_img->image[x] = tmp.image[x];
+                        ret_img->image[x] = tmp->image[x];
                     }
                 }
-                stop = compare(*ret_img, tmp);
-                memcpy(tmp.image, ret_img->image, totalpixels);
+                stop = compare(*ret_img, *tmp);
+                memcpy(tmp->image, ret_img->image, totalpixels);
             }
         }
+        free(tmp->image);
+        free(tmp);
     }
-    free(tmp.image);
     return ret_img;
 }
 

@@ -32,6 +32,17 @@ static void fps_count(GLFWwindow *window){
     gettimeofday(&start, NULL);
 }
 
+bool handle_inputs(GLFWwindow *window){
+    glfwPollEvents();
+    if (glfwWindowShouldClose(window))
+        return true;
+    int q_key = glfwGetKey(window, 81);
+    if (q_key == GLFW_PRESS){
+        return true;
+    }
+    return false;
+}
+
 void show_image(GLFWwindow *window, K9_Image image, bool show_fps){
     if (pastsize != image.width * image.height){
         unbind_texture();
@@ -115,6 +126,10 @@ K9_Image *load_video_frame(K9_Image *ret_img, K9_Video video, int ret){
         fflush(video.pipein);
         pclose(video.pipein);
         ret_img->channels = 0;
+    }
+    if (ret_img->mem_id != NULL){
+        clReleaseMemObject(ret_img->mem_id);
+        ret_img->mem_id = NULL;
     }
     return ret_img;
 }
@@ -255,13 +270,17 @@ K9_Image *create_img(int width, int height, int channels){
     return ret_img;
 }
 
-K9_Image *create_img_template(K9_Image *image){
+K9_Image *create_img_template(K9_Image *image, bool alloc_mem){
     K9_Image *ret_img = malloc(sizeof(K9_Image));
     ret_img->channels = image->channels;
     ret_img->height = image->height;
     ret_img->width = image->width;
     ret_img->mem_id = NULL;
-    ret_img->image = (uint8_t *)malloc(image->width * image->height * image->channels);
+    // No point to allocate data if its going str8 to gpu as a buffer
+    if (global.enable_gpu && !alloc_mem)
+        ret_img->image = NULL; 
+    else
+        ret_img->image = (uint8_t *)malloc(image->width * image->height * image->channels);
     return ret_img;
 }
 

@@ -7,7 +7,7 @@ import argparse
 import re
 
 compiler = "gcc "
-link_files = " -lGL -lglfw -lm -Werror -lOpenCL -lGLEW"
+link_files = " -lGL -lglfw -lm -Werror -lOpenCL -lGLEW "
 
 def extract_headers(cfile):
     possible_files = []
@@ -46,7 +46,6 @@ def extract_project_files(comp_file):
             if q not in valid_files and os.path.isfile(q):
                 valid_files.append(q)
         g.close()
-    # DO NOT FUCKING MOVE AGAIN
     return " ".join(valid_files)
 
 

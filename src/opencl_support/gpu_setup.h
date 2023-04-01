@@ -8,6 +8,7 @@ typedef struct gpu_values {
     cl_command_queue command_queue;
     cl_kernel kernel;
     size_t localsize;
+    size_t totalpixels;
 } GPU_Values;
 
 struct node {
@@ -30,6 +31,15 @@ void update_input_buffer(K9_Image *image, int totalpixels);
 void set_main_args(cl_mem input, cl_mem output);
 uint8_t *run_kernel(size_t global_item_size, K9_Image ret_img, size_t return_size);
 void run_kernel_no_return(size_t global_item_size);
+
+/*! @brief Reads the image buffer stored on the GPU back into Ram.
+ *  
+ * @param[in] image The image whose data will be read back into memory
+ * @return Same image, but with updated image data stored in Ram.
+ */
+uint8_t *read_mem_buffer(K9_Image *image);
+
+void recalculate_local_workgroups(size_t size);
 
 // Frees the stored gpu values. Include at the end of program.
 void K9_free_gpu(void);

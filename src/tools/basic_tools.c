@@ -5,63 +5,60 @@
 #include <stdio.h>
 #include "../global.h"
 
-// TLC Needed
 K9_Image *blur(K9_Image *ret_img, K9_Image *image, Kernel kern, int iterations, bool read){
     iterations = abs(iterations);
     size_t totalpixels = image->width * image->height * image->channels;
     uint8_t kernelsize = kern.width * kern.height;
+    // creating temporary image to store data so we can do multiple iterations
+    K9_Image *tmpimg = malloc(sizeof(K9_Image));
+    tmpimg->width = image->width;
+    tmpimg->height = image->height;
+    tmpimg->channels = image->channels;
+    tmpimg->mem_id = NULL;
+    tmpimg->image = (uint8_t *)malloc(totalpixels);
+    memcpy(tmpimg->image, image->image, totalpixels);
     if (global.enable_gpu == true){
         char prog[] = "./tools/basic_tools.cl";
         char func[] = "blur";
         uint16_t tool_id = 540;
-        if (image->mem_id == NULL)
-            update_input_buffer(image, totalpixels);
+        if (tmpimg->mem_id == NULL)
+            update_input_buffer(tmpimg, totalpixels);
         if (ret_img->mem_id == NULL)
-            update_output_buffer(ret_img, ret_img->height * ret_img->width * ret_img->channels);
+            update_output_buffer(ret_img, totalpixels);
+        if (ret_img->image == NULL && read)
+            ret_img->image = (uint8_t *)malloc(totalpixels);
         read_cl_program(prog, tool_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, tool_id);
             strcpy(global.past_func, func);
 		}
-        set_main_args(image->mem_id, ret_img->mem_id);
+        set_main_args(tmpimg->mem_id, ret_img->mem_id);
 
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_uchar), (void *)&kernelsize);
-        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_int), (void *)&image->width);
-        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 4, sizeof(cl_uchar), (void *)&image->channels);
+        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_int), (void *)&tmpimg->width);
+        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 4, sizeof(cl_uchar), (void *)&tmpimg->channels);
 
-        if (read)
-            iterations -= 1;
-
-        for (int i = 0; i < iterations; i ++){
+        for (int i = 0; i < iterations; i++){
             run_kernel_no_return(totalpixels);
-            //if (i%2==0)
-            //    set_main_args(ret_img->mem_id, image->mem_id);
-            //else
-            //    set_main_args(image->mem_id, ret_img->mem_id);
+            if (i%2==0)
+                set_main_args(ret_img->mem_id, tmpimg->mem_id);
+            else
+                set_main_args(tmpimg->mem_id, ret_img->mem_id);
         }
         if (read)
-            ret_img->image = run_kernel(totalpixels, *ret_img, totalpixels);
+            ret_img->image = read_mem_buffer(ret_img);
+        global.gpu_values.ret = clReleaseMemObject(tmpimg->mem_id);
     } else {
-        // creating temporary image to store data so we can do multiple iterations
-        K9_Image tmpimg = {
-            .width = image->width,
-            .height = image->height,
-            .channels = image->channels,
-            .image = (uint8_t *)malloc(totalpixels),
-        };
-        memcpy(tmpimg.image, image->image, totalpixels);
-        if (tmpimg.channels > 3)
-            tmpimg.channels = 3;
         int comp_iters = 0;
         while (comp_iters != iterations){
             for (int x = 0; x < totalpixels; x++){
                 int avg_col = 0, loops = 0;
                 for (int y = 0; y < kern.width; y++){
                     for (int z = 0; z < kern.height; z++){
-                        int curr_val = x + (y - (kern.width / 2))*tmpimg.channels + ((z - (kern.height / 2)) * tmpimg.width)*tmpimg.channels;
+                        int curr_val = x + (y - (kern.width / 2))*tmpimg->channels + ((z - (kern.height / 2)) * tmpimg->width)*tmpimg->channels;
                         if (curr_val > totalpixels || curr_val < 0) //OOB MEM CHECK
                             continue; 
-                        avg_col += tmpimg.image[curr_val];
+                        avg_col += tmpimg->image[curr_val];
                         loops++;
                     }
                 }
@@ -71,27 +68,29 @@ K9_Image *blur(K9_Image *ret_img, K9_Image *image, Kernel kern, int iterations, 
                     ret_img->image[x] = avg_col/loops;
             }
             if (comp_iters != iterations)
-                memcpy(tmpimg.image, ret_img->image, totalpixels);
+                memcpy(tmpimg->image, ret_img->image, totalpixels);
             comp_iters++;
         }
-        free(tmpimg.image);
     }
+    free(tmpimg->image);
+    free(tmpimg);
     return ret_img;
 }
 
 K9_Image *subtract(K9_Image *ret_img, K9_Image *img1, K9_Image *img2, bool read){
-    int totalpixels = img1->width * img1->height * img1->channels;
+    size_t totalpixels = img1->width * img1->height * img1->channels;
     if (global.enable_gpu == true){
         char prog[] = "./tools/basic_tools.cl";
         char func[] = "subtract";
         uint16_t tool_id = 540;
-        size_t global_item_size = img1->width * img1->height * img1->channels;
         if (img1->mem_id == NULL)
             update_input_buffer(img1, totalpixels);
         if (img2->mem_id == NULL)
             update_input_buffer(img2, totalpixels);
         if (ret_img->mem_id == NULL)
-            update_output_buffer(ret_img, ret_img->height * ret_img->width * ret_img->channels);
+            update_output_buffer(ret_img, totalpixels);
+        if (ret_img->image == NULL && read)
+            ret_img->image = (uint8_t *)malloc(totalpixels);
         read_cl_program(prog, tool_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, tool_id);
@@ -103,9 +102,9 @@ K9_Image *subtract(K9_Image *ret_img, K9_Image *img1, K9_Image *img2, bool read)
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_mem), (void *)&img2->mem_id);
         
         if (read)
-           ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
+           ret_img->image = run_kernel(totalpixels, *ret_img, totalpixels);
         else
-            run_kernel_no_return(global_item_size);
+            run_kernel_no_return(totalpixels);
 
     }else{
         for (int x = 0; x < totalpixels; x++){
@@ -124,8 +123,12 @@ K9_Image *add(K9_Image *ret_img, K9_Image *img1, K9_Image *img2, bool read){
         size_t global_item_size = img1->width * img1->height * img1->channels;
         if (img1->mem_id == NULL)
             update_input_buffer(img1, totalpixels);
+        if (img2->mem_id == NULL)
+            update_input_buffer(img2, totalpixels);
         if (ret_img->mem_id == NULL)
             update_output_buffer(ret_img, ret_img->height * ret_img->width * ret_img->channels);
+        if (ret_img->image == NULL && read)
+            ret_img->image = (uint8_t *)malloc(global_item_size);
         read_cl_program(prog, tool_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, tool_id);
@@ -293,6 +296,8 @@ K9_Image *gray_morph(K9_Image *ret_img, K9_Image *image, Kernel kern, int type, 
             update_input_buffer(image, global_item_size);
         if (ret_img->mem_id == NULL)
             update_output_buffer(ret_img, ret_img->height * ret_img->width * ret_img->channels);
+        if (ret_img->image == NULL && read)
+            ret_img->image = (uint8_t *)malloc(global_item_size);
         read_cl_program(prog, tool_id);
         if (strcmp(global.past_func, func) != 0){
             bind_cl_function(func, tool_id);

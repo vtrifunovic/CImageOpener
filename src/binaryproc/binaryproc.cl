@@ -65,7 +65,7 @@ static char A(char a1, char a2){
 
 __kernel void gh_thin(__global const uchar *in_image, __global uchar *out_image, int width, uchar iteration){
     int x = get_global_id(0);
-    if (in_image[x] == 0){
+    if (in_image[x] != 255){
         out_image[x] = 0;
         return;
     }

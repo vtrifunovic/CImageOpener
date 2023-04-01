@@ -50,34 +50,51 @@ __kernel void rgb_to_hsv(__global const uchar *in_image, __global uchar *out_ima
 }
 
 // calculating where the x position of our pixel would be if we used a 2d array
-int calculate_pos_x(int in, int size){
-    int ret = in%size-1;
-    if (ret == -1){
-        return size-1;
-    }
-    return ret;
+int calculate_pos_x(int in, int width, int height){
+    return (in/width)%height;
 }
 
 // calculating where the y position of our pixel would be if we used a 2d array
-int calculate_pos_y(int in, int size){
-    if (calculate_pos_x(in, size) == size-1)
-        return in/size -1;
-    return in/size;
+int calculate_pos_y(int in, int width){
+    return in%width-1;
 }
 
 __kernel void resize_img_nearest(__global const uchar *in_image, __global uchar *out_image, __global const double *scale, __global const int *sizes){
     int x = get_global_id(0);
-
+    // x_loc refers to x position in x down y left type grid
     // SCALE: sizex = 0 :: sizey = 1 
-    // SIZES: ret.width = 0 :: ret.height = 1 :: ret.chan = 2
-    if (x%3 == 0){
-        int x_loc = calculate_pos_x(x, sizes[0]);
-        int y_loc = calculate_pos_y(x, sizes[0]);
+    // SIZES: ret.width = 0 :: ret.height = 1 :: ret.chan = 2 :: image.width = 3
+    if (x%sizes[2] == 0){
+        int x_loc = calculate_pos_x(x/sizes[2], sizes[0], sizes[1]);
+        int y_loc = calculate_pos_y(x/sizes[2], sizes[0]);
         double posx = floor(y_loc*scale[0]);
         double posy = floor(x_loc*scale[1]);
         for (uchar z = 0; z < sizes[2]; z++){
-            out_image[((x_loc*sizes[0])+y_loc)*sizes[2]+z] = 
-            in_image[((int)(posy*sizes[0])+(int)posx)*sizes[2]+z];
+            out_image[(x_loc*sizes[0]+y_loc)*sizes[2]+z] = in_image[(int)(posy*sizes[3]+posx)*sizes[2]+z];
+        }
+    }
+}
+
+__kernel void resize_img_billinear(__global const uchar *in_image, __global uchar *out_image, __global const double *scale, __global const int *sizes){
+    int x = get_global_id(0);
+
+    // Scales are swapped for this one
+    if (x%sizes[2] == 0){
+        int x_loc = calculate_pos_x(x/sizes[2], sizes[0], sizes[1]);
+        int y_loc = calculate_pos_y(x/sizes[2], sizes[0]);
+        float sizex = (x_loc + 0.5) * (scale[1])-0.5;
+        float sizey = (y_loc + 0.5) * (scale[0])-0.5;
+        int xpoi = (int)sizex;
+        int ypoi = (int)sizey;
+        float x_dist = sizex - xpoi;
+        float y_dist = sizey - ypoi;
+        for (uchar z = 0; z < sizes[2]; z++){
+            uchar a = in_image[(int)(xpoi*sizes[3]+ypoi)*sizes[2]+z];
+            uchar b = in_image[(int)((xpoi+1)*sizes[3]+ypoi)*sizes[2]+z];
+            uchar c = in_image[(int)(xpoi*sizes[3]+(ypoi+1))*sizes[2]+z];
+            uchar d = in_image[(int)((xpoi+1)*sizes[3]+(ypoi+1))*sizes[2]+z];
+
+            out_image[(x_loc*sizes[0]+y_loc)*sizes[2]+z] =  a*(1-x_dist)*(1-y_dist) +b*(x_dist)*(1-y_dist) + c*(1-x_dist)*(y_dist) + d*(x_dist)*y_dist;
         }
     }
 }

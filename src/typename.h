@@ -1,5 +1,5 @@
 #define K9_NEAREST 0xA0
-#define K9_BILLINEAR 0xA1
+#define K9_BILINEAR 0xA1
 #define K9_BICUBIC 0xA2
 #define K9_FILL 0xA3
 #define K9_NOFILL 0xA4

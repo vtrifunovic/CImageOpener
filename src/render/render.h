@@ -6,6 +6,9 @@
 #define CL_TARGET_OPENCL_VERSION 220
 #include <CL/cl.h>
 
+#define GET_PIXEL(x, y, z, width, chan) ((x*width+y)*chan+z)
+#define GET_PIXEL_GRAY(x, y, width) (x * width + y)
+
 // Image struct
 typedef struct k9_image{
     int width;
@@ -24,6 +27,13 @@ typedef struct k9_video{
     FILE *pipein;
 } K9_Video;
 
+/*! @brief Handles user input on display window. Returns True if window should close.
+ * Returns False if window should stay open. Will also handle other user inputs.
+ *
+ * @param[in] window Display window
+ * @return True or False if window should close
+ */
+bool handle_inputs(GLFWwindow *window);
 /*! @brief Shows the selected image in the chosen window
  *
  *  @param[in] window The window the image will be displayed in
@@ -85,9 +95,11 @@ K9_Image *create_img(int width, int height, int channels);
 /*! @brief Similar to the @ref create_img function, this function creates a new image, but uses a pre-existing K9_Image as a template to copy metadata from. It creates a new image "object" based on the dimensions stored in the input struct.
  * 
  * @param[in] image The image whose parameters will be copied into a new structure.
+ * @param[in] alloc_mem Whether to allocate memory for image on RAM. This will be ignored if GPU processing is not enabled.
  * @returns New K9_Image struct with same dimensions as the given image. Image data will contain no useful information.
  *
  */
-K9_Image *create_img_template(K9_Image *image);
+K9_Image *create_img_template(K9_Image *image, bool alloc_mem);
+
 // Frees the structure from memory.
 void K9_free(K9_Image *image);
