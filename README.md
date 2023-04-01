@@ -22,12 +22,12 @@ Basic Image Processing engine written in C, used to be the CImageOpener.c file, 
     - RGB to HSV and back
     - RGB to Gray
     - Inversion
-    - Resizing (Nearest Neighbor)
+    - Resizing (Nearest Neighbor & Billinear)
 - Binary
     - Creating kernel
     - Hit-Miss
     - Binary Dilation & Erosion
-    - Thinning (GuoHall)
+    - Thinning (Zhangsuen)
 - Tools
     - Blur
     - Channel split & Re-Merge
@@ -37,9 +37,6 @@ Basic Image Processing engine written in C, used to be the CImageOpener.c file, 
 
 # To-do Features
 - Finish adding OpenCL functions for rest of current features
-- Keep improving performance when GPU is enabled
-- Add multi-image support for GPU processing
-    - Currently only allows 1 image at a time otherwise program will seg. fault
 
 # To-do Fixes
 - Add better debugging/error messages (more detail)
