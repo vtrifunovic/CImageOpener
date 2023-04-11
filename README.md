@@ -29,11 +29,14 @@ Basic Image Processing engine written in C, used to be the CImageOpener.c file, 
     - Binary Dilation & Erosion
     - Thinning (Zhangsuen)
 - Tools
-    - Blur
-    - Channel split & Re-Merge
-    - Adding & Subtracting Images
-    - Crop/Zoom w/ fill & no fill
-    - Dilation & Erosion
+    - Basic tools:
+        - Blur
+        - Channel split & Re-Merge
+        - Adding & Subtracting Images
+        - Crop/Zoom w/ fill & no fill
+        - Dilation & Erosion
+    - Filters:
+        - Median Filter
 
 # To-do Features
 - Finish adding OpenCL functions for rest of current features
