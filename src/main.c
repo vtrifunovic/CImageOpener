@@ -8,6 +8,7 @@
 #include "binaryproc/binaryproc.h"
 #include "conversions/conversions.h"
 #include "tools/basic_tools.h"
+#include "tools/filters.h"
 #include "typename.h"
 
 int press = 0, held = 0;
@@ -60,6 +61,9 @@ int main(int argc, char *argv[]){
     K9_Image *gray = create_img_template(mask, false);
     gray = rgb_to_gray(gray, new_img, true);
 
+    K9_Image *med = create_img_template(new_img, true);
+    med = median_filter(med, new_img, 5, true);
+
     // blurring the image
     K9_Image *blr = create_img_template(new_img, false);
     blr = blur(blr, new_img, kern, 10, true);
@@ -94,7 +98,7 @@ int main(int argc, char *argv[]){
         if (count == 0)
             show_image(window, *new_img, false);
         else if (count == 1)
-            show_image(window, *thin, false);            
+            show_image(window, *med, false);            
         else if (count == 2)
             show_image(window, *blr, false);
         else if (count == 3)

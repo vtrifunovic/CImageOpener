@@ -167,10 +167,10 @@ K9_Image *resize_img(K9_Image *ret_img, K9_Image *image, vec2 scale, int type, b
         int sizes[] = {ret_img->width, ret_img->height, ret_img->channels, image->width};
 
         cl_mem scale_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, 2 * sizeof(double), NULL, &global.gpu_values.ret);
-        cl_mem sizes_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, 4 * sizeof(int), NULL, &global.gpu_values.ret);
+        cl_mem sizes_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, 3 * sizeof(int), NULL, &global.gpu_values.ret);
 
         global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, scale_mem_obj, CL_TRUE, 0, 2 * sizeof(double), scales, 0, NULL, NULL);
-        global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, sizes_mem_obj, CL_TRUE, 0, 4 * sizeof(int), sizes, 0, NULL, NULL);
+        global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, sizes_mem_obj, CL_TRUE, 0, 3 * sizeof(int), sizes, 0, NULL, NULL);
 
         set_main_args(image->mem_id, ret_img->mem_id);
 
@@ -179,7 +179,7 @@ K9_Image *resize_img(K9_Image *ret_img, K9_Image *image, vec2 scale, int type, b
 
         if (return_item_size > global_item_size){
             global_item_size = return_item_size;
-            recalculate_local_workgroups(return_item_size);
+            recalculate_local_workgroups(return_item_size, 0);
         }
 
         if (read)

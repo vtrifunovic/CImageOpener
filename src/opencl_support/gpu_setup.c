@@ -149,8 +149,11 @@ uint8_t *read_mem_buffer(K9_Image *image){
     return image->image;
 }
 
-void recalculate_local_workgroups(size_t size){
-    set_local_workgroup(size);
+void recalculate_local_workgroups(size_t size, int override){
+    if (override != 0)
+        g.localsize = override;
+    else
+        set_local_workgroup(size);
 }
 
 void K9_free_gpu(void){

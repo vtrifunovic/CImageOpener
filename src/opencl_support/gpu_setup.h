@@ -39,7 +39,7 @@ void run_kernel_no_return(size_t global_item_size);
  */
 uint8_t *read_mem_buffer(K9_Image *image);
 
-void recalculate_local_workgroups(size_t size);
+void recalculate_local_workgroups(size_t size, int override);
 
 // Frees the stored gpu values. Include at the end of program.
 void K9_free_gpu(void);

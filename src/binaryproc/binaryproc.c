@@ -17,16 +17,16 @@ K9_Image *hit_x_miss(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read)
         char func[] = "hit_x_miss";
         uint16_t bin_id = 640;
         size_t global_item_size = image->width * image->height * image->channels;
-		if (image->mem_id == NULL)
-			update_input_buffer(image, global_item_size);
-		if (ret_img->mem_id == NULL)
+        if (image->mem_id == NULL)
+            update_input_buffer(image, global_item_size);
+        if (ret_img->mem_id == NULL)
             update_output_buffer(ret_img, global_item_size);
         if (ret_img->image == NULL && read)
             ret_img->image = (uint8_t *)malloc(global_item_size);
         read_cl_program(prog, bin_id);
 		if (strcmp(global.past_func, func) != 0){
-			bind_cl_function(func, bin_id);
-			strcpy(global.past_func, func);
+            bind_cl_function(func, bin_id);
+            strcpy(global.past_func, func);
 		}
         cl_mem kern_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, kernelsize * sizeof(int16_t), NULL, &global.gpu_values.ret);
 
@@ -41,7 +41,7 @@ K9_Image *hit_x_miss(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read)
         if (read)
             ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
         else 
-			run_kernel_no_return(global_item_size);
+            run_kernel_no_return(global_item_size);
 
         global.gpu_values.ret = clReleaseMemObject(kern_mem_obj);
     } else {
@@ -300,7 +300,7 @@ K9_Image *thinning(K9_Image *ret_img, K9_Image *image, bool read){
 		}
         uint8_t iter = 0;
         bool stop = false;
-        // tmp use didn't work cuz there was nothing in image memory (all in VRAM)
+        // tmp use to not work cuz there was nothing in image memory (all in VRAM)
         while (!stop){
             memcpy(tmp->image, ret_img->image, totalpixels);
             set_main_args(image->mem_id, ret_img->mem_id);
