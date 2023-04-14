@@ -1,18 +1,18 @@
-__kernel void blur(__global const uchar *in_image, __global uchar *out_image, uchar dim, int width, uchar channels){
+__kernel void blur(__global const uchar *in_image, __global uchar *out_image, uchar dim, int width, uchar chan){
     int x = get_global_id(0);
     int totalcolor = 0;
-    uchar h = sqrt((float)dim)-1;
-    for (uchar i = 0; i < h; i++){
-        for (uchar j = 0; j < h+1; j++){
-            if (i == 0 && j == h)
+    char order = sqrt((float)dim);
+    char p_back = order/2;
+    char start = p_back-order+1;
+    char shift = abs(p_back-order+1);
+    for (char y = start; y <= p_back; y++){
+        for (char z = start; z <= p_back; z++){
+            if (x+z*chan+width*y*chan < 0)
                 continue;
-            else if (x-(i*width-i)*channels-j*channels < 0) // OOB Check
-                continue;
-            totalcolor += in_image[x-(i*width-i)*channels-j*channels];
-            totalcolor += in_image[x+(i*width-i)*channels+j*channels];
+            totalcolor += in_image[x+z*chan+width*y*chan];
         }
     }
-    out_image[x] = (totalcolor - in_image[x])/dim;
+    out_image[x] = totalcolor/dim;
 }
 
 __kernel void add(__global const uchar *in_image, __global uchar *out_image, __global const uchar *img2){
@@ -32,39 +32,37 @@ __kernel void subtract(__global const uchar *in_image, __global uchar *out_image
         out_image[x] = in_image[x] - img2[x];
 }
 
-__kernel void g_dilated(__global const uchar *in_image, __global uchar *out_image, __global const short *kern, uchar dim, int width, uchar channels){
+__kernel void g_dilated(__global const uchar *in_image, __global uchar *out_image, __global const short *kern, uchar dim, int width, uchar chan){
     int x = get_global_id(0);
     uchar max = 0;
-    uchar h = sqrt((float)dim)-1;
-    for (uchar i = 0; i < h; i++){
-        for (uchar j = 0; j < h+1; j++){
-            if (i == 0 && j == h)
+    char order = sqrt((float)dim);
+    char p_back = order/2;
+    char start = p_back-order+1;
+    char shift = abs(p_back-order+1);
+    for (char y = start; y <= p_back; y++){
+        for (char z = start; z <= p_back; z++){
+            if (x+z*chan+width*y*chan < 0)
                 continue;
-            if (x-(i*width-i)*channels-j*channels < 0)
-                continue;
-            if (in_image[x-(i*width-i)*channels-j*channels] > max)
-                max = in_image[x-(i*width-i)*channels-j*channels];
-            if (in_image[x+(i*width-i)*channels+j*channels] > max)
-                max = in_image[x+(i*width-i)*channels+j*channels];
+            if (in_image[x+z*chan+width*y*chan] > max)
+                max = in_image[x+z*chan+width*y*chan];
         }
     }
     out_image[x] = max;
 }
 
-__kernel void g_eroded(__global const uchar *in_image, __global uchar *out_image, __global const short *kern, uchar dim, int width, uchar channels){
+__kernel void g_eroded(__global const uchar *in_image, __global uchar *out_image, __global const short *kern, uchar dim, int width, uchar chan){
     int x = get_global_id(0);
     short min = 255;
-    uchar h = sqrt((float)dim)-1;
-    for (uchar i = 0; i < h; i++){
-        for (uchar j = 0; j < h+1; j++){
-            if (i == 0 && j == h)
+    char order = sqrt((float)dim);
+    char p_back = order/2;
+    char start = p_back-order+1;
+    char shift = abs(p_back-order+1);
+    for (char y = start; y <= p_back; y++){
+        for (char z = start; z <= p_back; z++){
+            if (x+z*chan+width*y*chan < 0)
                 continue;
-            if (x-(i*width-i)*channels-j*channels < 0)
-                continue;
-            if (in_image[x-(i*width-i)*channels-j*channels] < min)
-                min = in_image[x-(i*width-i)*channels-j*channels];
-            if (in_image[x+(i*width-i)*channels+j*channels] < min)
-                min = in_image[x+(i*width-i)*channels+j*channels];
+            if (in_image[x+z*chan+width*y*chan] < min)
+                min = in_image[x+z*chan+width*y*chan];
         }
     }
     out_image[x] = min;

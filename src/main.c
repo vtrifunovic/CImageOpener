@@ -34,7 +34,8 @@ int main(int argc, char *argv[]){
     {1, 1, 1,
     1, 1, 1,
     1, 1, 1};
-    kern = create_kernel(a, sizeof(a) / sizeof(int));
+    kern = create_kernel(a, sizeof(a) / sizeof(int), false);
+    //kern = quick_kernel(7, 7);
 
     // setting upper and lower bound for rgb masking.
     // Creating new image structure to hold the masked values in, then running the mask.
@@ -47,6 +48,9 @@ int main(int argc, char *argv[]){
     // binary dilation
     K9_Image *dil = create_img_template(mask, false);
     dil = bin_dilation(dil, mask, kern, true);
+
+    K9_Image *ero = create_img_template(mask, false);
+    ero = bin_erosion(ero, mask, kern, true);
 
     // binary hit miss
     K9_Image *hxm = create_img_template(mask, false);
@@ -62,7 +66,17 @@ int main(int argc, char *argv[]){
     gray = rgb_to_gray(gray, new_img, true);
 
     K9_Image *med = create_img_template(new_img, true);
-    med = median_filter(med, new_img, 5, true);
+    med = median_filter(med, new_img, 3, true);
+    // [1, -1, 1], [-1, 1, -1], [1, -1, 1]
+    int g[] = {
+        1, -1, 1,
+        -1, 1, -1, 
+        1, -1, 1
+    };
+    Kernel k2 = create_kernel(g, sizeof(a) / sizeof(int), true);
+
+    K9_Image *hp = create_img_template(new_img, true);
+    hp = convolve(hp, new_img, k2, true);
 
     // blurring the image
     K9_Image *blr = create_img_template(new_img, false);
@@ -86,6 +100,7 @@ int main(int argc, char *argv[]){
 
     // initializing glfw window
     GLFWwindow *window = init_window(*new_img, "Engine Showcase");
+
     // looping and displaying images based on how many times 'n' key is pressed
     while (!handle_inputs(window)){
         int n_key = glfwGetKey(window, GLFW_KEY_N);
@@ -98,11 +113,11 @@ int main(int argc, char *argv[]){
         if (count == 0)
             show_image(window, *new_img, false);
         else if (count == 1)
-            show_image(window, *med, false);            
+            show_image(window, *hp, false);            
         else if (count == 2)
-            show_image(window, *blr, false);
+            show_image(window, *med, false);
         else if (count == 3)
-            show_image(window, *hxm, false);
+            show_image(window, *dil, false);
         else if (count == 4)
             show_image(window, *and, false);
         else if (count == 5)
