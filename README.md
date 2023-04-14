@@ -2,7 +2,7 @@
 Basic Image Processing engine written in C, used to be the CImageOpener.c file, but have now re-structured it to be much cleaner and better organized.
 
 <div align="left">
-    <img src="/phots/convolution.png" width="500px"</img> 
+    <img src="/photos/convolution.png" width="400px"</img> 
 </div>
 
 # Build
