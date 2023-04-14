@@ -7,11 +7,13 @@ Basic Image Processing engine written in C, used to be the CImageOpener.c file, 
     - GLEW
 - OpenCL
 - GLFW
+
+# Dependencies
 - FFMPEG
 
 # Features
 - Processing
-    - CPU & GPU Processing (in progress)
+    - CPU & GPU Processing
 - Rendering
     - Read & Display Images
     - Read & Display Videos
@@ -37,6 +39,7 @@ Basic Image Processing engine written in C, used to be the CImageOpener.c file, 
         - Dilation & Erosion
     - Filters:
         - Median Filter
+        - Convolution
 
 # To-do Features
 - Finish adding OpenCL functions for rest of current features
@@ -44,5 +47,3 @@ Basic Image Processing engine written in C, used to be the CImageOpener.c file, 
 # To-do Fixes
 - Add better debugging/error messages (more detail)
 - Add & fix up resizing methods
-- Create more dynamic kernels
-
