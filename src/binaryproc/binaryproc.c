@@ -273,23 +273,24 @@ static uint8_t A(uint8_t a1, uint8_t a2){
     return(!a1 && a2);
 }
 
-// This might need some TLC soon
 K9_Image *thinning(K9_Image *ret_img, K9_Image *image, bool read){
     int totalpixels = image->width * image->height * image->channels;
     K9_Image *tmp = malloc(sizeof(K9_Image)); 
     tmp->channels = image->channels;
     tmp->height = image->height;
     tmp->width = image->width;
-    tmp->mem_id = NULL;
     tmp->image = (uint8_t *)malloc(totalpixels);
     if (global.enable_gpu == true){
         char prog[] = "./binaryproc/binaryproc.cl";
         char func[] = "gh_thin";
         uint16_t bin_id = 640;
         size_t global_item_size = image->width * image->height * image->channels;
-		if (image->mem_id == NULL)
-			update_input_buffer(image, global_item_size);
-		if (ret_img->mem_id == NULL)
+        // need to do it like this or it overwrites input memory
+        image->image = read_mem_buffer(*image);
+        memcpy(tmp->image, image->image, global_item_size);
+        // -----------------------------------------------------
+        update_input_buffer(tmp, global_item_size);
+        if (ret_img->mem_id == NULL)
 			update_output_buffer(ret_img, ret_img->height * ret_img->width * ret_img->channels);
         if (ret_img->image == NULL && read)
             ret_img->image = (uint8_t *)malloc(global_item_size);
@@ -300,22 +301,21 @@ K9_Image *thinning(K9_Image *ret_img, K9_Image *image, bool read){
 		}
         uint8_t iter = 0;
         bool stop = false;
-        // tmp use to not work cuz there was nothing in image memory (all in VRAM)
         while (!stop){
-            memcpy(tmp->image, ret_img->image, totalpixels);
-            set_main_args(image->mem_id, ret_img->mem_id);
+            set_main_args(tmp->mem_id, ret_img->mem_id);
             global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_int), (void *)&image->width);
             global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_uchar), (void *)&iter);
             run_kernel_no_return(global_item_size);
             iter++;
 
-            set_main_args(ret_img->mem_id, image->mem_id);
+            set_main_args(ret_img->mem_id, tmp->mem_id);
             global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_int), (void *)&image->width);
             global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_uchar), (void *)&iter);
             ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
 
             iter = 0;
             stop = compare(*ret_img, *tmp);
+            memcpy(tmp->image, ret_img->image, totalpixels);
         }
         global.gpu_values.ret = clReleaseMemObject(tmp->mem_id);
     } else {
@@ -361,19 +361,25 @@ K9_Image *thinning(K9_Image *ret_img, K9_Image *image, bool read){
                 memcpy(tmp->image, ret_img->image, totalpixels);
             }
         }
-        free(tmp->image);
-        free(tmp);
     }
+    free(tmp->image);
+    free(tmp);
     return ret_img;
 }
 
-Kernel create_kernel(int *a, size_t size){
+Kernel create_kernel(int *a, size_t size, bool bin){
     // only works with 1x1, 3x3, 5x5 ... NxN kernels
     Kernel kern = {
         .height = sqrt(size), // fix this
         .width = sqrt(size),  // and this
         .kernel = (int16_t *)malloc(size * sizeof(int16_t)),
     };
+    if (bin){
+        for (int i = 0; i < size; i++){
+            kern.kernel[i] = (int16_t)a[i];
+        }
+        return kern;
+    }
     for (int j = 0; j < size; j++){
         kern.kernel[j] = a[j]*255;
     }

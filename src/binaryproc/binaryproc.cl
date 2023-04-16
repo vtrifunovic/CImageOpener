@@ -6,17 +6,15 @@ __kernel void hit_x_miss(__global const uchar *in_image, __global uchar *out_ima
     out_image[x] = 0;
     if (in_image[x] != kern[dim/2])
         return;
-    // assuming square 3x3 kernel for now
-    uchar h = sqrt((float)dim)-1;
-    for (uchar i = 0; i < h; i++){
-        for (uchar j = 0; j < h+1; j++){
-            if (i == 0 && j == h)
+    char order = sqrt((float)dim);
+    char p_back = order/2;
+    char start = p_back-order+1;
+    char shift = abs(p_back-order+1);
+    for (char y = start; y <= p_back; y++){
+        for (char z = start; z <= p_back; z++){
+            if (x+z+width*y < 0)
                 continue;
-            else if (x-(i*width-i)-j < 0)
-                return;
-            if (kern[dim/2-i*h-j] != in_image[x-(i*width-i)-j] && kern[dim/2-i*h-j] >= 0)
-                return;
-            if (kern[dim/2+i*h+j] != in_image[x+(i*width-i)+j] && kern[dim/2+i*h+j] >= 0)
+            if (kern[order*(y+shift)+(z+shift)] != in_image[x+z+width*y] && kern[order*(y+shift)+(z+shift)] >= 0)
                 return;
         }
     }
@@ -26,17 +24,17 @@ __kernel void hit_x_miss(__global const uchar *in_image, __global uchar *out_ima
 __kernel void bin_dilation(__global const uchar *in_image, __global uchar *out_image, __global const short *kern, uchar dim, int width){
     int x = get_global_id(0);
     out_image[x] = 0;
-    uchar h = sqrt((float)dim)-1;
-    if (kern[dim/2] == in_image[x]){ // matching center elements
-        for (uchar i = 0; i < h; i++){
-            for (uchar j = 0; j < h+1; j++){
-                if (i == 0 && j == h)
-                    continue;
-                else if (x-(i*width-i)-j < 0)
-                    continue;
-                out_image[x-(i*width-i)-j] = MAX(kern[dim/2-i*h-j], in_image[x-(i*width-i)-j]);
-                out_image[x+(i*width-i)+j] = MAX(kern[dim/2+i*h+j], in_image[x+(i*width-i)+j]);
-            }
+    if (kern[dim/2] != in_image[x])
+        return;
+    char order = sqrt((float)dim);
+    char p_back = order/2;
+    char start = p_back-order+1;
+    char shift = abs(p_back-order+1);
+    for (char y = start; y <= p_back; y++){
+        for (char z = start; z <= p_back; z++){
+            if (x+z+width*y < 0)
+                continue;
+            out_image[x+z+width*y] = MAX(kern[order*(y+shift)+(z+shift)], in_image[x+z+width*y]);
         }
     }
 }
@@ -44,17 +42,17 @@ __kernel void bin_dilation(__global const uchar *in_image, __global uchar *out_i
 __kernel void bin_erosion(__global const uchar *in_image, __global uchar *out_image, __global const short *kern, uchar dim, int width){
     int x = get_global_id(0);
     out_image[x] = 255;
-    uchar h = sqrt((float)dim)-1;
-    if (kern[dim/2] != in_image[x]){ // not matching center elements
-        for (uchar i = 0; i < h; i++){
-            for (uchar j = 0; j < h+1; j++){
-                if (i == 0 && j == h)
-                    continue;
-                else if (x-(i*width-i)-j < 0) // OOB Check
-                    continue;
-                out_image[x-(i*width-i)-j] = 0;
-                out_image[x+(i*width-i)+j] = 0;
-            }
+    if (kern[dim/2] == in_image[x])
+        return;
+    char order = sqrt((float)dim);
+    char p_back = order/2;
+    char start = p_back-order+1;
+    char shift = abs(p_back-order+1);
+    for (char y = start; y <= p_back; y++){
+        for (char z = start; z <= p_back; z++){
+            if (x+z+width*y < 0)
+                continue;
+            out_image[x+z+width*y] = kern[order*(y+shift)+(z+shift)] > 0 ? 0 : in_image[x+z+width*y];
         }
     }
 }
@@ -96,20 +94,4 @@ __kernel void gh_thin(__global const uchar *in_image, __global uchar *out_image,
         return;
     }
     out_image[x] = in_image[x];
-}
-
-__kernel void add(__global const uchar *in_image, __global uchar *out_image, __global const uchar *img2){
-    int x = get_global_id(0);
-    if (in_image[x] + img2[x] > 255)
-        out_image[x] = 255;
-    else
-        out_image[x] = in_image[x] + img2[x];
-}
-
-__kernel void subtract(__global const uchar *in_image, __global uchar *out_image, __global const uchar *img2){
-    int x = get_global_id(0);
-    if (in_image[x] - img2[x] < 0)
-        out_image[x] = 0;
-    else
-        out_image[x] = in_image[x] - img2[x];
 }

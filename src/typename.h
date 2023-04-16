@@ -5,3 +5,4 @@
 #define K9_NOFILL 0xA4
 #define K9_DILATION 0xA5
 #define K9_EROSION 0xA6
+#define K9_IGNORE 0xFFFFFF

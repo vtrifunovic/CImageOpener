@@ -37,7 +37,7 @@ void run_kernel_no_return(size_t global_item_size);
  * @param[in] image The image whose data will be read back into memory
  * @return Same image, but with updated image data stored in Ram.
  */
-uint8_t *read_mem_buffer(K9_Image *image);
+uint8_t *read_mem_buffer(K9_Image image);
 
 void recalculate_local_workgroups(size_t size, int override);
 

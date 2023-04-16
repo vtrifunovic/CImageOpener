@@ -70,20 +70,22 @@ int main(int argc, char *argv[]){
         -1, 0, -1,
         0, 1, 0,
     };
-    Kernel kern_x = create_kernel(a, sizeof(a) / sizeof(int));
-    Kernel kern_y = create_kernel(b, sizeof(b) / sizeof(int));
-    Kernel kern_z = create_kernel(c, sizeof(c) / sizeof(int));
-    Kernel kern_a = create_kernel(d, sizeof(d) / sizeof(int));
-    Kernel kern_b = create_kernel(e, sizeof(e) / sizeof(int));
-    Kernel kern_c = create_kernel(f, sizeof(f) / sizeof(int));
-    Kernel kern_d = create_kernel(g, sizeof(g) / sizeof(int));
-    Kernel kern_e = create_kernel(h, sizeof(h) / sizeof(int));
-    Kernel fix = create_kernel(fx, sizeof(fx) / sizeof(int));
-    Kernel kern_dil = create_kernel(dil, sizeof(dil) / sizeof(int));
+    Kernel kern_x = create_kernel(a, sizeof(a) / sizeof(int), false);
+    Kernel kern_y = create_kernel(b, sizeof(b) / sizeof(int), false);
+    Kernel kern_z = create_kernel(c, sizeof(c) / sizeof(int), false);
+    Kernel kern_a = create_kernel(d, sizeof(d) / sizeof(int), false);
+    Kernel kern_b = create_kernel(e, sizeof(e) / sizeof(int), false);
+    Kernel kern_c = create_kernel(f, sizeof(f) / sizeof(int), false);
+    Kernel kern_d = create_kernel(g, sizeof(g) / sizeof(int), false);
+    Kernel kern_e = create_kernel(h, sizeof(h) / sizeof(int), false);
+    Kernel fix = create_kernel(fx, sizeof(fx) / sizeof(int), false);
+    Kernel kern_dil = create_kernel(dil, sizeof(dil) / sizeof(int), false);
 
     K9_Image *mask = create_img(new_img->width, new_img->height, 1);
-    rgb_mask(mask, new_img, lower, higher, false);
-    thinning(mask, mask, true);
+    rgb_mask(mask, new_img, lower, higher, true);
+    K9_Image *thin = create_img_template(mask, true);
+    memcpy(thin->image, mask->image, mask->width*mask->height*mask->channels);
+    thinning(mask, thin, true);
 
     K9_Image *past_mask = create_img_template(mask, false);
     rgb_mask(past_mask, new_img, lower, higher, true);

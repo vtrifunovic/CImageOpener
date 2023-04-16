@@ -46,7 +46,7 @@ K9_Image *blur(K9_Image *ret_img, K9_Image *image, Kernel kern, int iterations, 
                 set_main_args(tmpimg->mem_id, ret_img->mem_id);
         }
         if (read)
-            ret_img->image = read_mem_buffer(ret_img);
+            ret_img->image = read_mem_buffer(*ret_img);
         global.gpu_values.ret = clReleaseMemObject(tmpimg->mem_id);
     } else {
         int comp_iters = 0;

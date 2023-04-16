@@ -4,11 +4,12 @@
 #include "../binaryproc/binaryproc.h"
 
 /*! @brief Blurs an image, with pixel mixing depending on the size of the kernel.
- * 
+ *
  * @param ret_img Return image, blurred output image is stored here
  * @param image Input image, the image thats going to get blurred
  * @param kern Kernel, values don't matter just the size to determine pixel mixing
  * @param iterations How many times the blurring operation should take place, more iterations, more blurry
+ * @param[in] read Whether to read the data into RAM
  * @return Blurred image stored in the ret_img structure
  */
 K9_Image *blur(K9_Image *ret_img, K9_Image *image, Kernel kern, int iterations, bool read);
@@ -17,6 +18,7 @@ K9_Image *blur(K9_Image *ret_img, K9_Image *image, Kernel kern, int iterations, 
  * @param ret_img Return image where the output gets stored
  * @param img1 First image, one being subtracted from
  * @param img2 Second image, one that is subtracting
+ * @param[in] read Whether to read the data into RAM
  * @return Output of img1 - img2
  */
 K9_Image *subtract(K9_Image *ret_img, K9_Image *img1, K9_Image *img2, bool read);
@@ -25,6 +27,7 @@ K9_Image *subtract(K9_Image *ret_img, K9_Image *img1, K9_Image *img2, bool read)
  * @param ret_img Return image where the output gets stored
  * @param img1 First image in addition process
  * @param img2 Second image in addition process
+ * @param[in] read Whether to read the data into RAM
  * @return Output of img1 + img2
  */
 K9_Image *add(K9_Image *ret_img, K9_Image *img1, K9_Image *img2, bool read);
@@ -73,13 +76,14 @@ K9_Image *blend_img(K9_Image *ret_img, K9_Image *image, K9_Image b, float alpha)
  * @return Boolean value of true if images are the same, false if they differ
  */
 bool compare(K9_Image img1, K9_Image img2);
-/*! @brief Grayscale Morphological Processes, based on the type given will determine what will be used. (Will accept 3 channel images). 
+/*! @brief Grayscale Morphological Processes, based on the type given will determine what will be used. (Will accept 3 channel images).
  * Check `type` param to see what acceptable values are.
  *
  * @param ret_img Return image, where output is stored
  * @param image Input image, the image to be processed
  * @param kern Kernel struct determining area of processing
  * @param type K9_EROSION will perform Erosion operation. K9_DILATION will perform dilation.
+ * @param[in] read Whether to read the data into RAM
  * @return Image with requested type of processing.
  */
 K9_Image *gray_morph(K9_Image *ret_img, K9_Image *image, Kernel kern, int type, bool read);

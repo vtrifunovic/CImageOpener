@@ -12,6 +12,7 @@ typedef struct kernel {
  * @param ret_img Return image, stores the output of the hit miss operation
  * @param image Input image that the hit miss operation gets ran on
  * @param kern Input kernel, this determines what pixels are hits and which are miss
+ * @param[in] read Whether to read the data into RAM
  * @return Single channel image where 255's are hits and 0's are misses.
  */
 K9_Image *hit_x_miss(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read);
@@ -20,6 +21,7 @@ K9_Image *hit_x_miss(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read)
  * @param ret_img Return image, stores the output of the dilation
  * @param image Input image that the dilation is performed on
  * @param kern The input kernel used for dilation
+ * @param[in] read Whether to read the data into RAM
  * @return Single channel image of 255's and 0's.
  */
 K9_Image *bin_dilation(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read);
@@ -29,6 +31,7 @@ K9_Image *bin_dilation(K9_Image *ret_img, K9_Image *image, Kernel kern, bool rea
  * @param ret_img Return image, stores the output of the erosion
  * @param image Input image that the erosion is performed on
  * @param kern The input kernel used for erosion
+ * @param[in] read Whether to read the data into RAM
  * @return Single channel image of 255's and 0's.
  */
 K9_Image *bin_erosion(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read);
@@ -36,7 +39,8 @@ K9_Image *bin_erosion(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read
  * More info on GuoHall thinning: https://dl.acm.org/doi/10.1145/62065.62074
  *
  * @param ret_img Return image, stores output of thinning
- * @param image Input image for thinning, must be a binary image 
+ * @param image Input image for thinning, must be a binary image
+ * @param[in] read Whether to read the data into RAM
  * @return Single channel image thinned to one pixel paths.
  */
 K9_Image *thinning(K9_Image *ret_img, K9_Image *image, bool read);
@@ -45,9 +49,10 @@ K9_Image *thinning(K9_Image *ret_img, K9_Image *image, bool read);
  *
  * @param input Input integer array created by user.
  * @param size Size/length of the input array.
+ * @param bin Whether the kernel is binary (0's, 1's and -1's)
  * @returns Kernel structure that can be used for operations.
  */
-Kernel create_kernel(int *input, size_t size);
+Kernel create_kernel(int *input, size_t size, bool bin);
 /*! @brief Creates a wxh sized kernel filled with 1's (255's).
  * This is for when the shape of the kernel isn't important.
  *

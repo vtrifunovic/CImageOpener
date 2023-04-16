@@ -142,11 +142,11 @@ void run_kernel_no_return(size_t global_item_size){
     global.gpu_values.ret = clEnqueueNDRangeKernel(global.gpu_values.command_queue, global.gpu_values.kernel, 1, NULL, &global_item_size, &g.localsize, 0, NULL, NULL);
 }
 
-uint8_t *read_mem_buffer(K9_Image *image){
-    if (image->image == NULL)
-        image->image = (uint8_t *) malloc(image->width*image->height*image->channels);
-    global.gpu_values.ret = clEnqueueReadBuffer(global.gpu_values.command_queue, image->mem_id, CL_TRUE, 0, image->width*image->channels*image->height, image->image, 0, NULL, NULL);
-    return image->image;
+uint8_t *read_mem_buffer(K9_Image image){
+    if (image.image == NULL)
+        image.image = (uint8_t *) malloc(image.width*image.height*image.channels);
+    global.gpu_values.ret = clEnqueueReadBuffer(global.gpu_values.command_queue, image.mem_id, CL_TRUE, 0, image.width*image.channels*image.height, image.image, 0, NULL, NULL);
+    return image.image;
 }
 
 void recalculate_local_workgroups(size_t size, int override){

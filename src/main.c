@@ -66,14 +66,14 @@ int main(int argc, char *argv[]){
     gray = rgb_to_gray(gray, new_img, true);
 
     K9_Image *med = create_img_template(new_img, true);
-    med = median_filter(med, new_img, 3, true);
-    // [1, -1, 1], [-1, 1, -1], [1, -1, 1]
+    med = median_filter(med, new_img, 7, true);
+    
     int g[] = {
-        1, -1, 1,
-        -1, 1, -1, 
-        1, -1, 1
+        1, 0, -1,
+        1, 0, -1, 
+        1, 0, -1
     };
-    Kernel k2 = create_kernel(g, sizeof(a) / sizeof(int), true);
+    Kernel k2 = create_kernel(g, sizeof(g) / sizeof(int), true);
 
     K9_Image *hp = create_img_template(new_img, true);
     hp = convolve(hp, new_img, k2, true);
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]){
 
     // thinning 
     K9_Image *thin = create_img_template(mask, false);
-    thin = thinning(thin, dil, true);
+    thin = thinning(thin, mask, true);
 
     // initializing glfw window
     GLFWwindow *window = init_window(*new_img, "Engine Showcase");
@@ -113,9 +113,9 @@ int main(int argc, char *argv[]){
         if (count == 0)
             show_image(window, *new_img, false);
         else if (count == 1)
-            show_image(window, *hp, false);            
+            show_image(window, *med, false);            
         else if (count == 2)
-            show_image(window, *med, false);
+            show_image(window, *hp, false);
         else if (count == 3)
             show_image(window, *dil, false);
         else if (count == 4)

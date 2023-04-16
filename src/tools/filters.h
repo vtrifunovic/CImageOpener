@@ -6,7 +6,7 @@
  * @param[in] ret_img Return image that stores the output
  * @param[in] image Input image that will get filtered
  * @param[in] order The size of the blur (NxN)
- * @param[in] read Whether to read the data to Ram or not.
+ * @param[in] read Whether to read the data into RAM
  * @returns Image that has had a median filter ran on it.
  */
 K9_Image *median_filter(K9_Image *ret_img, K9_Image *image, uint8_t order, bool read);
@@ -20,3 +20,14 @@ K9_Image *median_filter(K9_Image *ret_img, K9_Image *image, uint8_t order, bool 
  * @returns Convolved image based on the user's input kernel
  */
 K9_Image *convolve(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read);
+
+/*! @brief Performs a gaussian blur on an image.
+ *
+ * @param ret_img Return image where output is stored
+ * @param image Input image that the operation is performed on
+ * @param kern The kernel (preferrably a gaussian one)
+ * @param[in] read Whether to read the data into RAM
+ * @param divisor If you want to override and provide your own external factor. Otherwise provide it K9_IGNORE (0xFFFFFF)
+ * @returns Image that has had a gaussian blur performed on it.
+ */
+K9_Image *gaussian_blur(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read, int divisor);

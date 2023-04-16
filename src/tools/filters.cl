@@ -43,3 +43,20 @@ __kernel void convolve(__global const uchar *in_image, __global uchar *out_image
     total = total > 255 ? 255 : total;
     out_image[x] = total < 0 ? 0 : total;
 }
+
+__kernel void g_blur(__global const uchar *in_image, __global uchar *out_image, __global const short *kern, uchar order, int width, uchar chan, int divisor){
+    int x = get_global_id(0);
+    char p_back = order/2;
+    char start = p_back-order+1;
+    char shift = abs(p_back-order+1);
+    int total = 0;
+    for (char y = start; y <= p_back; y++){
+        for (char z = start; z <= p_back; z++){
+            if (x+z*chan+width*y*chan < 0)
+                continue;
+            total += kern[order*(y+shift)+(z+shift)] * in_image[x+z*chan+width*y*chan];
+        }
+    }
+    total = total/divisor > 255 ? 255 : total/divisor;
+    out_image[x] = total < 0 ? 0 : total;
+}
