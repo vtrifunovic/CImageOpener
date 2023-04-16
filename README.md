@@ -44,6 +44,7 @@ Basic Image Processing engine written in C, used to be the CImageOpener.c file, 
     - Filters:
         - Median Filter
         - Convolution
+        - Gaussian Blur
 
 # To-do Features
 - Finish adding OpenCL functions for rest of current features
