@@ -25,7 +25,7 @@ Basic Image Processing engine written in C, used to be the CImageOpener.c file, 
     - RGB & Grayscale/single-channel mask
     - BitwiseAnd & BitwiseNot
 - Conversions
-    - RGB to HSV and back
+    - RGB to HSV
     - RGB to Gray
     - Inversion
     - Resizing (Nearest Neighbor & Billinear)
@@ -45,10 +45,11 @@ Basic Image Processing engine written in C, used to be the CImageOpener.c file, 
         - Median Filter
         - Convolution
         - Gaussian Blur
+        - Contour Detection (In progress: Slow & Unstable)
 
 # To-do Features
 - Finish adding OpenCL functions for rest of current features
 
 # To-do Fixes
 - Add better debugging/error messages (more detail)
-- Add & fix up resizing methods
+- Fix & speed up contour detection
