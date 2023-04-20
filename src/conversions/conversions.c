@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <malloc.h>
 #include "conversions.h"
 #include "../render/render.h"
 #include "../linmath.h"
@@ -144,7 +145,6 @@ K9_Image *resize_img(K9_Image *ret_img, K9_Image *image, vec2 scale, int type, b
     ret_img->height = scale[1] * image->height;
     ret_img->channels = image->channels;
     if (global.enable_gpu == true){
-        // gpu bound re-sizing makes 1080x1080 jpgs buffer fail???
         char prog[] = "./conversions/conversions.cl";
         char func[] = "resize_img_billinear";
         if (type == K9_NEAREST)
@@ -165,12 +165,11 @@ K9_Image *resize_img(K9_Image *ret_img, K9_Image *image, vec2 scale, int type, b
 		}
         double scales[] = {image->width/(double)ret_img->width, image->height/(double)ret_img->height};
         int sizes[] = {ret_img->width, ret_img->height, ret_img->channels, image->width};
-
         cl_mem scale_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, 2 * sizeof(double), NULL, &global.gpu_values.ret);
-        cl_mem sizes_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, 3 * sizeof(int), NULL, &global.gpu_values.ret);
+        cl_mem sizes_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, 4 * sizeof(int), NULL, &global.gpu_values.ret);
 
         global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, scale_mem_obj, CL_TRUE, 0, 2 * sizeof(double), scales, 0, NULL, NULL);
-        global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, sizes_mem_obj, CL_TRUE, 0, 3 * sizeof(int), sizes, 0, NULL, NULL);
+        global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, sizes_mem_obj, CL_TRUE, 0, 4 * sizeof(int), sizes, 0, NULL, NULL);
 
         set_main_args(image->mem_id, ret_img->mem_id);
 

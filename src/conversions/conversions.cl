@@ -1,5 +1,6 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
+#define GET_PIXEL(x, y, z, width, chan) ((x*width+y)*chan+z)
 
 __kernel void rgb_to_gray(__global const uchar *in_image, __global uchar *out_image){
     int x = get_global_id(0);
@@ -56,7 +57,7 @@ int calculate_pos_x(int in, int width, int height){
 
 // calculating where the y position of our pixel would be if we used a 2d array
 int calculate_pos_y(int in, int width){
-    return in%width-1;
+    return in%width;
 }
 
 __kernel void resize_img_nearest(__global const uchar *in_image, __global uchar *out_image, __global const double *scale, __global const int *sizes){

@@ -28,9 +28,8 @@ static struct node *find(uint16_t sid){
     while (current->id != sid){
         if (current->next == NULL){
             return NULL;
-        }else{
-            current = current->next;
         }
+        current = current->next;
     }
     return current;
 }
@@ -134,6 +133,9 @@ void set_main_args(cl_mem input, cl_mem output){
 
 uint8_t *run_kernel(size_t global_item_size, K9_Image ret_img, size_t return_size){
     global.gpu_values.ret = clEnqueueNDRangeKernel(global.gpu_values.command_queue, global.gpu_values.kernel, 1, NULL, &global_item_size, &g.localsize, 0, NULL, NULL);
+    if (global.gpu_values.ret != CL_SUCCESS){
+        fprintf(stderr, "Failed to run kernel: \e[1;31m%s\e[0m\n", global.past_func);
+    }
     global.gpu_values.ret = clEnqueueReadBuffer(global.gpu_values.command_queue, ret_img.mem_id, CL_TRUE, 0, return_size * sizeof(uint8_t), ret_img.image, 0, NULL, NULL);
     return ret_img.image;
 }

@@ -2,6 +2,12 @@
 #include "../global.h"
 #include "../binaryproc/binaryproc.h"
 
+struct contour {
+    int *pixels;
+    int length;
+    struct contour *next;
+};
+
 /*! @brief Performs the Median filter/blur on a given input image. The order is the size of the blur to be added to the photo.
  * @param[in] ret_img Return image that stores the output
  * @param[in] image Input image that will get filtered
@@ -31,3 +37,7 @@ K9_Image *convolve(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read);
  * @returns Image that has had a gaussian blur performed on it.
  */
 K9_Image *gaussian_blur(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read, int divisor);
+
+void detect_contours(K9_Image *image, bool debug);
+
+K9_Image *viz_contour_by_index(K9_Image *original, int index);

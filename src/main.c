@@ -44,13 +44,31 @@ int main(int argc, char *argv[]){
     
     K9_Image *mask = create_img(new_img->width, new_img->height, 1);
     mask = rgb_mask(mask, new_img, lower, higher, true);
-
+   
     // binary dilation
     K9_Image *dil = create_img_template(mask, false);
     dil = bin_dilation(dil, mask, kern, true);
 
     K9_Image *ero = create_img_template(mask, false);
     ero = bin_erosion(ero, mask, kern, true);
+
+    detect_contours(ero, true);
+    K9_Image *first_c = create_img_template(mask, true);
+ 
+    GLFWwindow *cviz = init_window(*mask, "Contour viz");
+    while (!handle_inputs(cviz)){
+        int n_key = glfwGetKey(cviz, GLFW_KEY_N);
+        if (n_key == 1 && held == 0){
+            count += 1;
+            held = 1;
+        }
+        else if (n_key == 0 && held == 1)
+            held = 0;
+        first_c = viz_contour_by_index(first_c, count);
+        show_image(cviz, *first_c, false);
+    }
+    glfwTerminate();
+    count = 0;
 
     // binary hit miss
     K9_Image *hxm = create_img_template(mask, false);
@@ -65,13 +83,16 @@ int main(int argc, char *argv[]){
     K9_Image *gray = create_img_template(mask, false);
     gray = rgb_to_gray(gray, new_img, true);
 
+    K9_Image *rz = create_img_template(new_img, false);
+    rz = resize_img(rz, new_img, (vec2){0.5, 0.5}, K9_BILINEAR, true);
+
     K9_Image *med = create_img_template(new_img, true);
     med = median_filter(med, new_img, 7, true);
     
     int g[] = {
-        1, 0, -1,
-        1, 0, -1, 
-        1, 0, -1
+        -1, -1, -1,
+        -1, 8, -1, 
+        -1, -1, -1
     };
     Kernel k2 = create_kernel(g, sizeof(g) / sizeof(int), true);
 
@@ -113,20 +134,20 @@ int main(int argc, char *argv[]){
         if (count == 0)
             show_image(window, *new_img, false);
         else if (count == 1)
-            show_image(window, *med, false);            
+            show_image(window, *rz, false);            
         else if (count == 2)
-            show_image(window, *hp, false);
+            show_image(window, *med, false);
         else if (count == 3)
-            show_image(window, *dil, false);
+            show_image(window, *hp, false);
         else if (count == 4)
-            show_image(window, *and, false);
+            show_image(window, *mask, false);
         else if (count == 5)
-            show_image(window, *gray, false);
+            show_image(window, *dil, false);
         else if (count == 6)
             show_image(window, *g_dil, false);
         else if (count == 7)
             show_image(window, *gray2, false);
-        else if (count >= 8)
+        else
             show_image(window, *e_tec, false);
     }
     K9_free(new_img);
