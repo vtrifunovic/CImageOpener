@@ -1,11 +1,7 @@
 #include "filters.h"
+#include "../typename.h"
 #include <math.h>
 #include <string.h>
-
-struct contour *first = NULL;
-struct contour *now = NULL;
-
-int total_contours = 0;
 
 static uint8_t insertion_sort(uint8_t window[], uint8_t size){
     int j, key;
@@ -202,37 +198,55 @@ K9_Image *gaussian_blur(K9_Image *ret_img, K9_Image *image, Kernel kern, bool re
     return ret_img;
 }
 
-static void df_search(K9_Image *image, char *searched, int x){
+static void df_search(K9_Image *image, char *searched, int x, Contour *first, int type){
     first->length += 1;
     searched[x] = 'c';
     first->pixels[first->length] =  x;
+    // N4 Search
     if (image->image[x+1] == 255 && searched[x+1] == 'x')
-        df_search(image, searched, x+1);
+        df_search(image, searched, x+1, first, type);
     if (image->image[x-1] == 255 && searched[x-1] == 'x')
-        df_search(image, searched, x-1);
+        df_search(image, searched, x-1, first, type);
     if (image->image[x-image->width] == 255 && searched[x-image->width] == 'x')
-        df_search(image, searched, x-image->width);
+        df_search(image, searched, x-image->width, first, type);
     if (image->image[x+image->width] == 255 && searched[x+image->width] == 'x')
-        df_search(image, searched, x+image->width);
+        df_search(image, searched, x+image->width, first, type);
+    // N8 Search
+    if (type == K9_N8){
+        if (image->image[x+image->width+1] == 255 && searched[x+image->width+1] == 'x')
+            df_search(image, searched, x+image->width+1, first, type);        
+        if (image->image[x+image->width-1] == 255 && searched[x+image->width-1] == 'x')
+            df_search(image, searched, x+image->width-1, first, type);
+        if (image->image[x-image->width+1] == 255 && searched[x-image->width+1] == 'x')
+            df_search(image, searched, x-image->width+1, first, type);
+        if (image->image[x-image->width-1] == 255 && searched[x-image->width-1] == 'x')
+            df_search(image, searched, x-image->width-1, first, type);
+    }
     
 }
 
-static void dfs_new_contour(K9_Image *image, char *searched, int x){
-    total_contours++;
+static Contour *dfs_new_contour(K9_Image *image, char *searched, int x, Contour *first, int type){
     size_t totalpixels = image->width * image->height * image->channels;
-    struct contour *link = (struct contour *)malloc(sizeof(struct contour));
+    Contour *link = (Contour *)malloc(sizeof(Contour));
     link->length = 0;
     link->pixels = (int *)malloc(totalpixels * sizeof(int));
     link->next = first;
     first = link;
-    df_search(image, searched, x);
+    df_search(image, searched, x, first, type);
     first->pixels = (int *)realloc(first->pixels, first->length*sizeof(int));
+    return first;
 }
 
-void detect_contours(K9_Image *image, bool debug){
+Contour *detect_contours(K9_Image *image, int type, bool debug){
+    if (image->channels > 1){
+        fprintf(stderr, "\e[1;31mError!\e[0m Function detect_contours() only accepts single channel images\n");
+        exit(0);
+    }
+    Contour *first = NULL;
     size_t totalpixels = image->width * image->height * image->channels;
     char *searched = (char *)malloc(totalpixels);
     memset(searched, 'x', totalpixels);
+    int total_contours = 0;
     for (int x = 0; x < totalpixels; x++){
         if (debug)
             printf("Searching pixel[\e[1;36m%d\e[0m]: ", x);
@@ -248,24 +262,26 @@ void detect_contours(K9_Image *image, bool debug){
         }
         if (debug)
             printf("\t\e[1;32mNew contour found!\e[0m\n");
-        dfs_new_contour(image, searched, x);
+        first = dfs_new_contour(image, searched, x, first, type);
+        total_contours++;
     }
     free(searched);
+    
     if (debug)
         printf("Total contours found: %d\n", total_contours);
-    return;
+    return first;
 }
 
-K9_Image *viz_contour_by_index(K9_Image *original, int index){
+K9_Image *viz_contour_by_index(K9_Image *original, int index, Contour *first){
     size_t totalpixels = original->width * original->height * original->channels;
-    memset(original->image, 0, totalpixels);
+    //memset(original->image, 0, totalpixels);
     struct contour *fc = first;
     int cnt = 0;
     while (fc->next != NULL && cnt != index){
         fc = fc->next;
         cnt++;
     }
-    //printf("Vizualizing contour %d of length %d\n", index, first->length);
+    printf("Reconstructing contour \e[1;36m%d\e[0m\tSize: %d\n", cnt, fc->length);
     for (int i = 0; i < fc->length; i++){
         original->image[fc->pixels[i]] = 255;
     }

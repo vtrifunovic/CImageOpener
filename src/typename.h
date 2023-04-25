@@ -6,3 +6,5 @@
 #define K9_DILATION 0xA5
 #define K9_EROSION 0xA6
 #define K9_IGNORE 0xFFFFFF
+#define K9_N4 0xA7
+#define K9_N8 0xA8

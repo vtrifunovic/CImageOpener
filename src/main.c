@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <unistd.h>
 #include "linmath.h"
 #include "global.h"
 #include "render/render.h"
@@ -18,7 +19,7 @@ int main(int argc, char *argv[]){
 
     // opening images from terminal arguments
     if (argc < 2){
-        printf("Needs 2 images given\n\n");
+        printf("Needs 1 image given\n\n");
         exit(0);
     }
 
@@ -39,33 +40,36 @@ int main(int argc, char *argv[]){
 
     // setting upper and lower bound for rgb masking.
     // Creating new image structure to hold the masked values in, then running the mask.
-    int lower[] = {210, 200, 175};
+    int lower[] = {210, 150, 175};
     int higher[] = {255, 255, 255};
     
     K9_Image *mask = create_img(new_img->width, new_img->height, 1);
     mask = rgb_mask(mask, new_img, lower, higher, true);
+
+    // converting the input image to grayscale
+    // since the output is a single channel image I'm using the mask as a template
+    K9_Image *gray = create_img_template(mask, false);
+    gray = rgb_to_gray(gray, new_img, true);
    
     // binary dilation
     K9_Image *dil = create_img_template(mask, false);
     dil = bin_dilation(dil, mask, kern, true);
 
+    // binary erosion
     K9_Image *ero = create_img_template(mask, false);
     ero = bin_erosion(ero, mask, kern, true);
 
-    detect_contours(ero, true);
-    K9_Image *first_c = create_img_template(mask, true);
- 
+    // detecting contours in our mask
+    Contour *cnts = detect_contours(dil, K9_N8, false);
+
+    // creating image & window to display contours
+    K9_Image *first_c = create_img_template(mask, false);
     GLFWwindow *cviz = init_window(*mask, "Contour viz");
     while (!handle_inputs(cviz)){
-        int n_key = glfwGetKey(cviz, GLFW_KEY_N);
-        if (n_key == 1 && held == 0){
-            count += 1;
-            held = 1;
-        }
-        else if (n_key == 0 && held == 1)
-            held = 0;
-        first_c = viz_contour_by_index(first_c, count);
+        first_c = viz_contour_by_index(first_c, count, cnts);
         show_image(cviz, *first_c, false);
+        count++;
+        usleep(50000);
     }
     glfwTerminate();
     count = 0;
@@ -78,41 +82,38 @@ int main(int argc, char *argv[]){
     K9_Image *and = create_img_template(new_img, false);
     and = bitwiseAnd(and, new_img, dil, true);
 
-    // converting the input image to grayscale
-    // since the output is a single channel image I'm using the mask as a template
-    K9_Image *gray = create_img_template(mask, false);
-    gray = rgb_to_gray(gray, new_img, true);
-
+    // resizing image to half of our original size
     K9_Image *rz = create_img_template(new_img, false);
     rz = resize_img(rz, new_img, (vec2){0.5, 0.5}, K9_BILINEAR, true);
 
+    // running median filter on image
     K9_Image *med = create_img_template(new_img, true);
     med = median_filter(med, new_img, 7, true);
     
     int g[] = {
-        -1, -1, -1,
-        -1, 8, -1, 
-        -1, -1, -1
+        1, -2, 7,
+        -5, 2, 5, 
+        -10, -8, -1
     };
     Kernel k2 = create_kernel(g, sizeof(g) / sizeof(int), true);
 
     K9_Image *hp = create_img_template(new_img, true);
-    hp = convolve(hp, new_img, k2, true);
+    convolve(hp, new_img, k2, true);
 
     // blurring the image
     K9_Image *blr = create_img_template(new_img, false);
     blr = blur(blr, new_img, kern, 10, true);
 
     // grayscale erosion
-    K9_Image *g_dil = create_img_template(gray, false);
-    g_dil = gray_morph(g_dil, gray, kern, K9_EROSION, true);
+    K9_Image *g_dil = create_img_template(new_img, false);
+    g_dil = gray_morph(g_dil, new_img, kern, K9_EROSION, true);
 
     // grayscale dilation
-    K9_Image *gray2 = create_img_template(gray, false);
-    gray2 = gray_morph(gray2, gray, kern, K9_DILATION, true);
+    K9_Image *gray2 = create_img_template(new_img, false);
+    gray2 = gray_morph(gray2, new_img, kern, K9_DILATION, true);
 
     // subtracting erosion from dilation to create edge detect
-    K9_Image *e_tec = create_img_template(gray, false);
+    K9_Image *e_tec = create_img_template(new_img, false);
     e_tec = subtract(e_tec, gray2, g_dil, true);
 
     // thinning 

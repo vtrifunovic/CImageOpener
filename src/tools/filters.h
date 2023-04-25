@@ -2,11 +2,11 @@
 #include "../global.h"
 #include "../binaryproc/binaryproc.h"
 
-struct contour {
+typedef struct contour {
     int *pixels;
     int length;
     struct contour *next;
-};
+} Contour;
 
 /*! @brief Performs the Median filter/blur on a given input image. The order is the size of the blur to be added to the photo.
  * @param[in] ret_img Return image that stores the output
@@ -38,6 +38,23 @@ K9_Image *convolve(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read);
  */
 K9_Image *gaussian_blur(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read, int divisor);
 
-void detect_contours(K9_Image *image, bool debug);
+/*! @brief Detects contours in binary images. Runs depth first search to return
+all valid regions. Returns a Contour struct, which is a linked list of all the
+contours in the image.
+ * 
+ * @param image Input image which contour detection is ran on.
+ * @param type Type of search to do (N4 or N8 neighbors)
+ * @param debug May remove, prints search results to terminal.
+ * @return Linked list of Contour structs, one for each contour in image.
+ */
+Contour *detect_contours(K9_Image *image, int type, bool debug);
 
-K9_Image *viz_contour_by_index(K9_Image *original, int index);
+/*! @brief Vizualizes the contour by the index of the contour. Re-creates the contour on a 
+empty K9_Image. Will automatically stop once last contour is reached.
+ *
+ * @param original An image with the original shape/size to render the contour onto.
+ * @param index Index of the contour to be displayed.
+ * @param first The Contour that was returned by detect_contours.
+ * @return Image containing only the contour interested in.
+ */
+K9_Image *viz_contour_by_index(K9_Image *original, int index, Contour *first);
