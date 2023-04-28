@@ -20,6 +20,7 @@ Basic Image Processing engine written in C, used to be the CImageOpener.c file, 
     - CPU & GPU Processing
 - Rendering
     - Read & Display Images
+    - Saving Images
     - Read & Display Videos
 - Masks
     - RGB & Grayscale/single-channel mask
@@ -45,7 +46,7 @@ Basic Image Processing engine written in C, used to be the CImageOpener.c file, 
         - Median Filter
         - Convolution
         - Gaussian Blur
-        - Contour Detection (In progress: Slow & Unstable)
+        - Contour Detection (In progress: Unstable)
 
 # To-do Features
 - Finish adding OpenCL functions for rest of current features
