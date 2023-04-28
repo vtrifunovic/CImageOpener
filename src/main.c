@@ -60,10 +60,10 @@ int main(int argc, char *argv[]){
     ero = bin_erosion(ero, mask, kern, true);
 
     // detecting contours in our mask
-    Contour *cnts = detect_contours(dil, K9_N8, false);
+    Contour *cnts = detect_contours(ero, K9_N8, false);
 
     // creating image & window to display contours
-    K9_Image *first_c = create_img_template(mask, false);
+    K9_Image *first_c = create_img_template(mask, true);
     GLFWwindow *cviz = init_window(*mask, "Contour viz");
     while (!handle_inputs(cviz)){
         first_c = viz_contour_by_index(first_c, count, cnts);
@@ -84,7 +84,9 @@ int main(int argc, char *argv[]){
 
     // resizing image to half of our original size
     K9_Image *rz = create_img_template(new_img, false);
-    rz = resize_img(rz, new_img, (vec2){0.5, 0.5}, K9_BILINEAR, true);
+    rz = resize_img(rz, new_img, (vec2){0.89, 0.89}, K9_BILINEAR, true);
+
+    save_image(rz, "test.jpeg");
 
     // running median filter on image
     K9_Image *med = create_img_template(new_img, true);

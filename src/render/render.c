@@ -12,6 +12,8 @@
 #include "../opencl_support/gpu_setup.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 struct timeval start, stop;
 float added_delay;
@@ -116,6 +118,26 @@ K9_Image *load_image(char *file, bool debug){
         printf("Dimensions:\n-->Width: %d, Height: %d, Channels: %d\n", image->width, image->height, image->channels);
     }
     return image;
+}
+
+void save_image(K9_Image *save, const char *filename){
+    int ret;
+    char type[6] = {0};
+    for (int i = strlen(filename) - 5; i < strlen(filename); i++){
+        type[i - (strlen(filename) - 5)] = filename[i];
+    }
+    if (strcmp(type, ".jpeg") == 0)
+        ret = stbi_write_jpg(filename, save->width, save->height, save->channels, save->image, 100);
+    for (int j = 0; j < 5; j++)
+        type[j] = type[j+1];
+    type[5] = '\0';
+    printf("%s\n", type);
+    if (strcmp(type, ".jpg") == 0)
+        ret = stbi_write_jpg(filename, save->width, save->height, save->channels, save->image, 100);
+    if (strcmp(type, ".png") == 0)
+        ret = stbi_write_png(filename, save->width, save->height, save->channels, save->image, save->width*save->channels);
+    if (!ret)
+        fprintf(stderr, "Failed to save image.\n");
 }
 
 K9_Image *load_video_frame(K9_Image *ret_img, K9_Video video, int ret){

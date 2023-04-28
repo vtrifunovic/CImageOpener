@@ -67,6 +67,12 @@ GLFWwindow *init_window(K9_Image image, char *name);
  * 
  */
 K9_Image *load_image(char *file, bool debug);
+/*! @brief Saves Image to a file (.png/.jpg/.jpeg)
+ *
+ * @param image Image to be save
+ * @param filename The name of the file to save (include filetype extension)
+ */
+void save_image(K9_Image *image, const char *filename);
 /*! @brief Loads the next frame in the K9_Video struct and returns it as an K9_Image struct.
  * 
  * @param[in] ret_img The image that the frame will be saved in

@@ -2,6 +2,7 @@
 #include "../typename.h"
 #include <math.h>
 #include <string.h>
+#include <malloc.h>
 
 static uint8_t insertion_sort(uint8_t window[], uint8_t size){
     int j, key;
@@ -199,9 +200,11 @@ K9_Image *gaussian_blur(K9_Image *ret_img, K9_Image *image, Kernel kern, bool re
 }
 
 static void df_search(K9_Image *image, char *searched, int x, Contour *first, int type){
-    first->length += 1;
+    if (x > image->width*image->height || x < 0) // OOB mem check
+        return;
     searched[x] = 'c';
     first->pixels[first->length] =  x;
+    first->length += 1;
     // N4 Search
     if (image->image[x+1] == 255 && searched[x+1] == 'x')
         df_search(image, searched, x+1, first, type);
@@ -221,9 +224,10 @@ static void df_search(K9_Image *image, char *searched, int x, Contour *first, in
             df_search(image, searched, x-image->width+1, first, type);
         if (image->image[x-image->width-1] == 255 && searched[x-image->width-1] == 'x')
             df_search(image, searched, x-image->width-1, first, type);
-    }
-    
+    } 
 }
+// 1,166,400
+// 174,569
 
 static Contour *dfs_new_contour(K9_Image *image, char *searched, int x, Contour *first, int type){
     size_t totalpixels = image->width * image->height * image->channels;
@@ -249,7 +253,7 @@ Contour *detect_contours(K9_Image *image, int type, bool debug){
     int total_contours = 0;
     for (int x = 0; x < totalpixels; x++){
         if (debug)
-            printf("Searching pixel[\e[1;36m%d\e[0m]: ", x);
+            printf("Searching pixel[\e[1;36m%d\e[0m]: \tTotal Contours: %d ", x, total_contours);
         if (image->image[x] != 255){
             if (debug)
                 printf("\t\e[1;31mNot Valid!\e[0m\n");
@@ -266,7 +270,7 @@ Contour *detect_contours(K9_Image *image, int type, bool debug){
         total_contours++;
     }
     free(searched);
-    
+
     if (debug)
         printf("Total contours found: %d\n", total_contours);
     return first;
@@ -275,15 +279,14 @@ Contour *detect_contours(K9_Image *image, int type, bool debug){
 K9_Image *viz_contour_by_index(K9_Image *original, int index, Contour *first){
     size_t totalpixels = original->width * original->height * original->channels;
     //memset(original->image, 0, totalpixels);
-    struct contour *fc = first;
     int cnt = 0;
-    while (fc->next != NULL && cnt != index){
-        fc = fc->next;
+    while (first->next != NULL && cnt != index){
+        first = first->next;
         cnt++;
     }
-    printf("Reconstructing contour \e[1;36m%d\e[0m\tSize: %d\n", cnt, fc->length);
-    for (int i = 0; i < fc->length; i++){
-        original->image[fc->pixels[i]] = 255;
+    printf("Reconstructing contour \e[1;36m%d\e[0m\tSize: %d\n", cnt, first->length);
+    for (int i = 0; i < first->length; i++){
+        original->image[first->pixels[i]] = 255;
     }
     return original;
 }
