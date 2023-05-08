@@ -60,7 +60,7 @@ int main(int argc, char *argv[]){
     ero = bin_erosion(ero, mask, kern, true);
 
     // detecting contours in our mask
-    Contour *cnts = detect_contours(ero, K9_N8, false);
+    Contour *cnts = detect_contours(dil, K9_N8, false);
 
     // creating image & window to display contours
     K9_Image *first_c = create_img_template(mask, true);
@@ -74,6 +74,8 @@ int main(int argc, char *argv[]){
     glfwTerminate();
     count = 0;
 
+    free_contours(cnts);
+
     // binary hit miss
     K9_Image *hxm = create_img_template(mask, false);
     hxm = hit_x_miss(hxm, mask, kern, true);
@@ -86,7 +88,7 @@ int main(int argc, char *argv[]){
     K9_Image *rz = create_img_template(new_img, false);
     rz = resize_img(rz, new_img, (vec2){0.89, 0.89}, K9_BILINEAR, true);
 
-    save_image(rz, "test.jpeg");
+    //save_image(rz, "test.jpeg");
 
     // running median filter on image
     K9_Image *med = create_img_template(new_img, true);

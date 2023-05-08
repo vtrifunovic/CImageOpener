@@ -2,6 +2,13 @@
 #include "../global.h"
 #include "../binaryproc/binaryproc.h"
 
+#define FREE_AND_RETURN(stack) {free(stack->values); free(stack); return;}
+
+typedef struct k9_stack {
+    int *values;
+    int len;
+} K9_Stack;
+
 typedef struct contour {
     int *pixels;
     int length;
@@ -58,3 +65,6 @@ empty K9_Image. Will automatically stop once last contour is reached.
  * @return Image containing only the contour interested in.
  */
 K9_Image *viz_contour_by_index(K9_Image *original, int index, Contour *first);
+
+// Frees all data in contour list
+void free_contours(Contour *first);

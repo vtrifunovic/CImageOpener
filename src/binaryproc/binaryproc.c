@@ -28,6 +28,7 @@ K9_Image *hit_x_miss(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read)
             bind_cl_function(func, bin_id);
             strcpy(global.past_func, func);
 		}
+        recalculate_local_workgroups(global_item_size, 0);
         cl_mem kern_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, kernelsize * sizeof(int16_t), NULL, &global.gpu_values.ret);
 
         global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, kern_mem_obj, CL_TRUE, 0, kernelsize*sizeof(int16_t), kern.kernel, 0, NULL, NULL);
@@ -89,7 +90,7 @@ K9_Image *bin_dilation(K9_Image *ret_img, K9_Image *image, Kernel kern, bool rea
 		if (image->mem_id == NULL)
 			update_input_buffer(image, global_item_size);
 		if (ret_img->mem_id == NULL)
-			update_output_buffer(ret_img, ret_img->height * ret_img->width * ret_img->channels);
+            update_output_buffer(ret_img, global_item_size);
         if (ret_img->image == NULL && read)
             ret_img->image = (uint8_t *)malloc(global_item_size);
         read_cl_program(prog, bin_id);
@@ -97,6 +98,7 @@ K9_Image *bin_dilation(K9_Image *ret_img, K9_Image *image, Kernel kern, bool rea
 			bind_cl_function(func, bin_id);
 			strcpy(global.past_func, func);
 		}
+        recalculate_local_workgroups(global_item_size, 0);
         cl_mem kern_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, kernelsize * sizeof(int16_t), NULL, &global.gpu_values.ret);
 
         global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, kern_mem_obj, CL_TRUE, 0, kernelsize * sizeof(int16_t), kern.kernel, 0, NULL, NULL);
@@ -191,6 +193,7 @@ K9_Image *bin_erosion(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read
 			bind_cl_function(func, bin_id);
 			strcpy(global.past_func, func);
 		}
+        recalculate_local_workgroups(global_item_size, 0);
         cl_mem kern_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, kernelsize * sizeof(int16_t), NULL, &global.gpu_values.ret);
 
         global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, kern_mem_obj, CL_TRUE, 0, kernelsize * sizeof(int16_t), kern.kernel, 0, NULL, NULL);
@@ -299,6 +302,7 @@ K9_Image *thinning(K9_Image *ret_img, K9_Image *image, bool read){
 			bind_cl_function(func, bin_id);
 			strcpy(global.past_func, func);
 		}
+        recalculate_local_workgroups(global_item_size, 0);
         uint8_t iter = 0;
         bool stop = false;
         while (!stop){

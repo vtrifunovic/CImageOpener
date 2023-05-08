@@ -41,6 +41,8 @@ static void free_progs(){
     }
     while (1){
         if (current->next == NULL){
+            global.gpu_values.ret = clReleaseProgram(current->prog);
+            free(current);
             return;
         }else{
             struct node *tmp = current;
@@ -98,7 +100,7 @@ void read_cl_program(char *path, uint16_t sid){
         }
         source_str = (char *)malloc(MAX_SOURCE_SIZE);
         source_size = fread(source_str, 1, MAX_SOURCE_SIZE, fp);
-        source_str = realloc(source_str, strlen(source_str) * sizeof(char)+1);
+        source_str = realloc(source_str, strlen(source_str)+1);
         fclose(fp);
 
         cl_program program = clCreateProgramWithSource(global.gpu_values.context, 1, (const char **)&source_str, (const size_t *)&source_size, &global.gpu_values.ret);

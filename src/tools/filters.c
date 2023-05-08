@@ -2,7 +2,6 @@
 #include "../typename.h"
 #include <math.h>
 #include <string.h>
-#include <malloc.h>
 
 static uint8_t insertion_sort(uint8_t window[], uint8_t size){
     int j, key;
@@ -199,57 +198,89 @@ K9_Image *gaussian_blur(K9_Image *ret_img, K9_Image *image, Kernel kern, bool re
     return ret_img;
 }
 
-static void df_search(K9_Image *image, char *searched, int x, Contour *first, int type){
-    if (x > image->width*image->height || x < 0) // OOB mem check
-        return;
-    searched[x] = 'c';
-    first->pixels[first->length] =  x;
-    first->length += 1;
-    // N4 Search
-    if (image->image[x+1] == 255 && searched[x+1] == 'x')
-        df_search(image, searched, x+1, first, type);
-    if (image->image[x-1] == 255 && searched[x-1] == 'x')
-        df_search(image, searched, x-1, first, type);
-    if (image->image[x-image->width] == 255 && searched[x-image->width] == 'x')
-        df_search(image, searched, x-image->width, first, type);
-    if (image->image[x+image->width] == 255 && searched[x+image->width] == 'x')
-        df_search(image, searched, x+image->width, first, type);
-    // N8 Search
-    if (type == K9_N8){
-        if (image->image[x+image->width+1] == 255 && searched[x+image->width+1] == 'x')
-            df_search(image, searched, x+image->width+1, first, type);        
-        if (image->image[x+image->width-1] == 255 && searched[x+image->width-1] == 'x')
-            df_search(image, searched, x+image->width-1, first, type);
-        if (image->image[x-image->width+1] == 255 && searched[x-image->width+1] == 'x')
-            df_search(image, searched, x-image->width+1, first, type);
-        if (image->image[x-image->width-1] == 255 && searched[x-image->width-1] == 'x')
-            df_search(image, searched, x-image->width-1, first, type);
-    } 
+static int pop_from_stack(K9_Stack *stack){
+    stack->len--;
+    if (stack->len <= 0)
+        return -1;
+    stack->values = (int *)realloc(stack->values, stack->len * sizeof(int));
+    return stack->values[stack->len-1];
 }
-// 1,166,400
-// 174,569
+
+static void append_to_stack(K9_Stack *stack, int x){
+    stack->len++;
+    stack->values = (int *)realloc(stack->values, stack->len * sizeof(int));
+    stack->values[stack->len-1] = x;
+}
+
+// Not my favorite way to do it, but recrusion was breaking the stack so had to implement
+// iteration-based df search :)
+static void df_search(K9_Image *image, char *searched, int x, Contour *current, int type, size_t totalpixels){
+    K9_Stack *my_stack = (K9_Stack *)malloc(sizeof(K9_Stack));
+    my_stack->len = 0;
+    my_stack->values = (int *)malloc(sizeof(int));
+    my_stack->values[0] = x;
+    while (1){
+        if (x > totalpixels || x < 0){
+            x = pop_from_stack(my_stack);
+            if (x == -1)
+                FREE_AND_RETURN(my_stack);
+        }else{
+            if (current->length < image->width*image->height && searched[x] != 'c'){
+                current->pixels[current->length-1] = x;
+                current->length++;
+            }
+            searched[x] = 'c';
+        }
+        int br = x;
+        // lots of mem-checks to satisfy valgrind
+        if (x+1 < totalpixels && image->image[x+1] == 255 && searched[x+1] == 'x')
+            br = x+1;
+        if (x-1 > 0 && image->image[x-1] == 255 && searched[x-1] == 'x')
+            br = x-1;
+        if (x+image->width < totalpixels && image->image[x+image->width] == 255 && searched[x+image->width] == 'x')
+            br = x+image->width;
+        if (x-image->width > 0 && image->image[x-image->width] == 255 && searched[x-image->width] == 'x')
+            br = x-image->width;
+        if (type == K9_N8){
+            if (x-image->width+1 > 0 && image->image[x-image->width+1] == 255 && searched[x-image->width+1] == 'x')
+                br = x-image->width+1;
+            if (x-image->width-1 > 0 && image->image[x-image->width-1] == 255 && searched[x-image->width-1] == 'x')
+                br = x-image->width-1;
+            if (x+image->width+1 < totalpixels && image->image[x+image->width+1] == 255 && searched[x+image->width+1] == 'x')
+                br = x+image->width+1;
+            if (x+image->width-1 < totalpixels && image->image[x+image->width-1] == 255 && searched[x+image->width-1] == 'x')
+                br = x+image->width-1;
+        }
+        if (x == br){
+            x = pop_from_stack(my_stack);
+            if (x == -1)
+                FREE_AND_RETURN(my_stack);
+        } else {
+            append_to_stack(my_stack, x);
+            x = br;
+        }
+    }
+}
 
 static Contour *dfs_new_contour(K9_Image *image, char *searched, int x, Contour *first, int type){
     size_t totalpixels = image->width * image->height * image->channels;
     Contour *link = (Contour *)malloc(sizeof(Contour));
-    link->length = 0;
+    link->length = 1;
     link->pixels = (int *)malloc(totalpixels * sizeof(int));
     link->next = first;
-    first = link;
-    df_search(image, searched, x, first, type);
-    first->pixels = (int *)realloc(first->pixels, first->length*sizeof(int));
-    return first;
+    df_search(image, searched, x, link, type, totalpixels);
+    link->pixels = (int *)realloc(link->pixels, link->length * sizeof(int));
+    return link;
 }
 
 Contour *detect_contours(K9_Image *image, int type, bool debug){
     if (image->channels > 1){
-        fprintf(stderr, "\e[1;31mError!\e[0m Function detect_contours() only accepts single channel images\n");
-        exit(0);
+        fprintf(stderr, "\e[1;33mWarning!\e[0m Function detect_contours() should be a binary image. Contours detected may be incorrect.\n");
     }
     Contour *first = NULL;
     size_t totalpixels = image->width * image->height * image->channels;
-    char *searched = (char *)malloc(totalpixels);
-    memset(searched, 'x', totalpixels);
+    char *searched = (char *)malloc(totalpixels*sizeof(char));
+    memset(searched, 'x', totalpixels*sizeof(char));
     int total_contours = 0;
     for (int x = 0; x < totalpixels; x++){
         if (debug)
@@ -284,9 +315,28 @@ K9_Image *viz_contour_by_index(K9_Image *original, int index, Contour *first){
         first = first->next;
         cnt++;
     }
-    printf("Reconstructing contour \e[1;36m%d\e[0m\tSize: %d\n", cnt, first->length);
+    //printf("Reconstructing contour \e[1;36m%d\e[0m\tSize: %d\n", cnt, first->length);
     for (int i = 0; i < first->length; i++){
-        original->image[first->pixels[i]] = 255;
+        if (first->pixels[i] < totalpixels)
+            original->image[first->pixels[i]] = 255;
     }
     return original;
+}
+
+void free_contours(Contour *first){
+    Contour *current = first;
+    if (first == NULL)
+        return;
+    while (1){
+        if (current->next == NULL){
+            free(current->pixels);
+            free(current);
+            return;
+        } else {
+            Contour *tmp = current;
+            current = current->next;
+            free(tmp->pixels);
+            free(tmp);
+        }
+    }
 }

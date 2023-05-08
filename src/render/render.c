@@ -38,8 +38,7 @@ bool handle_inputs(GLFWwindow *window){
     glfwPollEvents();
     if (glfwWindowShouldClose(window))
         return true;
-    int q_key = glfwGetKey(window, 81);
-    if (q_key == GLFW_PRESS){
+    if (glfwGetKey(window, 81) == GLFW_PRESS){
         return true;
     }
     return false;

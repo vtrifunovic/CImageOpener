@@ -5,7 +5,7 @@
 #include <GLFW/glfw3.h>
 #include "render_internal.h"
 
-#define MAX_SOURCE_SIZE (0x1000)
+#define MAX_SOURCE_SIZE (0x5000)
 
 unsigned int VBO;
 unsigned int VAO;
