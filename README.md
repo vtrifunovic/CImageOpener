@@ -46,11 +46,10 @@ Basic Image Processing engine written in C, used to be the CImageOpener.c file, 
         - Median Filter
         - Convolution
         - Gaussian Blur
-        - Contour Detection
+        - Contour Detection & Analysis
 
 # To-do Features
 - Finish adding OpenCL functions for rest of current features
 
 # To-do Fixes
 - Add better debugging/error messages (more detail)
-- Fix & speed up contour detection
