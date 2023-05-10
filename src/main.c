@@ -60,21 +60,27 @@ int main(int argc, char *argv[]){
     ero = bin_erosion(ero, mask, kern, true);
 
     // detecting contours in our mask
-    Contour *cnts = detect_contours(dil, K9_N8, false);
+    Contour *cnts = detect_contours(dil, K9_N4, false);
 
     // creating image & window to display contours
     K9_Image *first_c = create_img_template(mask, true);
+    analyze_contours(mask, cnts);
     GLFWwindow *cviz = init_window(*mask, "Contour viz");
     while (!handle_inputs(cviz)){
+        int n_key = glfwGetKey(cviz, GLFW_KEY_N);
+        if (n_key == 1 && held == 0){
+            count += 1;
+            held = 1;
+        }
+        else if (n_key == 0 && held == 1)
+            held = 0;
         first_c = viz_contour_by_index(first_c, count, cnts);
         show_image(cviz, *first_c, false);
-        count++;
-        usleep(50000);
     }
     glfwTerminate();
     count = 0;
 
-    free_contours(cnts);
+    K9_free_contours(cnts);
 
     // binary hit miss
     K9_Image *hxm = create_img_template(mask, false);

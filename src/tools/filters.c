@@ -226,7 +226,7 @@ static void df_search(K9_Image *image, char *searched, int x, Contour *current, 
                 FREE_AND_RETURN(my_stack);
         }else{
             if (current->length < image->width*image->height && searched[x] != 'c'){
-                current->pixels[current->length-1] = x;
+                current->pixels[current->length] = x;
                 current->length++;
             }
             searched[x] = 'c';
@@ -265,7 +265,7 @@ static void df_search(K9_Image *image, char *searched, int x, Contour *current, 
 static Contour *dfs_new_contour(K9_Image *image, char *searched, int x, Contour *first, int type){
     size_t totalpixels = image->width * image->height * image->channels;
     Contour *link = (Contour *)malloc(sizeof(Contour));
-    link->length = 1;
+    link->length = 0;
     link->pixels = (int *)malloc(totalpixels * sizeof(int));
     link->next = first;
     df_search(image, searched, x, link, type, totalpixels);
@@ -279,8 +279,8 @@ Contour *detect_contours(K9_Image *image, int type, bool debug){
     }
     Contour *first = NULL;
     size_t totalpixels = image->width * image->height * image->channels;
-    char *searched = (char *)malloc(totalpixels*sizeof(char));
-    memset(searched, 'x', totalpixels*sizeof(char));
+    char *searched = (char *)malloc(totalpixels);
+    memset(searched, 'x', totalpixels);
     int total_contours = 0;
     for (int x = 0; x < totalpixels; x++){
         if (debug)
@@ -307,15 +307,50 @@ Contour *detect_contours(K9_Image *image, int type, bool debug){
     return first;
 }
 
+static int calculate_pos_y(int px, int width, int height){
+    return (px/width)%height;
+}
+
+static int calculate_pos_x(int px, int width){
+    return px%width;
+}
+
+Contour *analyze_contours(K9_Image *image, Contour *contour_list){
+    Contour *current = contour_list;
+    while (current != NULL){
+        int min_x = 0xBEEF;
+        int max_x = 0;
+        int min_y = 0xBEEF;
+        int max_y = 0;
+        for (int x = 0; x < current->length; x++){
+            int pos = calculate_pos_x(current->pixels[x], image->width);
+            if (pos > max_x)
+                max_x = pos;
+            if (pos < min_x)
+                min_x = pos;
+            pos = calculate_pos_y(current->pixels[x], image->width, image->height);
+            if (pos > max_y)
+                max_y = pos;
+            if (pos < min_y)
+                min_y = pos;            
+        }
+        current->width = max_x - min_x;
+        current->x0 = min_x;
+        current->height = max_y - min_y;
+        current->y0 = min_y;
+        current = current->next;
+    }
+}
+
 K9_Image *viz_contour_by_index(K9_Image *original, int index, Contour *first){
     size_t totalpixels = original->width * original->height * original->channels;
-    //memset(original->image, 0, totalpixels);
+    memset(original->image, 0, totalpixels);
     int cnt = 0;
     while (first->next != NULL && cnt != index){
         first = first->next;
         cnt++;
     }
-    //printf("Reconstructing contour \e[1;36m%d\e[0m\tSize: %d\n", cnt, first->length);
+    //printf("Reconstructing contour \e[1;36m%d\e[0m\tSize: %d\nWidth: %d \tHeight: %d\n", cnt, first->length, first->width, first->height);
     for (int i = 0; i < first->length; i++){
         if (first->pixels[i] < totalpixels)
             original->image[first->pixels[i]] = 255;
@@ -323,7 +358,7 @@ K9_Image *viz_contour_by_index(K9_Image *original, int index, Contour *first){
     return original;
 }
 
-void free_contours(Contour *first){
+void K9_free_contours(Contour *first){
     Contour *current = first;
     if (first == NULL)
         return;

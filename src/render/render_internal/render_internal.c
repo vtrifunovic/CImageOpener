@@ -26,7 +26,7 @@ void create_shader(void){
     size_t source_size;
     vertexShaderSource = (char *)malloc(MAX_SOURCE_SIZE);
     source_size = fread(vertexShaderSource, 1, MAX_SOURCE_SIZE, fp);
-    vertexShaderSource = realloc(vertexShaderSource, strlen(vertexShaderSource) * sizeof(char) + 1);
+    vertexShaderSource = realloc(vertexShaderSource, strlen(vertexShaderSource)+2);
     fclose(fp);
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, (const char *const *)&vertexShaderSource, NULL);
@@ -49,7 +49,7 @@ void create_shader(void){
     char *fragmentShaderSource;
     fragmentShaderSource = (char *)malloc(MAX_SOURCE_SIZE);
     source_size = fread(fragmentShaderSource, 1, MAX_SOURCE_SIZE, fp2);
-    fragmentShaderSource = realloc(fragmentShaderSource, strlen(fragmentShaderSource) * sizeof(char) + 1);
+    fragmentShaderSource = realloc(fragmentShaderSource, strlen(fragmentShaderSource) + 2);
     fclose(fp2);
     fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, (const char *const *)&fragmentShaderSource, NULL);

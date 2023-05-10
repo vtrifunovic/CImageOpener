@@ -12,6 +12,10 @@ typedef struct k9_stack {
 typedef struct contour {
     int *pixels;
     int length;
+    int width;
+    int height;
+    int x0;
+    int y0;
     struct contour *next;
 } Contour;
 
@@ -67,4 +71,6 @@ empty K9_Image. Will automatically stop once last contour is reached.
 K9_Image *viz_contour_by_index(K9_Image *original, int index, Contour *first);
 
 // Frees all data in contour list
-void free_contours(Contour *first);
+void K9_free_contours(Contour *first);
+
+Contour *analyze_contours(K9_Image *image, Contour *contour_list);
