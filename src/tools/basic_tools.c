@@ -96,7 +96,6 @@ K9_Image *subtract(K9_Image *ret_img, K9_Image *img1, K9_Image *img2, bool read)
             bind_cl_function(func, tool_id);
             strcpy(global.past_func, func);
 		}
-
         set_main_args(img1->mem_id, ret_img->mem_id);
 
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_mem), (void *)&img2->mem_id);

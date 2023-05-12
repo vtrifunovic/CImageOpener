@@ -54,6 +54,7 @@ static void free_progs(){
 }
 
 static void set_local_workgroup(int siz){
+    g.totalpixels = siz;
     for (int i = CL_DEVICE_LOCAL_MEM_SIZE/8; i > 0; i--){
         if (siz % i == 0){
             g.localsize = i;
@@ -122,8 +123,6 @@ void update_output_buffer(K9_Image *image, size_t totalsize){
 }
 
 void update_input_buffer(K9_Image *image, int totalpixels){
-    if (totalpixels != g.totalpixels)
-        set_local_workgroup(totalpixels);
     image->mem_id = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_WRITE, totalpixels * sizeof(uint8_t), NULL, &global.gpu_values.ret);
     global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, image->mem_id, CL_TRUE, 0, totalpixels * sizeof(uint8_t), image->image, 0, NULL, NULL);
 }
@@ -134,6 +133,8 @@ void set_main_args(cl_mem input, cl_mem output){
 }
 
 uint8_t *run_kernel(size_t global_item_size, K9_Image ret_img, size_t return_size){
+    if (global_item_size != g.totalpixels)
+        set_local_workgroup(global_item_size);
     global.gpu_values.ret = clEnqueueNDRangeKernel(global.gpu_values.command_queue, global.gpu_values.kernel, 1, NULL, &global_item_size, &g.localsize, 0, NULL, NULL);
     if (global.gpu_values.ret != CL_SUCCESS){
         fprintf(stderr, "Failed to run kernel: \e[1;31m%s\e[0m\n", global.past_func);
@@ -143,6 +144,8 @@ uint8_t *run_kernel(size_t global_item_size, K9_Image ret_img, size_t return_siz
 }
 
 void run_kernel_no_return(size_t global_item_size){
+    if (global_item_size != g.totalpixels)
+        set_local_workgroup(global_item_size);
     global.gpu_values.ret = clEnqueueNDRangeKernel(global.gpu_values.command_queue, global.gpu_values.kernel, 1, NULL, &global_item_size, &g.localsize, 0, NULL, NULL);
 }
 

@@ -30,6 +30,6 @@ __kernel void grayscale_mask(__global const uchar *in_image, __global uchar *out
     int x = get_global_id(0);
     out_image[x] = 0;
     if (in_image[x] >= low && in_image[x] <= high){
-        out_image[x] = in_image[x];
+        out_image[x] = 255;
     }
 }

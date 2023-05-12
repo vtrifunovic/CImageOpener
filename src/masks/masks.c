@@ -204,7 +204,7 @@ K9_Image *grayscale_mask(K9_Image *ret_img, K9_Image *image, uint8_t lower_bound
 	} else {
 		for (int g = 0; g < totalpixels; g++){
 			if (lower_bound <= image->image[g] && higher_bound >= image->image[g])
-				ret_img->image[g] = image->image[g];
+				ret_img->image[g] = 255;
 		}
 	}
 	return ret_img;
