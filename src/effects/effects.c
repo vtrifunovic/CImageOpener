@@ -8,17 +8,9 @@ K9_Image *pixel_lag(K9_Image *ret_img, K9_Image *image, int chance, int chunk_si
     char prog[] = "./effects/effects.cl";
     char func[] = "pixel_lag";
     uint16_t effects_id = 230;
-    if (image->mem_id == NULL)
-        update_input_buffer(image, global_item_size);
-    if (ret_img->mem_id == NULL)
-        update_output_buffer(ret_img, global_item_size);
-    if (ret_img->image == NULL && read)
-        ret_img->image = (uint8_t *)malloc(global_item_size);
-    read_cl_program(prog, effects_id);
-    if (strcmp(global.past_func, func) != 0){
-        bind_cl_function(func, effects_id);
-        strcpy(global.past_func, func);
-    }
+
+    mem_check_gpu(image, ret_img, prog, func, effects_id, global_item_size, read);
+
     set_main_args(image->mem_id, ret_img->mem_id);
 
     int value = rand() % (chance + 1);
@@ -52,9 +44,9 @@ K9_Image *color_decay(K9_Image *ret_img, K9_Image *image, int kern, int iteratio
         char func[] = "color_decay";
         uint16_t effects_id = 230;
         if (tmpimg->mem_id == NULL)
-            update_input_buffer(tmpimg, totalpixels);
+            update_input_buffer(tmpimg);
         if (ret_img->mem_id == NULL)
-            update_output_buffer(ret_img, totalpixels);
+            update_output_buffer(ret_img);
         if (ret_img->image == NULL && read)
             ret_img->image = (uint8_t *)malloc(totalpixels);
         read_cl_program(prog, effects_id);
@@ -89,17 +81,8 @@ K9_Image *buffer_kill(K9_Image *ret_img, K9_Image *image, uint8_t buffer_overwri
     char prog[] = "./effects/effects.cl";
     char func[] = "buffer_kill";
     uint16_t effects_id = 230;
-    if (image->mem_id == NULL)
-        update_input_buffer(image, global_item_size);
-    if (ret_img->mem_id == NULL)
-        update_output_buffer(ret_img, global_item_size);
-    if (ret_img->image == NULL && read)
-        ret_img->image = (uint8_t *)malloc(global_item_size);
-    read_cl_program(prog, effects_id);
-    if (strcmp(global.past_func, func) != 0){
-        bind_cl_function(func, effects_id);
-        strcpy(global.past_func, func);
-    }
+
+    mem_check_gpu(image, ret_img, prog, func, effects_id, global_item_size, read);
 
     set_main_args(image->mem_id, ret_img->mem_id);
     global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_uchar), (void *)&buffer_overwrite);

@@ -26,8 +26,8 @@ void init_gpu(K9_Image *image);
 
 void read_cl_program(char *path, uint16_t sid);
 void bind_cl_function(char *function, uint16_t sid);
-void update_output_buffer(K9_Image *image, size_t totalsize);
-void update_input_buffer(K9_Image *image, int totalpixels);
+void update_output_buffer(K9_Image *image);
+void update_input_buffer(K9_Image *image);
 void set_main_args(cl_mem input, cl_mem output);
 uint8_t *run_kernel(size_t global_item_size, K9_Image ret_img, size_t return_size);
 void run_kernel_no_return(size_t global_item_size);
@@ -38,6 +38,8 @@ void run_kernel_no_return(size_t global_item_size);
  * @returns Image data from VRAM into RAM.
  */
 uint8_t *read_mem_buffer(K9_Image image);
+
+void mem_check_gpu(K9_Image *image, K9_Image *ret_img, char *prog, char *func, uint16_t id, size_t global_item_size, bool read);
 
 void recalculate_local_workgroups(size_t size, int override);
 

@@ -101,6 +101,7 @@ K9_Image *load_image(char *file, bool debug){
     // load image using stbi
     uint8_t *rgb_image = stbi_load(file, &image->width, &image->height, &image->channels, 3);
     image->channels = 3;
+    image->tp = image->width * image->height * image->channels;
     // Check that image exists
     if (!rgb_image){
         fprintf(stderr, "\e[1;31mError!\e[0m In function call load_image(), valid file was not given.\n");
@@ -286,6 +287,7 @@ K9_Image *create_img(int width, int height, int channels){
     ret_img->channels = channels;
     ret_img->height = height;
     ret_img->width = width;
+    ret_img->tp = width * height * channels;
     ret_img->mem_id = NULL;
     ret_img->image = (uint8_t *)malloc(width * height * channels);
     return ret_img;
@@ -296,6 +298,7 @@ K9_Image *create_img_template(K9_Image *image, bool alloc_mem){
     ret_img->channels = image->channels;
     ret_img->height = image->height;
     ret_img->width = image->width;
+    ret_img->tp = image->tp;
     ret_img->mem_id = NULL;
     // No point to allocate data if its going str8 to gpu as a buffer
     if (global.enable_gpu && !alloc_mem)

@@ -118,13 +118,13 @@ void bind_cl_function(char *function, uint16_t sid){
     strcpy(global.past_func, function);
 }
 
-void update_output_buffer(K9_Image *image, size_t totalsize){
-    image->mem_id = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_WRITE, totalsize * sizeof(uint8_t), NULL, &global.gpu_values.ret);
+void update_output_buffer(K9_Image *image){
+    image->mem_id = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_WRITE, image->tp * sizeof(uint8_t), NULL, &global.gpu_values.ret);
 }
 
-void update_input_buffer(K9_Image *image, int totalpixels){
-    image->mem_id = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_WRITE, totalpixels * sizeof(uint8_t), NULL, &global.gpu_values.ret);
-    global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, image->mem_id, CL_TRUE, 0, totalpixels * sizeof(uint8_t), image->image, 0, NULL, NULL);
+void update_input_buffer(K9_Image *image){
+    image->mem_id = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_WRITE, image->tp * sizeof(uint8_t), NULL, &global.gpu_values.ret);
+    global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, image->mem_id, CL_TRUE, 0, image->tp * sizeof(uint8_t), image->image, 0, NULL, NULL);
 }
 
 void set_main_args(cl_mem input, cl_mem output){
@@ -154,6 +154,20 @@ uint8_t *read_mem_buffer(K9_Image image){
         image.image = (uint8_t *) malloc(image.width*image.height*image.channels);
     global.gpu_values.ret = clEnqueueReadBuffer(global.gpu_values.command_queue, image.mem_id, CL_TRUE, 0, image.width*image.channels*image.height, image.image, 0, NULL, NULL);
     return image.image;
+}
+
+void mem_check_gpu(K9_Image *image, K9_Image *ret_img, char *prog, char *func, uint16_t id, size_t global_item_size, bool read){
+    if (image->mem_id == NULL)
+        update_input_buffer(image);
+    if (ret_img->mem_id == NULL)
+        update_output_buffer(ret_img);
+    if (ret_img->image == NULL && read)
+        ret_img->image = (uint8_t *)malloc(global_item_size);
+    read_cl_program(prog, id);
+    if (strcmp(global.past_func, func) != 0){
+        bind_cl_function(func, id);
+        strcpy(global.past_func, func);
+    }
 }
 
 void recalculate_local_workgroups(size_t size, int override){

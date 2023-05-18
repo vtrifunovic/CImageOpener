@@ -147,7 +147,7 @@ int main(int argc, char *argv[]){
             dil_img = gray_morph(dil_img, mask, kern_dil, K9_DILATION, true);
             dil_img = crop(dil_img, *dil_img, (vec2){10, dil_img->width-(dil_img->width/25)}, (vec2){10, dil_img->height-15}, K9_FILL);
             // eventually crop will be gpu bound so I won't have to do this
-            update_input_buffer(dil_img, dil_img->height*dil_img->width*3);
+            update_input_buffer(dil_img);
             new_img2 = bitwiseNot(new_img2, new_img, dil_img, true);
             free(kern_x.kernel);
             free(kern_y.kernel);

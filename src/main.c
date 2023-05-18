@@ -29,6 +29,15 @@ int main(int argc, char *argv[]){
     // initializes gpu processing
     init_gpu(new_img);
 
+    // Creating interpolated table of values for LUT function
+    int xp[] = {0, 64, 128, 192, 255};
+    int fp[] = {0, 16, 128, 240, 255};
+    int *table = interp_arrays(256, xp, 5, fp, 5);
+
+    // Applying LUT function to contrast-stretch image
+    K9_Image *luttest = create_img_template(new_img, true);
+    LUT(luttest, new_img, table, 256, true);
+
     // creating a 3x3 kernel of all 1's
     Kernel kern;
     int a[] = 
@@ -60,7 +69,7 @@ int main(int argc, char *argv[]){
     ero = bin_erosion(ero, mask, kern, true);
 
     // detecting contours in our mask
-    Contour *cnts = detect_contours(dil, K9_N4, false);
+    Contour *cnts = detect_contours(mask, K9_N8, false);
 
     // creating image & window to display contours
     K9_Image *first_c = create_img_template(mask, true);
@@ -115,16 +124,16 @@ int main(int argc, char *argv[]){
     blr = blur(blr, new_img, kern, 10, true);
 
     // grayscale erosion
-    K9_Image *g_dil = create_img_template(new_img, false);
-    g_dil = gray_morph(g_dil, new_img, kern, K9_EROSION, true);
+    K9_Image *g_ero = create_img_template(new_img, false);
+    g_ero = gray_morph(g_ero, new_img, kern, K9_EROSION, true);
 
     // grayscale dilation
-    K9_Image *gray2 = create_img_template(new_img, false);
-    gray2 = gray_morph(gray2, new_img, kern, K9_DILATION, true);
+    K9_Image *g_dil = create_img_template(new_img, false);
+    g_dil = gray_morph(g_dil, new_img, kern, K9_DILATION, true);
 
     // subtracting erosion from dilation to create edge detect
     K9_Image *e_tec = create_img_template(new_img, false);
-    e_tec = subtract(e_tec, gray2, g_dil, true);
+    e_tec = subtract(e_tec, g_dil, g_ero, true);
 
     // thinning 
     K9_Image *thin = create_img_template(mask, false);
@@ -145,19 +154,27 @@ int main(int argc, char *argv[]){
         if (count == 0)
             show_image(window, *new_img, false);
         else if (count == 1)
-            show_image(window, *rz, false);            
+            show_image(window, *rz, false); 
         else if (count == 2)
-            show_image(window, *med, false);
+            show_image(window, *luttest, false);            
         else if (count == 3)
-            show_image(window, *hp, false);
+            show_image(window, *med, false);
         else if (count == 4)
-            show_image(window, *mask, false);
+            show_image(window, *hp, false);
         else if (count == 5)
-            show_image(window, *dil, false);
+            show_image(window, *mask, false);
         else if (count == 6)
-            show_image(window, *g_dil, false);
+            show_image(window, *dil, false);
         else if (count == 7)
-            show_image(window, *gray2, false);
+            show_image(window, *ero, false);
+        else if (count == 8)
+            show_image(window, *gray, false);
+        else if (count == 9)
+            show_image(window, *g_dil, false);
+        else if (count == 10)
+            show_image(window, *g_ero, false);
+        else if (count == 11)
+            show_image(window, *thin, false);
         else
             show_image(window, *e_tec, false);
     }
@@ -168,8 +185,8 @@ int main(int argc, char *argv[]){
     K9_free(hxm);
     K9_free(blr);
     K9_free(gray);
+    K9_free(g_ero);
     K9_free(g_dil);
-    K9_free(gray2);
     K9_free(e_tec);
     K9_free_gpu();
     return 0;

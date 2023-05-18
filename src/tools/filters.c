@@ -18,24 +18,14 @@ static uint8_t insertion_sort(uint8_t window[], uint8_t size){
 }
 
 K9_Image *median_filter(K9_Image *ret_img, K9_Image *image, uint8_t order, bool read){
-    size_t global_item_size = image->width * image->height * image->channels;
     if (global.enable_gpu == true){
         char prog[] = "./tools/filters.cl";
         char func[] = "median_filter";
         uint16_t filt_id = 145;
-        if (image->mem_id == NULL)
-            update_input_buffer(image, global_item_size);
-        if (ret_img->mem_id == NULL)
-            update_output_buffer(ret_img, global_item_size);
-        if (ret_img->image == NULL && read)
-            ret_img->image = (uint8_t *) malloc(global_item_size);
-        read_cl_program(prog, filt_id);
-        if (strcmp(global.past_func, func) != 0){
-            bind_cl_function(func, filt_id);
-            strcpy(global.past_func, func);
-        }
+
+        mem_check_gpu(image, ret_img, prog, func, filt_id, ret_img->tp, read);
         // window won't work properly if workgroups aren't size of 1
-        recalculate_local_workgroups(global_item_size, 1);
+        recalculate_local_workgroups(ret_img->tp, 1);
 
         set_main_args(image->mem_id, ret_img->mem_id);
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_uchar)*order*order, NULL);
@@ -44,21 +34,22 @@ K9_Image *median_filter(K9_Image *ret_img, K9_Image *image, uint8_t order, bool 
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 5, sizeof(cl_uchar), (void *)&image->channels);
 
         if (read)
-            ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
+            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp);
         else
-            run_kernel_no_return(global_item_size);
+            run_kernel_no_return(ret_img->tp);
+
         // not time effective, but saves speed by resetting back to original
-        recalculate_local_workgroups(global_item_size, 0);
+        recalculate_local_workgroups(ret_img->tp, 0);
     } else {
         uint8_t *window = (uint8_t *)malloc(order*order);
         uint8_t *new_window = (uint8_t *) malloc(order*order);
         int8_t p_back = order/2;
         int8_t start = p_back - order + 1;
         int8_t shift = abs(p_back - order + 1);
-        for (int y = 0; y < global_item_size; y++){
+        for (int y = 0; y < ret_img->tp; y++){
             for (int8_t x = start; x <= p_back; x++){
                 for (int8_t z = start; z <= p_back; z++){
-                    if (y+z*3+image->width*x*3 > global_item_size) // OOB Check
+                    if (y+z*3+image->width*x*3 > ret_img->tp) // OOB Check
                         continue;
                     window[order*(x+shift)+(z+shift)] = image->image[y+z*image->channels+image->width*x*image->channels];
                 }
@@ -72,22 +63,12 @@ K9_Image *median_filter(K9_Image *ret_img, K9_Image *image, uint8_t order, bool 
 }
 
 K9_Image *convolve(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read){
-    size_t global_item_size = image->width * image->height *image->channels;
     if (global.enable_gpu == true){
         char prog[] = "./tools/filters.cl";
         char func[] = "convolve";
         uint16_t filt_id = 145;
-        if (image->mem_id == NULL)
-            update_input_buffer(image, global_item_size);
-        if (ret_img->mem_id == NULL)
-            update_output_buffer(ret_img, global_item_size);
-        if (ret_img->image == NULL && read)
-            ret_img->image = (uint8_t *)malloc(global_item_size);
-        read_cl_program(prog, filt_id);
-        if (strcmp(global.past_func, func) != 0){
-            bind_cl_function(func, filt_id);
-            strcpy(global.past_func, func);
-        }
+
+        mem_check_gpu(image, ret_img, prog, func, filt_id, ret_img->tp, read);
 
         cl_mem kern_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, kern.width * kern.height * sizeof(int16_t), NULL, &global.gpu_values.ret);
 
@@ -101,9 +82,9 @@ K9_Image *convolve(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read){
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 5, sizeof(cl_uchar), (void *)&image->channels);
 
         if (read)
-            ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
+        ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp);
         else
-            run_kernel_no_return(global_item_size);
+        run_kernel_no_return(ret_img->tp);
 
         global.gpu_values.ret = clReleaseMemObject(kern_mem_obj);
 
@@ -111,13 +92,13 @@ K9_Image *convolve(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read){
         int8_t p_back = kern.width / 2;
         int8_t start = p_back - kern.width + 1;
         int8_t shift = abs(p_back - kern.width + 1);
-        for (int y = 0; y < global_item_size; y++){
+        for (int y = 0; y < ret_img->tp; y++){
             int total = 0;
             for (int8_t x = start; x <= p_back; x++){
                 for (int8_t z = start; z <= p_back; z++){
                     if (y+z*image->channels+image->width*x*image->channels < 0)
                         continue;
-                    if (y+z*image->channels+image->width*x*image->channels > global_item_size)
+                    if (y+z*image->channels+image->width*x*image->channels > ret_img->tp)
                         continue;
                     total += kern.kernel[kern.width*(x+shift)+(z+shift)] * image->image[y+z*image->channels+image->width*x*image->channels];
                 }
@@ -138,25 +119,15 @@ static int calculate_divisor(Kernel kern){
 }
 
 K9_Image *gaussian_blur(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read, int divisor){
-    size_t global_item_size = image->width * image->height * image->channels;
     if (divisor == 0xFFFFFF)
         divisor = calculate_divisor(kern);
-        
+
     if (global.enable_gpu == true){
         char prog[] = "./tools/filters.cl";
         char func[] = "g_blur";
         uint16_t filt_id = 145;
-        if (image->mem_id == NULL)
-            update_input_buffer(image, global_item_size);
-        if (ret_img->mem_id == NULL)
-            update_output_buffer(ret_img, global_item_size);
-        if (ret_img->image == NULL && read)
-            ret_img->image = (uint8_t *)malloc(global_item_size);
-        read_cl_program(prog, filt_id);
-        if (strcmp(global.past_func, func) != 0){
-            bind_cl_function(func, filt_id);
-            strcpy(global.past_func, func);
-        }
+
+        mem_check_gpu(image, ret_img, prog, func, filt_id, ret_img->tp, read);
 
         cl_mem kern_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, kern.width * kern.height * sizeof(int16_t), NULL, &global.gpu_values.ret);
 
@@ -171,22 +142,22 @@ K9_Image *gaussian_blur(K9_Image *ret_img, K9_Image *image, Kernel kern, bool re
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 6, sizeof(cl_int), (void *)&divisor);
 
         if (read)
-            ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
+            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp);
         else
-            run_kernel_no_return(global_item_size);
+            run_kernel_no_return(ret_img->tp);
 
         global.gpu_values.ret = clReleaseMemObject(kern_mem_obj);
     } else {
         int8_t p_back = kern.width / 2;
         int8_t start = p_back - kern.width + 1;
         int8_t shift = abs(p_back - kern.width + 1);
-        for (int y = 0; y < global_item_size; y++){
+        for (int y = 0; y < ret_img->tp; y++){
             int total = 0;
             for (int8_t x = start; x <= p_back; x++){
                 for (int8_t z = start; z <= p_back; z++){
                     if (y+z*image->channels+image->width*x*image->channels < 0)
                         continue;
-                    if (y+z*image->channels+image->width*x*image->channels > global_item_size)
+                    if (y+z*image->channels+image->width*x*image->channels > ret_img->tp)
                         continue;
                     total += kern.kernel[kern.width*(x+shift)+(z+shift)] * image->image[y+z*image->channels+image->width*x*image->channels];
                 }
@@ -263,12 +234,11 @@ static void df_search(K9_Image *image, char *searched, int x, Contour *current, 
 }
 
 static Contour *dfs_new_contour(K9_Image *image, char *searched, int x, Contour *first, int type){
-    size_t totalpixels = image->width * image->height * image->channels;
     Contour *link = (Contour *)malloc(sizeof(Contour));
     link->length = 0;
-    link->pixels = (int *)malloc(totalpixels * sizeof(int));
+    link->pixels = (int *)malloc(image->tp * sizeof(int));
     link->next = first;
-    df_search(image, searched, x, link, type, totalpixels);
+    df_search(image, searched, x, link, type, image->tp);
     link->pixels = (int *)realloc(link->pixels, link->length * sizeof(int));
     return link;
 }
@@ -278,11 +248,10 @@ Contour *detect_contours(K9_Image *image, int type, bool debug){
         fprintf(stderr, "\e[1;33mWarning!\e[0m Function detect_contours() should be a binary image. Contours detected may be incorrect.\n");
     }
     Contour *first = NULL;
-    size_t totalpixels = image->width * image->height * image->channels;
-    char *searched = (char *)malloc(totalpixels);
-    memset(searched, 'x', totalpixels);
+    char *searched = (char *)malloc(image->tp);
+    memset(searched, 'x', image->tp);
     int total_contours = 0;
-    for (int x = 0; x < totalpixels; x++){
+    for (int x = 0; x < image->tp; x++){
         if (debug)
             printf("Searching pixel[\e[1;36m%d\e[0m]: \tTotal Contours: %d ", x, total_contours);
         if (image->image[x] != 255){
@@ -343,8 +312,7 @@ Contour *analyze_contours(K9_Image *image, Contour *contour_list){
 }
 
 K9_Image *viz_contour_by_index(K9_Image *original, int index, Contour *first){
-    size_t totalpixels = original->width * original->height * original->channels;
-    memset(original->image, 0, totalpixels);
+    memset(original->image, 0, original->tp);
     int cnt = 0;
     while (first->next != NULL && cnt != index){
         first = first->next;
@@ -352,10 +320,64 @@ K9_Image *viz_contour_by_index(K9_Image *original, int index, Contour *first){
     }
     //printf("Reconstructing contour \e[1;36m%d\e[0m\tSize: %d\nWidth: %d \tHeight: %d\n", cnt, first->length, first->width, first->height);
     for (int i = 0; i < first->length; i++){
-        if (first->pixels[i] < totalpixels)
+        if (first->pixels[i] < original->tp)
             original->image[first->pixels[i]] = 255;
     }
     return original;
+}
+
+int *interp_arrays(int return_size, int *xp, int size_xp, int *fp, int size_fp){
+    int *ret_array = (int *) calloc(return_size, sizeof(int));
+    int idx = 0;
+    for (int x = 0; x < return_size; x++){
+        if (x > xp[idx])
+            idx++;
+        if (idx > size_xp || idx > size_fp)
+            break;
+        int x1 = xp[idx-1];
+        int x2 = xp[idx];
+        int y1 = fp[idx-1];
+        int y2 = fp[idx];
+        float step1 = (float)(y2-y1)/(float)(x2-x1);
+        float step2 = step1 * (x-x1);
+        ret_array[x] = step2 + y1;
+    }
+    return ret_array;
+}
+
+K9_Image *LUT(K9_Image *ret_img, K9_Image *image, int *table, int tablesize, bool read){
+    if (global.enable_gpu == true){
+        char prog[] = "./tools/filters.cl";
+        char func[] = "LUT";
+        uint16_t filt_id = 145;
+
+        mem_check_gpu(image, ret_img, prog, func, filt_id, ret_img->tp, read);
+
+        cl_mem table_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, tablesize * sizeof(int), NULL, &global.gpu_values.ret);
+
+        global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, table_mem_obj, CL_TRUE, 0, tablesize * sizeof(int), table, 0, NULL, NULL);
+
+        set_main_args(image->mem_id, ret_img->mem_id);
+
+        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_mem), (void *)&table_mem_obj);
+        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_int), (void *)&tablesize);
+
+        if (read)
+            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp);
+        else
+            run_kernel_no_return(ret_img->tp);
+
+        global.gpu_values.ret = clReleaseMemObject(table_mem_obj);
+    } else {
+        for (int i = 0; i < ret_img->tp; i++){
+            if (image->image[i] > tablesize){
+                ret_img->image[i] = 0;
+            } else {
+                ret_img->image[i] = table[image->image[i]];
+            }
+        }
+    }
+    return ret_img;
 }
 
 void K9_free_contours(Contour *first){

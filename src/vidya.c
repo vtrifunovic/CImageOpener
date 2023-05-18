@@ -56,9 +56,9 @@ int main(int argc, char *argv[]){
     while (!handle_inputs(window)){
         f = load_video_frame(f, *vid, ret);
         if (ret == 0){
+            //color_decay(frame, f, 3, 10, false);
             pixel_lag(frame, f, 1, 1, false);
             buffer_kill(frame2, frame, 0, true);
-            //color_decay(frame, f, 3, 10, false);
             //frame2 = gray_morph(frame2, frame, kern, K9_DILATION, true);
         }
         if (f->channels == 0){

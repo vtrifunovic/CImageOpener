@@ -69,8 +69,35 @@ empty K9_Image. Will automatically stop once last contour is reached.
  * @return Image containing only the contour interested in.
  */
 K9_Image *viz_contour_by_index(K9_Image *original, int index, Contour *first);
+/*! @brief Analyzes the contours in the list and returns the same list with the
+ * height, width, and (x0, y0) parameters updated.
+ *
+ * @param image Image which the images were detected on.
+ * @param contour_list List of contours detected by detect_contours
+ * @returns Updated Contour list.
+ */
+Contour *analyze_contours(K9_Image *image, Contour *contour_list);
+/*! @brief
+ * Interpolates the values using two arrays. One for determining cutoffs, the other for determining the values. Works similiar to np.interp()
+ * 
+ * @param return_size Size of array to be returned (256 for images)
+ * @param xp Input array that determines the boundaries of interpolation
+ * @param size_xp Length of the xp array
+ * @param fp Input array that determines max values in each xp segment
+ * @param size_fp Length of fp array
+ * @returns Integer array with interpolated values.
+ */
+int *interp_arrays(int return_size, int *xp, int size_xp, int *fp, int size_fp);
+/*! @brief Uses an image and a table to adjust all the pixel values in an image based on the table's values.
+ *
+ * @param ret_img Return image, this is where output of LUT is stored
+ * @param image Input image, this is the image that will be transformed.
+ * @param table Table of pixel values. Index is the input image pixel, value is the returned value.
+ * @param tablesize Size of the input table
+ * @param read Whether to read the data into RAM
+ * @returns Image that is scaled based on the input table.
+ */
+K9_Image *LUT(K9_Image *ret_img, K9_Image *image, int *table, int tablesize, bool read);
 
 // Frees all data in contour list
 void K9_free_contours(Contour *first);
-
-Contour *analyze_contours(K9_Image *image, Contour *contour_list);

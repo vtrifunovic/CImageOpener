@@ -60,3 +60,13 @@ __kernel void g_blur(__global const uchar *in_image, __global uchar *out_image, 
     total = total/divisor > 255 ? 255 : total/divisor;
     out_image[x] = total < 0 ? 0 : total;
 }
+
+__kernel void LUT(__global const uchar *in_image, __global uchar *out_image, __global const int *table, int tablesize){
+    int x = get_global_id(0);
+
+    if (in_image[x] > tablesize){
+        out_image[x] = 0;
+        return;
+    }
+    out_image[x] = table[in_image[x]];
+}

@@ -14,6 +14,7 @@ typedef struct k9_image{
     int width;
     int height;
     int channels;
+    size_t tp;
     uint8_t *image;
     cl_mem mem_id;
 } K9_Image;

@@ -17,31 +17,21 @@ K9_Image *rgb_to_gray(K9_Image *gray, K9_Image *image, bool read){
         fprintf(stderr,"\e[1;33mWarning!\e[0m In function rgb_to_gray(), image is already single channel.\n");
         return gray;
     }
-    int totalpixels = image->width * image->height;
     if (global.enable_gpu == true){
         char prog[] = "./conversions/conversions.cl";
         char func[] = "rgb_to_gray";
         uint16_t conv_id = 440;
-        size_t global_item_size = image->width * image->height * image->channels;
-        if (image->mem_id == NULL)
-			update_input_buffer(image, global_item_size);
-		if (gray->mem_id == NULL)
-            update_output_buffer(gray, gray->height * gray->width * gray->channels);
-        if (gray->image == NULL && read)
-            gray->image = (uint8_t *) malloc(totalpixels);
-        read_cl_program(prog, conv_id);
-        if (strcmp(global.past_func, func) != 0){
-            bind_cl_function(func, conv_id);
-            strcpy(global.past_func, func);
-		}
+
+        mem_check_gpu(image, gray, prog, func, conv_id, image->tp, read);
+
         set_main_args(image->mem_id, gray->mem_id);
 
         if (read)
-            gray->image = run_kernel(global_item_size, *gray, totalpixels);
-        else 
-			run_kernel_no_return(global_item_size);
+            gray->image = run_kernel(image->tp, *gray, gray->tp);
+        else
+            run_kernel_no_return(image->tp);
     } else {
-        for (int g = 0; g < totalpixels; g++){
+        for (int g = 0; g < gray->tp; g++){
             int avg = (image->image[g*3] + image->image[g*3+1] + image->image[g*3+2])/3;
             gray->image[g] = avg;
         }
@@ -54,33 +44,23 @@ K9_Image *rgb_to_hsv(K9_Image *hsv, K9_Image *image, bool read){
         fprintf(stderr,"\e[1;33mWarning!\e[0m In function rgb_to_hsv(), image is single channel.\n");
         return hsv;
     }
-    int totalpixels = image->width * image->height;
     if (global.enable_gpu == true){
         uint16_t conv_id = 440;
         char prog[] = "./conversions/conversions.cl";
         char func[] = "rgb_to_hsv";
-        size_t global_item_size = image->width * image->height * image->channels;
-        if (image->mem_id == NULL)
-			update_input_buffer(image, global_item_size);
-		if (hsv->mem_id == NULL)
-            update_output_buffer(hsv, hsv->height * hsv->width * hsv->channels);
-        if (hsv->image == NULL && read)
-            hsv->image = (uint8_t *) malloc(global_item_size);
-        read_cl_program(prog, conv_id);
-        if (strcmp(global.past_func, func) != 0){
-            bind_cl_function(func, conv_id);
-            strcpy(global.past_func, func);
-		}
+
+        mem_check_gpu(image, hsv, prog, func, conv_id, hsv->tp, read);
+
         set_main_args(image->mem_id, hsv->mem_id);
 
         if (read)
-            hsv->image = run_kernel(global_item_size, *hsv, totalpixels);
+            hsv->image = run_kernel(hsv->tp, *hsv, hsv->tp);
         else
-            run_kernel_no_return(global_item_size);
+            run_kernel_no_return(hsv->tp);
     } else {
         float r, g, b, cmax, cmin, cdiff;
         float h = -1, s = -1, v;
-        for (int a = 0; a < totalpixels; a++){
+        for (int a = 0; a < hsv->tp; a++){
             r = (float) image->image[a*3]/255.0;
             g = (float) image->image[a*3+1]/255.0;
             b = (float) image->image[a*3+2]/255.0;
@@ -109,31 +89,21 @@ K9_Image *rgb_to_hsv(K9_Image *hsv, K9_Image *image, bool read){
 }
 
 K9_Image *invert(K9_Image *ret_img, K9_Image *image, bool read){
-    int totalpixels = image->width * image->height * image->channels;
     if (global.enable_gpu == true){
         char prog[] = "./conversions/conversions.cl";
         char func[] = "invert";
         uint16_t conv_id = 440;
-        size_t global_item_size = image->width * image->height * image->channels;
-        if (image->mem_id == NULL)
-			update_input_buffer(image, global_item_size);
-        if (ret_img->mem_id == NULL)
-            update_output_buffer(ret_img, ret_img->height * ret_img->width * ret_img->channels);
-        if (ret_img->image == NULL && read)
-            ret_img->image = (uint8_t *) malloc(global_item_size);
-        read_cl_program(prog, conv_id);
-        if (strcmp(global.past_func, func) != 0){
-            bind_cl_function(func, conv_id);
-            strcpy(global.past_func, func);
-		}
+
+        mem_check_gpu(image, ret_img, prog, func, conv_id, ret_img->tp, read);
+
         set_main_args(image->mem_id, ret_img->mem_id);
 
         if (read)
-            ret_img->image = run_kernel(global_item_size, *ret_img, totalpixels);
+            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp);
         else
-            run_kernel_no_return(global_item_size);
+            run_kernel_no_return(ret_img->tp);
     } else {
-        for (int i = 0; i < totalpixels; i++){
+        for (int i = 0; i < ret_img->tp; i++){
             ret_img->image[i] = 255 - image->image[i];
         }
     }
@@ -152,17 +122,9 @@ K9_Image *resize_img(K9_Image *ret_img, K9_Image *image, vec2 scale, int type, b
         uint16_t conv_id = 440;
         size_t global_item_size = image->width * image->height * image->channels;
         size_t return_item_size = ret_img->width * ret_img->height * ret_img->channels;
-        if (image->mem_id == NULL)
-			update_input_buffer(image, global_item_size);
-        if (ret_img->mem_id == NULL)
-            update_output_buffer(ret_img, return_item_size);
-        if (ret_img->image == NULL && read)
-            ret_img->image = (uint8_t *)malloc(return_item_size);
-        read_cl_program(prog, conv_id);
-        if (strcmp(global.past_func, func) != 0){
-            bind_cl_function(func, conv_id);
-            strcpy(global.past_func, func);
-		}
+
+        mem_check_gpu(image, ret_img, prog, func, conv_id, global_item_size, read);
+
         double scales[] = {image->width/(double)ret_img->width, image->height/(double)ret_img->height};
         int sizes[] = {ret_img->width, ret_img->height, ret_img->channels, image->width};
         cl_mem scale_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, 2 * sizeof(double), NULL, &global.gpu_values.ret);

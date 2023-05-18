@@ -16,18 +16,9 @@ K9_Image *hit_x_miss(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read)
         char prog[] = "./binaryproc/binaryproc.cl";
         char func[] = "hit_x_miss";
         uint16_t bin_id = 640;
-        size_t global_item_size = image->width * image->height * image->channels;
-        if (image->mem_id == NULL)
-            update_input_buffer(image, global_item_size);
-        if (ret_img->mem_id == NULL)
-            update_output_buffer(ret_img, global_item_size);
-        if (ret_img->image == NULL && read)
-            ret_img->image = (uint8_t *)malloc(global_item_size);
-        read_cl_program(prog, bin_id);
-		if (strcmp(global.past_func, func) != 0){
-            bind_cl_function(func, bin_id);
-            strcpy(global.past_func, func);
-		}
+
+        mem_check_gpu(image, ret_img, prog, func, bin_id, ret_img->tp, read);
+
         cl_mem kern_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, kernelsize * sizeof(int16_t), NULL, &global.gpu_values.ret);
 
         global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, kern_mem_obj, CL_TRUE, 0, kernelsize*sizeof(int16_t), kern.kernel, 0, NULL, NULL);
@@ -39,9 +30,9 @@ K9_Image *hit_x_miss(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read)
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 4, sizeof(cl_int), (void *)&image->width);
         
         if (read)
-            ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
-        else 
-            run_kernel_no_return(global_item_size);
+            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp);
+        else
+            run_kernel_no_return(ret_img->tp);
 
         global.gpu_values.ret = clReleaseMemObject(kern_mem_obj);
     } else {
@@ -85,18 +76,9 @@ K9_Image *bin_dilation(K9_Image *ret_img, K9_Image *image, Kernel kern, bool rea
         char prog[] = "./binaryproc/binaryproc.cl";
         char func[] = "bin_dilation";
         uint16_t bin_id = 640;
-        size_t global_item_size = image->width * image->height;
-		if (image->mem_id == NULL)
-			update_input_buffer(image, global_item_size);
-		if (ret_img->mem_id == NULL)
-            update_output_buffer(ret_img, global_item_size);
-        if (ret_img->image == NULL && read)
-            ret_img->image = (uint8_t *)malloc(global_item_size);
-        read_cl_program(prog, bin_id);
-		if (strcmp(global.past_func, func) != 0){
-			bind_cl_function(func, bin_id);
-			strcpy(global.past_func, func);
-		}
+
+        mem_check_gpu(image, ret_img, prog, func, bin_id, ret_img->tp, read);
+
         cl_mem kern_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, kernelsize * sizeof(int16_t), NULL, &global.gpu_values.ret);
 
         global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, kern_mem_obj, CL_TRUE, 0, kernelsize * sizeof(int16_t), kern.kernel, 0, NULL, NULL);
@@ -108,9 +90,9 @@ K9_Image *bin_dilation(K9_Image *ret_img, K9_Image *image, Kernel kern, bool rea
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 4, sizeof(cl_int), (void *)&image->width);
 
         if (read)
-			ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
-		else 
-			run_kernel_no_return(global_item_size);
+            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp);
+        else
+            run_kernel_no_return(ret_img->tp);
 
         global.gpu_values.ret = clReleaseMemObject(kern_mem_obj);
     } else {
@@ -179,18 +161,9 @@ K9_Image *bin_erosion(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read
         char prog[] = "./binaryproc/binaryproc.cl";
         char func[] = "bin_erosion";
         uint16_t bin_id = 640;
-        size_t global_item_size = image->width * image->height;
-		if (image->mem_id == NULL)
-			update_input_buffer(image, global_item_size);
-		if (ret_img->mem_id == NULL)
-			update_output_buffer(ret_img, ret_img->height * ret_img->width * ret_img->channels);
-        if (ret_img->image == NULL && read)
-            ret_img->image = (uint8_t *)malloc(global_item_size);
-        read_cl_program(prog, bin_id);
-		if (strcmp(global.past_func, func) != 0){
-			bind_cl_function(func, bin_id);
-			strcpy(global.past_func, func);
-		}
+
+        mem_check_gpu(image, ret_img, prog, func, bin_id, ret_img->tp, read);
+
         cl_mem kern_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, kernelsize * sizeof(int16_t), NULL, &global.gpu_values.ret);
 
         global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, kern_mem_obj, CL_TRUE, 0, kernelsize * sizeof(int16_t), kern.kernel, 0, NULL, NULL);
@@ -202,9 +175,9 @@ K9_Image *bin_erosion(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 4, sizeof(cl_int), (void *)&image->width);
 
         if (read)
-			ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
-		else
-			run_kernel_no_return(global_item_size);
+            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp);
+        else
+            run_kernel_no_return(ret_img->tp);
 
         global.gpu_values.ret = clReleaseMemObject(kern_mem_obj);
     } else {
@@ -275,11 +248,7 @@ static uint8_t A(uint8_t a1, uint8_t a2){
 
 K9_Image *thinning(K9_Image *ret_img, K9_Image *image, bool read){
     int totalpixels = image->width * image->height * image->channels;
-    K9_Image *tmp = malloc(sizeof(K9_Image)); 
-    tmp->channels = image->channels;
-    tmp->height = image->height;
-    tmp->width = image->width;
-    tmp->image = (uint8_t *)malloc(totalpixels);
+    K9_Image *tmp = create_img_template(image, true);
     if (global.enable_gpu == true){
         char prog[] = "./binaryproc/binaryproc.cl";
         char func[] = "gh_thin";
@@ -289,9 +258,9 @@ K9_Image *thinning(K9_Image *ret_img, K9_Image *image, bool read){
         image->image = read_mem_buffer(*image);
         memcpy(tmp->image, image->image, global_item_size);
         // -----------------------------------------------------
-        update_input_buffer(tmp, global_item_size);
+        update_input_buffer(tmp);
         if (ret_img->mem_id == NULL)
-			update_output_buffer(ret_img, ret_img->height * ret_img->width * ret_img->channels);
+			update_output_buffer(ret_img);
         if (ret_img->image == NULL && read)
             ret_img->image = (uint8_t *)malloc(global_item_size);
         read_cl_program(prog, bin_id);
