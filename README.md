@@ -47,6 +47,7 @@ Basic Image Processing engine written in C, used to be the CImageOpener.c file, 
         - Convolution
         - Gaussian Blur
         - Contour Detection & Analysis
+        - LUT & LUT Table Creation
 
 # To-do Features
 - Finish adding OpenCL functions for rest of current features
