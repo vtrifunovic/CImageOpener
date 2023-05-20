@@ -83,7 +83,7 @@ K9_Image *bitwiseAnd(K9_Image *ret_img, K9_Image *image, K9_Image *mask, bool re
 			run_kernel_no_return(ret_img->tp);
 	} else {
 		if (image->channels == 3){
-			for (int x = 0; x < image->tp; x++){
+			for (int x = 0; x < image->tp/3; x++){
 				ret_img->image[x * 3] = image->image[x * 3] * mask->image[x]/255;
 				ret_img->image[x*3+1] = image->image[x*3+1] * mask->image[x]/255;
 				ret_img->image[x*3+2] = image->image[x*3+2] * mask->image[x]/255;

@@ -5,6 +5,9 @@
 #include <stdio.h>
 #include "../global.h"
 
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+
 K9_Image *hit_x_miss(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read){
     if (image->channels > 1){
         fprintf(stderr, "\e[1;31m Error!\e[0m Function hit_x_miss() needs a single channel image\n");
@@ -37,23 +40,23 @@ K9_Image *hit_x_miss(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read)
         global.gpu_values.ret = clReleaseMemObject(kern_mem_obj);
     } else {
         int length = image->width * image->height;
-        int count_trues = 0, nxtline = 0;
         for (int x = 0; x < length; x++){
             if (image->image[x] != kern.kernel[kernelsize/2]){
                 ret_img->image[x] = 0;
                 continue;
             }
-            uint8_t h = sqrt((float)kernelsize)-1;
+            int8_t order = sqrt((float)kernelsize);
+            int8_t p_back = order/2;
+            int8_t start = p_back-order+1;
+            int8_t shift = abs(p_back-order+1);
             bool r = false;
-            for (uint8_t i = 0; i < h; i++){
-                for (uint8_t j = 0; j < h+1; j++){
-                    if (i == 0 && j == h)
+            for (int8_t y = start; y <= p_back; y++){
+                for (int8_t z = start; z <= p_back; z++){
+                    if (x+z+image->width*y < 0)
                         continue;
-                    else if (x-(i*image->width-i)-j < 0)
-                        r = true;
-                    if (kern.kernel[kernelsize/2-i*h-j] != image->image[x-(i*image->width-i)-j] && kern.kernel[kernelsize/2-i*h-j] >= 0)
-                        r = true;
-                    if (kern.kernel[kernelsize/2+i*h+j] != image->image[x+(i*image->width-i)+j] && kern.kernel[kernelsize/2+i*h+j] >= 0)
+                    if (x+z+image->width*y > ret_img->tp)
+                        continue;
+                    if (kern.kernel[order*(y+shift)+(z+shift)] != image->image[x+z+image->width*y] && kern.kernel[order*(y+shift)+(z+shift)] >= 0)
                         r = true;
                 }
             }
@@ -96,54 +99,21 @@ K9_Image *bin_dilation(K9_Image *ret_img, K9_Image *image, Kernel kern, bool rea
 
         global.gpu_values.ret = clReleaseMemObject(kern_mem_obj);
     } else {
-        int center = kern.width * kern.height/ 2;
-        int length = image->width * image->height;
-        for (int j = 0; j < length; j++){
-            if (kern.kernel[center] == image->image[j]){
-                ret_img->image[j] = 255;
-                int inc = 1;
-                while (j-inc >= 0 && kern.kernel[center-inc] == 255 && inc <= kern.width/2){
-                    ret_img->image[j-inc] = 255;
-                    inc++;
-                }
-                inc = 1;
-                while (j + inc <= length && kern.kernel[center + inc] == 255 && inc <= kern.width/2){
-                    ret_img->image[j+inc] = 255;
-                    inc++;
-                }
-                inc = 1;
-                int side = 1;
-                while (j-inc*image->width >= 0 && kern.kernel[center + inc * kern.width] == 255){
-                    ret_img->image[j - inc*image->width] = 255;
-                    while (j - inc * image->width - side >= 0 && kern.kernel[center - inc - side * kern.width] == 255)
-                    {
-                        ret_img->image[j - side - inc * image->width] = 255;
-                        side++;
-                    }
-                    side = 1;
-                    while (j - inc * image->width - side >= 0 && kern.kernel[center - inc + side * kern.width] == 255)
-                    {
-                        ret_img->image[j + side - inc * image->width] = 255;
-                        side++;
-                    }
-                    inc++;
-                }
-                inc = 1;
-                side = 1;
-                while (j + inc * image->width <= length && kern.kernel[center - inc * kern.width] == 255){
-                    ret_img->image[j + inc * image->width] = 255;
-                    while (j + inc * image->width - side >= 0 && kern.kernel[center - inc - side * kern.width] == 255)
-                    {
-                        ret_img->image[j - side + inc * image->width] = 255;
-                        side++;
-                    }
-                    side = 1;
-                    while (j + inc * image->width - side >= 0 && kern.kernel[center - inc + side * kern.width] == 255)
-                    {
-                        ret_img->image[j + side + inc * image->width] = 255;
-                        side++;
-                    }
-                    inc++;
+        for (int x = 0; x < image->tp; x++){
+            if (image->image[x] != kern.kernel[kernelsize/2]){
+                continue;
+            }
+            int8_t order = sqrt((float)kernelsize);
+            int8_t p_back = order/2;
+            int8_t start = p_back-order+1;
+            int8_t shift = abs(p_back-order+1);
+            for (int8_t y = start; y <= p_back; y++){
+                for (int8_t z = start; z <= p_back; z++){
+                    if (x+z+image->width*y < 0)
+                        continue;
+                    if (x+z+image->width*y > ret_img->tp)
+                        continue;
+                    ret_img->image[x+z+image->width*y] = MAX(kern.kernel[order*(y+shift)+(z+shift)], image->image[x+z+image->width*y]);
                 }
             }
         }
@@ -181,52 +151,23 @@ K9_Image *bin_erosion(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read
 
         global.gpu_values.ret = clReleaseMemObject(kern_mem_obj);
     } else {
-        memcpy(ret_img->image, image->image, image->width * image->height);
-        int center = kern.width * kern.height / 2;
-        int length = image->width * image->height;
-        for (int j = 0; j < length; j++){
-            if (kern.kernel[center] != image->image[j])
-            {
-                ret_img->image[j] = 0;
-                int inc = 1;
-                while (j - inc >= 0 && kern.kernel[center - inc] == 255 && inc <= kern.width/2){
-                    ret_img->image[j - inc] = 0;
-                    inc++;
-                }
-                inc = 0;
-                while (j + inc <= length && kern.kernel[center + inc] == 255 && inc <= kern.width/2){
-                    ret_img->image[j + inc] = 0;
-                    inc++;
-                }
-                inc = 1;
-                int side = 1;
-                while (j - inc * image->width >= 0 && kern.kernel[center + inc * kern.width] == 255){
-                    ret_img->image[j - inc * image->width] = 0;
-                    while (j - inc * image->width - side >= 0 && kern.kernel[center - inc - side * kern.width] == 255){
-                        ret_img->image[j - side - inc * image->width] = 0;
-                        side++;
-                    }
-                    side = 1;
-                    while (j - inc * image->width - side >= 0 && kern.kernel[center - inc + side * kern.width] == 255){
-                        ret_img->image[j + side - inc * image->width] = 0;
-                        side++;
-                    }
-                    inc++;
-                }
-                side = 1;
-                inc = 1;
-                while (j + inc * image->width <= length && kern.kernel[center - inc * kern.width] == 255){
-                    ret_img->image[j + inc * image->width] = 0;
-                    while (j + inc * image->width - side >= 0 && kern.kernel[center - inc - side * kern.width] == 255){
-                        ret_img->image[j - side + inc * image->width] = 0;
-                        side++;
-                    }
-                    side = 1;
-                    while (j + inc * image->width - side >= 0 && kern.kernel[center - inc + side * kern.width] == 255){
-                        ret_img->image[j + side + inc * image->width] = 0;
-                        side++;
-                    }
-                    inc++;
+        // Stops data overwrites
+        memcpy(ret_img->image, image->image, image->tp);
+        for (int x = 0; x < image->tp; x++){
+            if (image->image[x] == kern.kernel[kernelsize/2]){
+                continue;
+            }
+            int8_t order = sqrt((float)kernelsize);
+            int8_t p_back = order / 2;
+            int8_t start = p_back - order + 1;
+            int8_t shift = abs(p_back - order + 1);
+            for (int8_t y = start; y <= p_back; y++){
+                for (int8_t z = start; z <= p_back; z++){
+                    if (x+z+image->width*y < 0)
+                        continue;
+                    if (x+z+image->width*y > ret_img->tp)
+                        continue;
+                    ret_img->image[x+z+image->width*y] = kern.kernel[order*(y+shift)+(z+shift)] > 0 ? 0 : image->image[x+z+image->width*y];
                 }
             }
         }

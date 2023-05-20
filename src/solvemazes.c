@@ -18,7 +18,7 @@ int main(int argc, char *argv[]){
     K9_Image *new_img = load_image(argv[1], true);
     K9_Image *new_img2 = create_img_template(new_img, true);
     memcpy(new_img2->image, new_img->image, new_img->height*new_img->width*new_img->channels);
-    init_gpu(new_img);
+    //init_gpu(new_img);
     int lower[] = {210, 200, 175};
     int higher[] = {255, 255, 255};
     int dil[] =
@@ -93,7 +93,7 @@ int main(int argc, char *argv[]){
     K9_Image *dil_img = create_img_template(mask, true);
     memset(dil_img->image, 255, dil_img->height*dil_img->width);
     dil_img = crop(dil_img, *dil_img, (vec2){5, dil_img->width - 5}, (vec2){5, dil_img->height - 5}, K9_FILL);
-    invert(dil_img, dil_img, false);
+    convert_channels(dil_img, dil_img, K9_INVERT, false);
     add(mask, dil_img, mask, true);
 
     K9_Image *m1 = create_img_template(mask, false);

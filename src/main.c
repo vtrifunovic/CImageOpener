@@ -55,10 +55,11 @@ int main(int argc, char *argv[]){
     K9_Image *mask = create_img(new_img->width, new_img->height, 1);
     mask = rgb_mask(mask, new_img, lower, higher, true);
 
-    // converting the input image to grayscale
-    // since the output is a single channel image I'm using the mask as a template
-    K9_Image *gray = create_img_template(mask, false);
-    gray = rgb_to_gray(gray, new_img, true);
+    // converting the input image to HSV
+    K9_Image *gray = create_img_template(new_img, false);
+    // Converting image to hsv and back. This should result in same image
+    convert_channels(gray, new_img, K9_RGB2HSV, true);
+    convert_channels(new_img, gray, K9_HSV2RGB, true);
    
     // binary dilation
     K9_Image *dil = create_img_template(mask, false);
@@ -69,7 +70,7 @@ int main(int argc, char *argv[]){
     ero = bin_erosion(ero, mask, kern, true);
 
     // detecting contours in our mask
-    Contour *cnts = detect_contours(mask, K9_N8, false);
+    Contour *cnts = detect_contours(mask, K9_N4, false);
 
     // creating image & window to display contours
     K9_Image *first_c = create_img_template(mask, true);
@@ -84,7 +85,7 @@ int main(int argc, char *argv[]){
         else if (n_key == 0 && held == 1)
             held = 0;
         first_c = viz_contour_by_index(first_c, count, cnts);
-        show_image(cviz, *first_c, false);
+        show_image(cviz, *gray, false);
     }
     glfwTerminate();
     count = 0;
@@ -168,7 +169,7 @@ int main(int argc, char *argv[]){
         else if (count == 7)
             show_image(window, *ero, false);
         else if (count == 8)
-            show_image(window, *gray, false);
+            show_image(window, *and, false);
         else if (count == 9)
             show_image(window, *g_dil, false);
         else if (count == 10)

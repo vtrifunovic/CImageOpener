@@ -12,102 +12,134 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
-K9_Image *rgb_to_gray(K9_Image *gray, K9_Image *image, bool read){
-    if (image->channels == 1){
-        fprintf(stderr,"\e[1;33mWarning!\e[0m In function rgb_to_gray(), image is already single channel.\n");
-        return gray;
-    }
+K9_Image *convert_channels(K9_Image *ret_img, K9_Image *image, int type, bool read){
     if (global.enable_gpu == true){
         char prog[] = "./conversions/conversions.cl";
         char func[] = "rgb_to_gray";
         uint16_t conv_id = 440;
+        if (type == 0xA9)
+            strcpy(func, "rgb_to_hsv");
+        else if (type == 0xAC)
+            strcpy(func, "hsv_to_rgb");
+        else if (type == 0xAB)
+            strcpy(func, "invert");
+        else if (type == 0xAD)
+            strcpy(func, "rgb_to_yuv");
+        else if (type == 0xAE)
+            strcpy(func, "yuv_to_rgb");
 
-        mem_check_gpu(image, gray, prog, func, conv_id, image->tp, read);
-
-        set_main_args(image->mem_id, gray->mem_id);
-
-        if (read)
-            gray->image = run_kernel(image->tp, *gray, gray->tp);
-        else
-            run_kernel_no_return(image->tp);
-    } else {
-        for (int g = 0; g < gray->tp; g++){
-            int avg = (image->image[g*3] + image->image[g*3+1] + image->image[g*3+2])/3;
-            gray->image[g] = avg;
-        }
-    }
-    return gray;
-}
-
-K9_Image *rgb_to_hsv(K9_Image *hsv, K9_Image *image, bool read){
-    if (image->channels == 1){
-        fprintf(stderr,"\e[1;33mWarning!\e[0m In function rgb_to_hsv(), image is single channel.\n");
-        return hsv;
-    }
-    if (global.enable_gpu == true){
-        uint16_t conv_id = 440;
-        char prog[] = "./conversions/conversions.cl";
-        char func[] = "rgb_to_hsv";
-
-        mem_check_gpu(image, hsv, prog, func, conv_id, hsv->tp, read);
-
-        set_main_args(image->mem_id, hsv->mem_id);
-
-        if (read)
-            hsv->image = run_kernel(hsv->tp, *hsv, hsv->tp);
-        else
-            run_kernel_no_return(hsv->tp);
-    } else {
-        float r, g, b, cmax, cmin, cdiff;
-        float h = -1, s = -1, v;
-        for (int a = 0; a < hsv->tp; a++){
-            r = (float) image->image[a*3]/255.0;
-            g = (float) image->image[a*3+1]/255.0;
-            b = (float) image->image[a*3+2]/255.0;
-            cmax = MAX(r, MAX(g, b));
-            cmin = MIN(r, MIN(g, b));
-            cdiff = cmax - cmin;
-            if (cmax == cmin)
-                h = 0;
-            else if (cmax == r)
-                h = fmod(60 * ((g - b)/cdiff) + 360, 360);
-            else if (cmax == g)
-                h = fmod(60 * ((b - r)/cdiff) + 120, 360);
-            else if (cmax == b)
-                h = fmod(60 * ((r - g)/cdiff) + 240, 360);
-            if (cmax == 0)
-                s = 0;
-            else
-                s = (1 - cmin/cmax)*255;
-            // Storing image as V,S,H
-            hsv->image[a*3+2] = h/2;
-            hsv->image[a*3+1] = s;
-            hsv->image[a*3] = cmax * 255;
-        }
-    }
-    return hsv;
-}
-
-K9_Image *invert(K9_Image *ret_img, K9_Image *image, bool read){
-    if (global.enable_gpu == true){
-        char prog[] = "./conversions/conversions.cl";
-        char func[] = "invert";
-        uint16_t conv_id = 440;
-
-        mem_check_gpu(image, ret_img, prog, func, conv_id, ret_img->tp, read);
-
+        mem_check_gpu(image, ret_img, prog, func, conv_id, image->tp, read);
         set_main_args(image->mem_id, ret_img->mem_id);
 
         if (read)
-            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp);
+            ret_img->image = run_kernel(image->tp, *ret_img, ret_img->tp);
         else
-            run_kernel_no_return(ret_img->tp);
+            run_kernel_no_return(image->tp);
     } else {
-        for (int i = 0; i < ret_img->tp; i++){
-            ret_img->image[i] = 255 - image->image[i];
+        if (type == 0xAA){
+            for (int g = 0; g < ret_img->tp; g++){
+                int avg = (image->image[g*3] + image->image[g*3+1] + image->image[g*3+2])/3;
+                ret_img->image[g] = avg;
+            }
+        } else if (type == 0xA9){
+            float r, g, b, cmax, cmin, cdiff;
+            float h = -1, s = -1, v;
+            for (int a = 0; a < ret_img->tp/3; a++){
+                r = (float)image->image[a*3]/255.0;
+                g = (float)image->image[a*3+1]/255.0;
+                b = (float)image->image[a*3+2]/255.0;
+                cmax = MAX(r, MAX(g, b));
+                cmin = MIN(r, MIN(g, b));
+                cdiff = cmax - cmin;
+                if (cmax == cmin)
+                    h = 0;
+                else if (cmax == r)
+                    h = fmod(60 * ((g - b)/cdiff) + 360, 360);
+                else if (cmax == g)
+                    h = fmod(60 * ((b - r)/cdiff) + 120, 360);
+                else if (cmax == b)
+                    h = fmod(60 * ((r - g)/cdiff) + 240, 360);
+                if (cmax == 0)
+                    s = 0;
+                else
+                    s = (1 - cmin/cmax)*255;
+                // Storing image as V,S,H
+                ret_img->image[a*3+2] = h/2;
+                ret_img->image[a*3+1] = s;
+                ret_img->image[a*3] = cmax * 255;
+            }
+        } else if (type == 0xAB){
+            for (int i = 0; i < ret_img->tp; i++){
+                ret_img->image[i] = 255 - image->image[i];
+            }
+        } else if (type == 0xAC){
+            float hh, p, q, t, ff;
+            int i;
+            for (int a = 0; a < ret_img->tp / 3; a++){
+                if (image->image[a*3+1] == 0){
+                    ret_img->image[a*3] =   image->image[a*3];
+                    ret_img->image[a*3+1] = image->image[a*3];
+                    ret_img->image[a*3+2] = image->image[a*3];
+                }
+                hh = image->image[a*3+2]*2;
+                if (hh >= 360.0)
+                    hh = 0;
+                hh /= 60.0;
+                i = (int)hh;
+                ff = hh - i;
+                p = image->image[a*3] * (1.0 - (float)image->image[a*3+1]/255);
+                q = image->image[a*3] * (1.0 - ((float)image->image[a*3+1]/255 * ff));
+                t = image->image[a*3] * (1.0 - ((float)image->image[a*3+1]/255 * (1.0 - ff)));
+                switch(i) {
+                    case 0:
+                        ret_img->image[a*3] = image->image[a*3];
+                        ret_img->image[a*3+1] = t;
+                        ret_img->image[a*3+2] = p;
+                        break;
+                    case 1:
+                        ret_img->image[a*3] = q;
+                        ret_img->image[a*3+1] = image->image[a*3];
+                        ret_img->image[a*3+2] = p;
+                        break;
+                    case 2:
+                        ret_img->image[a*3] = p;
+                        ret_img->image[a*3+1] = image->image[a*3];
+                        ret_img->image[a*3+2] = t;
+                        break;
+
+                    case 3:
+                        ret_img->image[a*3] = p;
+                        ret_img->image[a*3+1] = q;
+                        ret_img->image[a*3+2] = image->image[a*3];
+                        break;
+                    case 4:
+                        ret_img->image[a*3] = t;
+                        ret_img->image[a*3+1] = p;
+                        ret_img->image[a*3+2] = image->image[a*3];
+                        break;
+                    case 5:
+                    default:
+                        ret_img->image[a*3] = image->image[a*3];
+                        ret_img->image[a*3+1] = p;
+                        ret_img->image[a*3+2] = q;
+                        break;
+                }
+            }
         }
     }
     return ret_img;
+}
+
+K9_Image *rgb_to_gray(K9_Image *gray, K9_Image *image, bool read){
+    // deprecated
+}
+
+K9_Image *rgb_to_hsv(K9_Image *hsv, K9_Image *image, bool read){
+    // deprecated
+}
+
+K9_Image *invert(K9_Image *ret_img, K9_Image *image, bool read){
+    // deprecated
 }
 
 K9_Image *resize_img(K9_Image *ret_img, K9_Image *image, vec2 scale, int type, bool read){

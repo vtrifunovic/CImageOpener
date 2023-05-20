@@ -295,17 +295,18 @@ K9_Image *gray_morph(K9_Image *ret_img, K9_Image *image, Kernel kern, int type, 
         if (type == K9_EROSION){
             for (int x = 0; x < ret_img->tp; x++){
                 uint8_t min = 255;
-                uint8_t h = sqrt((float)kernelsize-1);
-                for (uint8_t i = 0; i < h; i++){
-                    for (uint8_t j = 0; j < h+1; j++){
-                        if (i == 0 && j == h)
+                int8_t order = sqrt((float)kernelsize);
+                int8_t p_back = order/2;
+                int8_t start = p_back-order+1;
+                int8_t shift = abs(p_back-order+1);
+                for (int8_t y = start; y <= p_back; y++){
+                    for (int8_t z = start; z <= p_back; z++){
+                        if (x+z+image->width*y < 0)
                             continue;
-                        if (x-(i*image->width-i)*image->channels-j*image->channels < 0)
+                        if (x+z+image->width*y > ret_img->tp)
                             continue;
-                        if (image->image[x-(i*image->width-i)*image->channels-j*image->channels] < min)
-                            min = image->image[x-(i*image->width-i)*image->channels-j*image->channels];
-                        if (image->image[x+(i*image->width-i)*image->channels+j*image->channels] < min)
-                            min = image->image[x+(i*image->width-i)*image->channels+j*image->channels];
+                        if (image->image[x+z*image->channels+image->width*y*image->channels] < min)
+                            min = image->image[x+z*image->channels+image->width*y*image->channels];
                     }
                 }
                 ret_img->image[x]  = min;
@@ -313,17 +314,18 @@ K9_Image *gray_morph(K9_Image *ret_img, K9_Image *image, Kernel kern, int type, 
         } else {
             for (int x = 0; x < ret_img->tp; x++){
                 uint8_t max = 0;
-                uint8_t h = sqrt((float)kernelsize-1);
-                for (uint8_t i = 0; i < h; i++){
-                    for (uint8_t j = 0; j < h+1; j++){
-                        if (i == 0 && j == h)
+                int8_t order = sqrt((float)kernelsize);
+                int8_t p_back = order/2;
+                int8_t start = p_back-order+1;
+                int8_t shift = abs(p_back-order+1);
+                for (int8_t y = start; y <= p_back; y++){
+                    for (int8_t z = start; z <= p_back; z++){
+                        if (x+z+image->width*y < 0)
                             continue;
-                        if (x-(i*image->width-i)*image->channels-j*image->channels < 0)
+                        if (x+z+image->width*y > ret_img->tp)
                             continue;
-                        if (image->image[x-(i*image->width-i)*image->channels-j*image->channels] > max)
-                            max = image->image[x-(i*image->width-i)*image->channels-j*image->channels];
-                        if (image->image[x+(i*image->width-i)*image->channels+j*image->channels] > max)
-                            max = image->image[x+(i*image->width-i)*image->channels+j*image->channels];
+                        if (image->image[x+z*image->channels+image->width*y*image->channels] > max)
+                            max = image->image[x+z*image->channels+image->width*y*image->channels];
                     }
                 }
                 ret_img->image[x]  = max;

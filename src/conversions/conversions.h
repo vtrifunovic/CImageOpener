@@ -2,30 +2,18 @@
 #include "../render/render.h"
 #include "../linmath.h"
 
-/*! @brief Creates a single channel grayscale image from an 3 channel RGB image
- *
- * @param gray The output grayscale image
- * @param image The input RGB image. Must be 3 channels
- * @param[in] read Whether to read the data into RAM
- * @return A single channel grayscaled image.
+/*! @brief Converts the channels in an image to new desired type.
+ * K9_RGB2HSV for rgb to hsv.
+ * K9_RGB2GRAY for rgb to gray.
+ * K9_INVERT for inverted colors.
+ * 
+ * @param ret_img Image where output will be stored
+ * @param image Input image to convert
+ * @param type Type of conversion to perform
+ * @param read Whether to read data into RAM
+ * @returns Image with channels converted to desired type.
  */
-K9_Image *rgb_to_gray(K9_Image *gray, K9_Image *image, bool read);
-/*! @brief Converts a RGB Image into its HSV (hue/saturation/value) values.
- *
- * @param hsv Output HSV image
- * @param image Input RGB image to be converted to HSV
- * @param[in] read Whether to read the data into RAM
- * @return HSV image. The values will be stored in VSH order.
- */
-K9_Image *rgb_to_hsv(K9_Image *hsv, K9_Image *image, bool read);
-/*! @brief Inverts the image. Negative effect in most editing software.
- *
- * @param ret_img Return image where inverted image will be stored.
- * @param image Input image that will be inverted
- * @param[in] read Whether to read the data into RAM
- * @return Inverted image, 255-(current pixel value).
- */
-K9_Image *invert(K9_Image *ret_img, K9_Image *image, bool read);
+K9_Image *convert_channels(K9_Image *ret_img, K9_Image *image, int type, bool read);
 /*! @brief Resizes a given image based on a scaling value.
  * Given types: K9_NEAREST (Nearest Neighbor)
  *

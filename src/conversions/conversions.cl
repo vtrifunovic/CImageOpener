@@ -29,24 +29,105 @@ __kernel void rgb_to_hsv(__global const uchar *in_image, __global uchar *out_ima
         if (cmax == cmin){
             h = 0;
         }
-        else if (cmax == r){
+        else if (cmax == r)
             h = fmod(60 * ((g - b)/cdiff) + 360, 360);
-        }
-        else if (cmax == g){
+        else if (cmax == g)
             h = fmod(60 * ((b - r)/cdiff) + 120, 360);
-        }
-        else if (cmax == b){
+        else if (cmax == b)
             h = fmod(60 * ((r - g)/cdiff) + 240, 360);
-        }
-        if (cmax == 0){
+        if (cmax == 0)
             s = 0;
-        }
-        else{
+        else
             s = (1 - cmin/cmax)*255;
-        }
         out_image[x] = cmax * 255;
         out_image[x+1] = s;
         out_image[x+2] = h/2;
+    }
+}
+
+__kernel void hsv_to_rgb(__global const uchar *in_image, __global uchar *out_image){
+    int x = get_global_id(0);
+
+    if (x%3 == 0){
+        float hh, p, q, t, ff;
+        int i;
+        if (in_image[x+1] == 0){
+            out_image[x] =   in_image[x];
+            out_image[x+1] = in_image[x];
+            out_image[x+2] = in_image[x];
+        }
+        hh = in_image[x+2]*2;
+        if (hh >= 360.0)
+            hh = 0;
+        hh /= 60.0;
+        i = (int)hh;
+        ff = hh - i;
+        p = in_image[x] * (1.0 - (float)in_image[x+1]/255);
+        q = in_image[x] * (1.0 - ((float)in_image[x+1]/255 * ff));
+        t = in_image[x] * (1.0 - ((float)in_image[x+1]/255 * (1.0 - ff)));
+        switch(i) {
+            case 0:
+                out_image[x] = in_image[x];
+                out_image[x+1] = t;
+                out_image[x+2] = p;
+                break;
+            case 1:
+                out_image[x] = q;
+                out_image[x+1] = in_image[x];
+                out_image[x+2] = p;
+                break;
+            case 2:
+                out_image[x] = p;
+                out_image[x+1] = in_image[x];
+                out_image[x+2] = t;
+                break;
+
+            case 3:
+                out_image[x] = p;
+                out_image[x+1] = q;
+                out_image[x+2] = in_image[x];
+                break;
+            case 4:
+                out_image[x] = t;
+                out_image[x+1] = p;
+                out_image[x+2] = in_image[x];
+                break;
+            case 5:
+            default:
+                out_image[x] = in_image[x];
+                out_image[x+1] = p;
+                out_image[x+2] = q;
+                break;
+        }
+    }
+}
+
+// full color range rgb to yuv:
+// https://web.archive.org/web/20180423091842/http://www.equasys.de/colorconversion.html
+__kernel void rgb_to_yuv(__global const uchar *in_image, __global uchar *out_image){
+    int x = get_global_id(0);
+
+    if (x%3 == 0){
+        float r = (float)in_image[x];
+        float g = (float)in_image[x+1];
+        float b = (float)in_image[x+2];
+        out_image[x] = 0.299*r+0.587*g+0.114*b;
+        out_image[x+1] = -0.169*r-0.331*g+0.500*b+128;
+        out_image[x+2] = 0.500*r-0.419*g-0.081*b+128;
+    }
+}
+
+__kernel void yuv_to_rgb(__global const uchar *in_image, __global uchar *out_image){
+    int x = get_global_id(0);
+
+    if (x%3 == 0){
+        float y = (float)in_image[x];
+        float u = (float)in_image[x+1]-128;
+        float v = (float)in_image[x+2]-128;
+
+        out_image[x] = 1.000*y+1.400*v;
+        out_image[x+1] = 1.000*y-0.343*u-0.711*v;
+        out_image[x+2] = 1.000*y+1.765*u;
     }
 }
 
