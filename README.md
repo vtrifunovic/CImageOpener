@@ -26,9 +26,11 @@ Basic Image Processing engine written in C, used to be the CImageOpener.c file, 
     - RGB & Grayscale/single-channel mask
     - BitwiseAnd & BitwiseNot
 - Conversions
-    - RGB to HSV
-    - RGB to Gray
-    - Inversion
+    - Channel Conversions
+        - RGB <-> HSV
+        - RGB <-> YUV
+        - RGB -> Gray
+        - Inversion (255 - x)
     - Resizing (Nearest Neighbor & Billinear)
 - Binary
     - Creating kernel
