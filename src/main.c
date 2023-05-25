@@ -70,11 +70,11 @@ int main(int argc, char *argv[]){
     ero = bin_erosion(ero, mask, kern, true);
 
     // detecting contours in our mask
-    Contour *cnts = detect_contours(mask, K9_N4, false);
+    Contour *cnts = detect_contours(dil, K9_N4, false);
 
     // creating image & window to display contours
     K9_Image *first_c = create_img_template(mask, true);
-    analyze_contours(mask, cnts);
+    analyze_contours(dil, cnts);
     GLFWwindow *cviz = init_window(*mask, "Contour viz");
     while (!handle_inputs(cviz)){
         int n_key = glfwGetKey(cviz, GLFW_KEY_N);
@@ -84,8 +84,10 @@ int main(int argc, char *argv[]){
         }
         else if (n_key == 0 && held == 1)
             held = 0;
-        first_c = viz_contour_by_index(first_c, count, cnts);
-        show_image(cviz, *gray, false);
+        viz_contour_by_index(first_c, count, cnts);
+        show_image(cviz, *first_c, false);
+        //viz_all_contours(new_img, cnts);
+        //show_image(cviz, *new_img, false);
     }
     glfwTerminate();
     count = 0;
@@ -153,7 +155,7 @@ int main(int argc, char *argv[]){
         else if (n_key == 0 && held == 1)
             held = 0;
         if (count == 0)
-            show_image(window, *new_img, false);
+            show_image(window, *new_img, true);
         else if (count == 1)
             show_image(window, *rz, false); 
         else if (count == 2)

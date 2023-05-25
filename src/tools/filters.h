@@ -69,6 +69,12 @@ empty K9_Image. Will automatically stop once last contour is reached.
  * @return Image containing only the contour interested in.
  */
 K9_Image *viz_contour_by_index(K9_Image *original, int index, Contour *first);
+/*! @brief Visualizes all contours on given image.
+ *
+ * @param original Image that the contours will be visualized on.
+ * @param first The Contour list that was returned by detect_contours.
+ */
+K9_Image *viz_all_contours(K9_Image *original, Contour *first);
 /*! @brief Analyzes the contours in the list and returns the same list with the
  * height, width, and (x0, y0) parameters updated.
  *

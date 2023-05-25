@@ -9,6 +9,13 @@
 #define GET_PIXEL(x, y, z, width, chan) ((x*width+y)*chan+z)
 #define GET_PIXEL_GRAY(x, y, width) (x * width + y)
 
+typedef struct display_details {
+    float xpos;
+    float ypos;
+    float zoom;
+    int pastsize;
+} Display_Deatils;
+
 // Image struct
 typedef struct k9_image{
     int width;

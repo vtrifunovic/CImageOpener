@@ -326,6 +326,23 @@ K9_Image *viz_contour_by_index(K9_Image *original, int index, Contour *first){
     return original;
 }
 
+K9_Image *viz_all_contours(K9_Image *original, Contour *first){
+    int cnt = 0;
+    while (first != NULL){
+        for (int i = 0; i < first->length; i++){
+            if (first->pixels[i] < original->tp){
+                if (original->channels == 1)
+                    original->image[first->pixels[i]] = 255;
+                else
+                    original->image[first->pixels[i]*3+1] = 255;
+            }
+        }
+        first = first->next;
+        cnt++;
+    }
+    return original;
+}
+
 int *interp_arrays(int return_size, int *xp, int size_xp, int *fp, int size_fp){
     int *ret_array = (int *) calloc(return_size, sizeof(int));
     int idx = 0;

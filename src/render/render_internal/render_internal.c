@@ -49,7 +49,7 @@ void create_shader(void){
     char *fragmentShaderSource;
     fragmentShaderSource = (char *)malloc(MAX_SOURCE_SIZE);
     source_size = fread(fragmentShaderSource, 1, MAX_SOURCE_SIZE, fp2);
-    fragmentShaderSource = realloc(fragmentShaderSource, strlen(fragmentShaderSource) + 2);
+    fragmentShaderSource = realloc(fragmentShaderSource, strlen(fragmentShaderSource)+2);
     fclose(fp2);
     fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, (const char *const *)&fragmentShaderSource, NULL);
@@ -82,6 +82,12 @@ void render_init(void){
         1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
         -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
         -1.0f, -1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f
+    };
+    float vertices2[] = {
+         0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+         0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+        -0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+        -0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f
     };
     unsigned int indices[] = {
         0, 1, 3, // first triangle
@@ -121,12 +127,26 @@ void bind_texture(int width, int height){
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 }
 
-void main_render(uint8_t *data, int width, int height, int channels){
+static void re_render_quad(int width, int height, float zoom, float xpos, float ypos){
+    float vertices[] = {
+         1.0f+zoom+xpos, -1.0f-zoom+ypos, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+         1.0f+zoom+xpos,  1.0f+zoom+ypos, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+        -1.0f-zoom+xpos,  1.0f+zoom+ypos, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+        -1.0f-zoom+xpos, -1.0f-zoom+ypos, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f};
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+}
+
+void main_render(uint8_t *data, int width, int height, int channels, float zoom, float xpos, float ypos){
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glUseProgram(shaderProgram);
+    re_render_quad(width, height, zoom, xpos, ypos);
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
 
     glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
 
     if (channels > 1)
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);

@@ -18,6 +18,8 @@
 struct timeval start, stop;
 float added_delay;
 int pastsize = 0;
+float zoom = 0;
+double xpos, ypos;
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height){
     glViewport(0, 0, width, height);
@@ -34,25 +36,47 @@ static void fps_count(GLFWwindow *window){
     gettimeofday(&start, NULL);
 }
 
+static void scroll_callback(GLFWwindow *window, double xoffset, double yoffset){
+    glfwGetCursorPos(window, &xpos, &ypos);
+    int h, w;
+    glfwGetWindowSize(window, &h, &w);
+    xpos = -(xpos/(h/2)-1);
+    ypos = ypos/(w/2)-1;
+    zoom += yoffset/10;
+    zoom = zoom < 0 ? 0 : zoom;
+    zoom = zoom > 100 ? 100 : zoom;
+    xpos *= zoom;
+    ypos *= zoom;
+}
+
+static void reset_values(void){
+    zoom = 0;
+    xpos = 0;
+    ypos = 0;
+}
+
 bool handle_inputs(GLFWwindow *window){
     glfwPollEvents();
+    glfwSetScrollCallback(window, scroll_callback);
+    if (glfwGetKey(window, GLFW_KEY_R))
+        reset_values();
     if (glfwWindowShouldClose(window))
         return true;
-    if (glfwGetKey(window, 81) == GLFW_PRESS){
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
         return true;
-    }
     return false;
 }
 
 void show_image(GLFWwindow *window, K9_Image image, bool show_fps){
     if (pastsize != image.width * image.height){
+        reset_values();
         unbind_texture();
         bind_texture(image.width, image.height);
         glfwSetWindowSize(window, image.width, image.height);
     }
     glfwMakeContextCurrent(window);
     render_begin(window);
-    main_render(image.image, image.width, image.height, image.channels);
+    main_render(image.image, image.width, image.height, image.channels, zoom, xpos, ypos);
     render_end(window);
     pastsize = image.width * image.height;
 }
@@ -77,7 +101,6 @@ GLFWwindow *init_window(K9_Image image, char *name){
     }
     glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
     GLFWwindow *window = glfwCreateWindow(image.width, image.height, name, NULL, NULL);
-
     if (!window){
         fprintf(stderr, "\e[1;31mWindow could not be created! \e[0m\n");
         exit(0);

@@ -310,7 +310,7 @@ K9_Image *gray_morph(K9_Image *ret_img, K9_Image *image, Kernel kern, int type, 
                     }
                 }
                 ret_img->image[x]  = min;
-            }   
+            }
         } else {
             for (int x = 0; x < ret_img->tp; x++){
                 uint8_t max = 0;
