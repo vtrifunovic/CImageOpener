@@ -154,7 +154,7 @@ void save_image(K9_Image *save, const char *filename){
     for (int j = 0; j < 5; j++)
         type[j] = type[j+1];
     type[5] = '\0';
-    printf("%s\n", type);
+    //printf("%s\n", type);
     if (strcmp(type, ".jpg") == 0)
         ret = stbi_write_jpg(filename, save->width, save->height, save->channels, save->image, 100);
     if (strcmp(type, ".png") == 0)

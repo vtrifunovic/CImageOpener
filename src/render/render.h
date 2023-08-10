@@ -6,7 +6,7 @@
 #define CL_TARGET_OPENCL_VERSION 220
 #include <CL/cl.h>
 
-#define GET_PIXEL(x, y, z, width, chan) ((x*width+y)*chan+z)
+#define GET_PIXEL(x, y, z, image) ((x*image->width+y)*image->channels+z)
 #define GET_PIXEL_GRAY(x, y, width) (x * width + y)
 
 typedef struct display_details {

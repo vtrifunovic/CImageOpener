@@ -35,8 +35,10 @@ int main(int argc, char *argv[]){
     int *table = interp_arrays(256, xp, 5, fp, 5);
 
     // Applying LUT function to contrast-stretch image
-    K9_Image *luttest = create_img_template(new_img, true);
-    LUT(luttest, new_img, table, 256, true);
+    K9_Image *rottest = create_img_template(new_img, true);
+    LUT(new_img, new_img, table, 256, true);
+    // test: 30 45 65 90 120 170 180 200 270 360
+    rotate_image(rottest, new_img, 2633, true, true);
 
     // creating a 3x3 kernel of all 1's
     Kernel kern;
@@ -60,7 +62,7 @@ int main(int argc, char *argv[]){
     // Converting image to hsv and back. This should result in same image
     convert_channels(gray, new_img, K9_RGB2HSV, true);
     convert_channels(new_img, gray, K9_HSV2RGB, true);
-   
+
     // binary dilation
     K9_Image *dil = create_img_template(mask, false);
     dil = bin_dilation(dil, mask, kern, true);
@@ -68,7 +70,7 @@ int main(int argc, char *argv[]){
     // binary erosion
     K9_Image *ero = create_img_template(mask, false);
     ero = bin_erosion(ero, mask, kern, true);
-
+    
     // detecting contours in our mask
     Contour *cnts = detect_contours(dil, K9_N4, false);
 
@@ -106,7 +108,7 @@ int main(int argc, char *argv[]){
     K9_Image *rz = create_img_template(new_img, false);
     rz = resize_img(rz, new_img, (vec2){0.89, 0.89}, K9_BILINEAR, true);
 
-    //save_image(rz, "test.jpeg");
+    ////save_image(rz, "test.jpeg");
 
     // running median filter on image
     K9_Image *med = create_img_template(new_img, true);
@@ -157,9 +159,9 @@ int main(int argc, char *argv[]){
         if (count == 0)
             show_image(window, *new_img, true);
         else if (count == 1)
-            show_image(window, *rz, false); 
+    	    show_image(window, *rottest, false);
         else if (count == 2)
-            show_image(window, *luttest, false);            
+            show_image(window, *new_img, false);            
         else if (count == 3)
             show_image(window, *med, false);
         else if (count == 4)

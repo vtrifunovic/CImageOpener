@@ -180,3 +180,112 @@ __kernel void resize_img_billinear(__global const uchar *in_image, __global ucha
         }
     }
 }
+
+// using a&b instead of x&y to keep my convention of x being the global_id
+__kernel void translate(__global const uchar *in_image, __global uchar *out_image, __global const int *dims, int a, int b){
+    int x = get_global_id(0);
+
+    if (x%dims[2] == 0){
+        // dims: 0 -> width, 1 -> height, 2->channels
+        int x_loc = calculate_pos_x(x/dims[2], dims[0], dims[1]);
+        int y_loc = calculate_pos_y(x/dims[2], dims[0]);
+        for (uchar z = 0; z < dims[2]; z++){
+            int loc = ((x_loc+b)*dims[0]+(y_loc+a))*dims[2]+z;
+            if (loc >= 0 || loc < dims[0]*dims[1]*dims[2]){
+                if (y_loc+a < 0 || y_loc+a > dims[0])
+                    out_image[x+z] = 0;
+                else if (x_loc+b < 0 || x_loc+b > dims[1])
+                    out_image[x+z] = 0;
+                else
+                    out_image[x+z] = in_image[loc];
+            }
+            else 
+                out_image[x+z] = 0;
+        }
+    }
+}
+
+__kernel void rotate_img(__global const uchar *in_image, __global uchar *out_image, __global const int *dims, double rad){
+    int x = get_global_id(0);
+
+    if (x%dims[2] == 0){
+        // dims: 0 -> width, 1 -> height, 2->channels
+        int x_loc = calculate_pos_x(x/dims[2], dims[0], dims[1]);
+        int y_loc = calculate_pos_y(x/dims[2], dims[0]);
+        for (int k = 0; k < dims[2]; k++){
+            int abc, ab, c;
+            abc = y_loc - (dims[0]/2);
+            if (abc >= 0){
+                c =  x_loc - (dims[1]/2);
+                ab = y_loc - (dims[0]/2);
+            } else {
+                ab = y_loc - (dims[0]/2);
+                c =  x_loc - (dims[1]/2);
+            }
+            double z = sqrt((double)(ab * ab) + (c * c));
+            double theta1 = asin((double)c / (double)z);
+            double d, a;
+            if (abc >= 0){
+                d = z*sin(theta1+rad);
+                a = z*cos(theta1+rad);
+            } else {
+                d = z*sin(rad-theta1);
+                a = z*cos(rad-theta1);
+            }
+            int y2, y1;
+            if (abc >=0){
+                y2 = (dims[1]/2) + d;
+                y1 = (dims[0]/2) + a;
+            } else {
+                y2 = (dims[1]/2) - d;
+                y1 = (dims[0]/2) - a;
+            }
+            if ((y2*dims[0]+y1)*dims[2]+k >= 0 && (y2*dims[0]+y1)*dims[2]+k < dims[0]*dims[1]*dims[2]){
+                if (fabs(a) < dims[0]/2 && fabs(d) < dims[1]/2) // prevent side looping
+                    out_image[(y2*dims[0]+y1)*dims[2]+k] = in_image[x+k];
+            }
+        }
+    }
+}
+
+__kernel void resize_rotate(__global const uchar *in_image, __global uchar *out_image, __global const int *dims, double rad, __global const int *out_dims){
+    int x = get_global_id(0);
+
+    if (x%dims[2] == 0){
+        // dims: 0 -> width, 1 -> height, 2->channels
+        int x_loc = calculate_pos_x(x/dims[2], dims[0], dims[1]);
+        int y_loc = calculate_pos_y(x/dims[2], dims[0]);
+        for (int k = 0; k < dims[2]; k++){
+            int abc, ab, c;
+            abc = y_loc - (dims[0]/2);
+            if (abc >= 0){
+                c =  x_loc - (dims[1]/2);
+                ab = y_loc - (dims[0]/2);
+            } else {
+                ab = y_loc - (dims[0]/2);
+                c =  x_loc - (dims[1]/2);
+            }
+            double z = sqrt((double)(ab * ab) + (c * c));
+            double theta1 = asin((double)c / (double)z);
+            double d, a;
+            if (abc >= 0){
+                d = z*sin(theta1+rad);
+                a = z*cos(theta1+rad);
+            } else {
+                d = z*sin(rad-theta1);
+                a = z*cos(rad-theta1);
+            }
+            int y2, y1;
+            if (abc >=0){
+                y2 = (out_dims[1]/2) + d;
+                y1 = (out_dims[0]/2) + a;
+            } else {
+                y2 = (out_dims[1]/2) - d;
+                y1 = (out_dims[0]/2) - a;
+            }
+            if ((y2*out_dims[0]+y1)*out_dims[2]+k >= 0 && (y2*out_dims[0]+y1)*out_dims[2]+k < out_dims[0]*out_dims[1]*out_dims[2]){
+                out_image[(y2*out_dims[0]+y1)*out_dims[2]+k] = in_image[x+k];
+            }
+        }
+    }
+}
