@@ -32,6 +32,8 @@ Basic Image Processing engine written in C, used to be the CImageOpener.c file, 
         - RGB -> Gray
         - Inversion (255 - x)
     - Resizing (Nearest Neighbor & Billinear)
+    - Translation
+    - Rotation (With & w/o resizing)
 - Binary
     - Creating kernel
     - Hit-Miss
