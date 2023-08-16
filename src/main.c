@@ -38,7 +38,7 @@ int main(int argc, char *argv[]){
     K9_Image *rottest = create_img_template(new_img, true);
     LUT(new_img, new_img, table, 256, true);
     // test: 30 45 65 90 120 170 180 200 270 360
-    rotate_image(rottest, new_img, 2633, true, true);
+    //rotate_image(rottest, new_img, 2633, true, true);
 
     // creating a 3x3 kernel of all 1's
     Kernel kern;
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]){
     // binary erosion
     K9_Image *ero = create_img_template(mask, false);
     ero = bin_erosion(ero, mask, kern, true);
-    
+
     // detecting contours in our mask
     Contour *cnts = detect_contours(dil, K9_N4, false);
 
@@ -107,7 +107,6 @@ int main(int argc, char *argv[]){
     // resizing image to half of our original size
     K9_Image *rz = create_img_template(new_img, false);
     rz = resize_img(rz, new_img, (vec2){0.89, 0.89}, K9_BILINEAR, true);
-
     ////save_image(rz, "test.jpeg");
 
     // running median filter on image
@@ -148,6 +147,7 @@ int main(int argc, char *argv[]){
     GLFWwindow *window = init_window(*new_img, "Engine Showcase");
 
     // looping and displaying images based on how many times 'n' key is pressed
+    float t = 0;
     while (!handle_inputs(window)){
         int n_key = glfwGetKey(window, GLFW_KEY_N);
         if (n_key == 1 && held == 0){
@@ -158,10 +158,15 @@ int main(int argc, char *argv[]){
             held = 0;
         if (count == 0)
             show_image(window, *new_img, true);
-        else if (count == 1)
-    	    show_image(window, *rottest, false);
+        else if (count == 1){
+	    rotate_image(rottest, new_img, t, true, true);
+	    usleep(5000);
+	    show_image(window, *rottest, false);
+	    show_image(window, *rottest, false);	    
+	    t += 1;
+	}
         else if (count == 2)
-            show_image(window, *new_img, false);            
+            show_image(window, *rz, false);            
         else if (count == 3)
             show_image(window, *med, false);
         else if (count == 4)

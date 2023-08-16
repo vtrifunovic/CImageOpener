@@ -30,7 +30,7 @@ typedef struct k9_image{
 typedef struct k9_video{
     int width;
     int height;
-    uint16_t framerate;
+    short framerate;
     int duration;
     FILE *pipein;
 } K9_Video;

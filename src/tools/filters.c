@@ -248,9 +248,10 @@ Contour *detect_contours(K9_Image *image, int type, bool debug){
         fprintf(stderr, "\e[1;33mWarning!\e[0m Function detect_contours() should be a binary image. Contours detected may be incorrect.\n");
     }
     Contour *first = NULL;
-    char *searched = (char *)malloc(image->tp);
+    char *searched = (char *)malloc(image->tp); // this fails
     memset(searched, 'x', image->tp);
     int total_contours = 0;
+
     for (int x = 0; x < image->tp; x++){
         if (debug)
             printf("Searching pixel[\e[1;36m%d\e[0m]: \tTotal Contours: %d ", x, total_contours);

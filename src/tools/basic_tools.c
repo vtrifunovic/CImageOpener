@@ -301,9 +301,9 @@ K9_Image *gray_morph(K9_Image *ret_img, K9_Image *image, Kernel kern, int type, 
                 int8_t shift = abs(p_back-order+1);
                 for (int8_t y = start; y <= p_back; y++){
                     for (int8_t z = start; z <= p_back; z++){
-                        if (x+z+image->width*y < 0)
+                        if (x+z*image->channels+image->width*y*image->channels < 0)
                             continue;
-                        if (x+z+image->width*y > ret_img->tp)
+                        if (x+z*image->channels+image->width*y*image->channels >= ret_img->tp)
                             continue;
                         if (image->image[x+z*image->channels+image->width*y*image->channels] < min)
                             min = image->image[x+z*image->channels+image->width*y*image->channels];
@@ -320,9 +320,9 @@ K9_Image *gray_morph(K9_Image *ret_img, K9_Image *image, Kernel kern, int type, 
                 int8_t shift = abs(p_back-order+1);
                 for (int8_t y = start; y <= p_back; y++){
                     for (int8_t z = start; z <= p_back; z++){
-                        if (x+z+image->width*y < 0)
+                        if (x+z*image->channels+image->width*y*image->channels < 0)
                             continue;
-                        if (x+z+image->width*y > ret_img->tp)
+                        if (x+z*image->channels+image->width*y*image->channels>= ret_img->tp)
                             continue;
                         if (image->image[x+z*image->channels+image->width*y*image->channels] > max)
                             max = image->image[x+z*image->channels+image->width*y*image->channels];

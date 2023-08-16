@@ -119,10 +119,12 @@ void bind_cl_function(char *function, uint16_t sid){
 }
 
 void update_output_buffer(K9_Image *image){
+    global.gpu_values.ret = clReleaseMemObject(image->mem_id);
     image->mem_id = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_WRITE, image->tp * sizeof(uint8_t), NULL, &global.gpu_values.ret);
 }
 
 void update_input_buffer(K9_Image *image){
+    global.gpu_values.ret = clReleaseMemObject(image->mem_id);
     image->mem_id = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_WRITE, image->tp * sizeof(uint8_t), NULL, &global.gpu_values.ret);
     global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, image->mem_id, CL_TRUE, 0, image->tp * sizeof(uint8_t), image->image, 0, NULL, NULL);
 }

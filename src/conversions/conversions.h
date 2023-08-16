@@ -16,6 +16,7 @@
 K9_Image *convert_channels(K9_Image *ret_img, K9_Image *image, int type, bool read);
 /*! @brief Resizes a given image based on a scaling value.
  * Given types: K9_NEAREST (Nearest Neighbor)
+ * K9_BILINEAR (Bilinear)
  *
  * @param ret_img Return image, where resized image will be stored.
  * @param image Input image that will be resized.

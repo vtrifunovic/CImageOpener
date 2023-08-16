@@ -45,6 +45,8 @@ K9_Image *convert_channels(K9_Image *ret_img, K9_Image *image, int type, bool re
             float r, g, b, cmax, cmin, cdiff;
             float h = -1, s = -1, v;
             for (int a = 0; a < ret_img->tp/3; a++){
+                if (a*3+2 >= image->tp)
+                    continue;
                 r = (float)image->image[a*3]/255.0;
                 g = (float)image->image[a*3+1]/255.0;
                 b = (float)image->image[a*3+2]/255.0;
@@ -75,7 +77,9 @@ K9_Image *convert_channels(K9_Image *ret_img, K9_Image *image, int type, bool re
         } else if (type == 0xAC){
             float hh, p, q, t, ff;
             int i;
-            for (int a = 0; a < ret_img->tp / 3; a++){
+            for (int a = 0; a < ret_img->tp/3; a++){
+                if (a*3+2 >= image->tp)
+                    continue;
                 if (image->image[a*3+1] == 0){
                     ret_img->image[a*3] =   image->image[a*3];
                     ret_img->image[a*3+1] = image->image[a*3];
@@ -209,10 +213,12 @@ K9_Image *resize_img(K9_Image *ret_img, K9_Image *image, vec2 scale, int type, b
                     float x_dist = sizex - xpoi;
                     float y_dist = sizey - ypoi;
                     for (int z = 0; z < ret_img->channels; z++){
+                        if (GET_PIXEL((xpoi + 1), (ypoi + 1), z, image) >= image->tp)
+                            continue;
                         uint8_t a = image->image[GET_PIXEL(xpoi, ypoi, z, image)];
                         uint8_t b = image->image[GET_PIXEL((xpoi+1), ypoi, z, image)];
                         uint8_t c = image->image[GET_PIXEL(xpoi, (ypoi+1), z, image)];
-                        uint8_t d = image->image[GET_PIXEL((xpoi+1), (ypoi+1), z, image)];
+                        uint8_t d = image->image[GET_PIXEL((xpoi + 1), (ypoi + 1), z, image)];
                         ret_img->image[GET_PIXEL(x,y,z,ret_img)]  = a*(1-x_dist)*(1-y_dist) +b*(x_dist)*(1-y_dist) + c*(1-x_dist)*(y_dist) + d*(x_dist)*y_dist;
                     }
                 }

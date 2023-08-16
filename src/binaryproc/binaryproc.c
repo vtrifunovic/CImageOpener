@@ -111,7 +111,7 @@ K9_Image *bin_dilation(K9_Image *ret_img, K9_Image *image, Kernel kern, bool rea
                 for (int8_t z = start; z <= p_back; z++){
                     if (x+z+image->width*y < 0)
                         continue;
-                    if (x+z+image->width*y > ret_img->tp)
+                    if (x+z+image->width*y >= ret_img->tp)
                         continue;
                     ret_img->image[x+z+image->width*y] = MAX(kern.kernel[order*(y+shift)+(z+shift)], image->image[x+z+image->width*y]);
                 }
@@ -122,6 +122,7 @@ K9_Image *bin_dilation(K9_Image *ret_img, K9_Image *image, Kernel kern, bool rea
 }
 
 K9_Image *bin_erosion(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read){
+    // problematic??
     if (image->channels > 1){
         fprintf(stderr, "\e[1;31mError!\e[0m Function bin_dilation() needs single channel image\n");
         return ret_img;
@@ -153,7 +154,7 @@ K9_Image *bin_erosion(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read
     } else {
         // Stops data overwrites
         memcpy(ret_img->image, image->image, image->tp);
-        for (int x = 0; x < image->tp; x++){
+        for (int x = 0; x < ret_img->tp; x++){
             if (image->image[x] == kern.kernel[kernelsize/2]){
                 continue;
             }
@@ -165,7 +166,7 @@ K9_Image *bin_erosion(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read
                 for (int8_t z = start; z <= p_back; z++){
                     if (x+z+image->width*y < 0)
                         continue;
-                    if (x+z+image->width*y > ret_img->tp)
+                    if (x+z+image->width*y >= ret_img->tp)
                         continue;
                     ret_img->image[x+z+image->width*y] = kern.kernel[order*(y+shift)+(z+shift)] > 0 ? 0 : image->image[x+z+image->width*y];
                 }
