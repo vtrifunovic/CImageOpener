@@ -158,6 +158,7 @@ __kernel void resize_img_nearest(__global const uchar *in_image, __global uchar 
 }
 
 __kernel void resize_img_billinear(__global const uchar *in_image, __global uchar *out_image, __global const double *scale, __global const int *sizes){
+
     int x = get_global_id(0);
 
     // Scales are swapped for this one

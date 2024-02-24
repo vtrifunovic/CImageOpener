@@ -134,8 +134,8 @@ void set_main_args(cl_mem input, cl_mem output){
     global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 1, sizeof(cl_mem), (void *)&output);
 }
 
-uint8_t *run_kernel(size_t global_item_size, K9_Image ret_img, size_t return_size){
-    if (global_item_size != g.totalpixels)
+uint8_t *run_kernel(size_t global_item_size, K9_Image ret_img, size_t return_size, bool internal_override){
+    if (!internal_override && global_item_size != g.totalpixels)
         set_local_workgroup(global_item_size);
     global.gpu_values.ret = clEnqueueNDRangeKernel(global.gpu_values.command_queue, global.gpu_values.kernel, 1, NULL, &global_item_size, &g.localsize, 0, NULL, NULL);
     if (global.gpu_values.ret != CL_SUCCESS){
@@ -159,12 +159,12 @@ uint8_t *read_mem_buffer(K9_Image image){
 }
 
 void mem_check_gpu(K9_Image *image, K9_Image *ret_img, char *prog, char *func, uint16_t id, size_t global_item_size, bool read){
+    if (ret_img->image == NULL && read)
+        ret_img->image = (uint8_t *)malloc(ret_img->tp);
     if (image->mem_id == NULL)
         update_input_buffer(image);
     if (ret_img->mem_id == NULL)
         update_output_buffer(ret_img);
-    if (ret_img->image == NULL && read)
-        ret_img->image = (uint8_t *)malloc(global_item_size);
     read_cl_program(prog, id);
     if (strcmp(global.past_func, func) != 0){
         bind_cl_function(func, id);

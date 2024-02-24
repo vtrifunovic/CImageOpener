@@ -29,7 +29,7 @@ void bind_cl_function(char *function, uint16_t sid);
 void update_output_buffer(K9_Image *image);
 void update_input_buffer(K9_Image *image);
 void set_main_args(cl_mem input, cl_mem output);
-uint8_t *run_kernel(size_t global_item_size, K9_Image ret_img, size_t return_size);
+uint8_t *run_kernel(size_t global_item_size, K9_Image ret_img, size_t return_size, bool internal_override);
 void run_kernel_no_return(size_t global_item_size);
 
 /*! @brief Reads the image buffer stored on the GPU back into Ram.

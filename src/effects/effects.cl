@@ -61,9 +61,16 @@ __kernel void buffer_kill(__global const uchar *in_image, __global uchar *out_im
         }
         if (cmax > 255)
             cmax = 10;
-        if (x == 15)  // Needs this to run properly
-            printf("Run\n");
-        //out_image[x/3*(int)(cmax)] = cmax*255;
-        out_image[x/2*(int)(3*cmax)] = s;
-        out_image[x/3*(int)(4*cmax)] = cmax*255;
+        if (x%3 == 0){
+            if (x-s > 0)
+                out_image[x-(int)s] = s;
+            float pos1 = x-s*cmax;
+            if ((int)pos1 < x)
+                out_image[(int)pos1] += s*cmax/h;
+            float pos2 = x/1.02;
+            if ((int)pos2 > 0)
+                out_image[(int)pos2] += h;
+        }
 }
+
+

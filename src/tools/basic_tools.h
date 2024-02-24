@@ -66,9 +66,10 @@ K9_Image *crop(K9_Image *ret_img, K9_Image image, vec2 xcrop, vec2 ycrop, int ty
  * @param image First image to be blended
  * @param b Second image to be blended
  * @param alpha The alpha value to mix the two images
+ * @param read Whether to read the data into RAM
  * @return Output image containing image*alpha + b*(1-alpha)
  */
-K9_Image *blend_img(K9_Image *ret_img, K9_Image *image, K9_Image b, float alpha);
+K9_Image *blend_img(K9_Image *ret_img, K9_Image *image, K9_Image *b, float alpha, bool read);
 /*! @brief Checks to see if two images are the same or not.
  *
  * @param img1 First image for comparison

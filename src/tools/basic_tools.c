@@ -86,7 +86,7 @@ K9_Image *subtract(K9_Image *ret_img, K9_Image *img1, K9_Image *img2, bool read)
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_mem), (void *)&img2->mem_id);
         
         if (read)
-            ret_img->image = run_kernel(img1->tp, *ret_img, img1->tp);
+            ret_img->image = run_kernel(img1->tp, *ret_img, img1->tp, false);
         else
             run_kernel_no_return(img1->tp);
     }else{
@@ -125,7 +125,7 @@ K9_Image *add(K9_Image *ret_img, K9_Image *img1, K9_Image *img2, bool read){
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_mem), (void *)&img2_mem_obj);
 
         if (read)
-            ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
+            ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size, false);
         else
             run_kernel_no_return(global_item_size);
 
@@ -151,6 +151,7 @@ void split_channels(K9_Image *r, K9_Image *g, K9_Image *b, K9_Image image){
     }
 }
 
+// OCL
 K9_Image *merge_channels(K9_Image *ret_img, K9_Image *r, K9_Image *g, K9_Image *b, bool destroy){
     if (r->height != g->height || g->height != b->height || r->width != g->width || g->width != b->width)
         fprintf(stderr,"\e[1;33mWarning!\e[0m In function call merge_channels() channel sizes do not match.\n");
@@ -220,28 +221,53 @@ K9_Image *crop(K9_Image *ret_img, K9_Image image, vec2 xcrop, vec2 ycrop, int ty
     return ret_img;
 }
 
-// OCL
-K9_Image *blend_img(K9_Image *ret_img, K9_Image *image, K9_Image b, float alpha){
+K9_Image *blend_img(K9_Image *ret_img, K9_Image *image, K9_Image *b, float alpha, bool read){
     if (alpha > 1){
         alpha = 1;
     }
-    float beta = 1 - alpha;
-    // same channels blend
-    if (image->channels == b.channels){
-        for (int x = 0; x < image->tp; x++){
-            ret_img->image[x] = image->image[x] * alpha + b.image[x] * beta;
-        }
-    // multi-channel blended into single channel
-    } else if (image->channels < b.channels){
-        for (int x = 0; x < image->tp; x++){
-            ret_img->image[x] = image->image[x] * alpha + b.image[x * b.channels] * beta;
-        }
-    // single channel blended into multi-channel
+    if (global.enable_gpu){
+        char prog[] = "./tools/basic_tools.cl";
+        char func[] = "blend_img";
+        uint16_t tool_id = 540;
+
+        mem_check_gpu(image, ret_img, prog, func, tool_id, image->tp, read);
+        if (b->mem_id == NULL)
+            update_input_buffer(b);
+
+        cl_mem b_mem_obj = clCreateBuffer(global.gpu_values.context, CL_MEM_READ_ONLY, b->tp * sizeof(uint8_t), NULL, &global.gpu_values.ret);
+
+        global.gpu_values.ret = clEnqueueWriteBuffer(global.gpu_values.command_queue, b_mem_obj, CL_TRUE, 0, b->tp * sizeof(uint8_t), b->image, 0, NULL, NULL);
+
+        set_main_args(image->mem_id, ret_img->mem_id);
+
+        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_mem), (void *)&b_mem_obj);
+        global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_float), (void *)&alpha);
+
+        if (read)
+            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp, false);
+        else
+            run_kernel_no_return(ret_img->tp);
+
+        global.gpu_values.ret = clReleaseMemObject(b_mem_obj);
     } else {
-        for (int x = 0; x < image->height; x++){
-            for (int y =0; y < image->width; y++){
-                for (int z = 0; z < image->channels; z++){
-                    ret_img->image[(y * image->width + x) * image->channels + z] = image->image[(y * image->width + x) * image->channels + z] * alpha + b.image[y * image->width + x] * beta;
+        float beta = 1 - alpha;
+        // same channels blend
+        if (image->channels == b->channels){
+            for (int x = 0; x < image->tp; x++){
+                ret_img->image[x] = image->image[x] * alpha + b->image[x] * beta;
+            }
+        // multi-channel blended into single channel
+        } else if (image->channels < b->channels){
+            for (int x = 0; x < image->tp; x++){
+                ret_img->image[x] = image->image[x] * alpha + b->image[x * b->channels] * beta;
+            }
+        // single channel blended into multi-channel
+        } else {
+            for (int x = 0; x < image->height; x++){
+                for (int y =0; y < image->width; y++){
+                    for (int z = 0; z < image->channels; z++){
+                        ret_img->image[(y * image->width + x) * image->channels + z] = image->image[(y * image->width + x) * image->channels + z] * alpha + b->image[y * image->width + x] * beta;
+                    }
                 }
             }
         }
@@ -286,7 +312,7 @@ K9_Image *gray_morph(K9_Image *ret_img, K9_Image *image, Kernel kern, int type, 
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 5, sizeof(cl_uchar), (void *)&image->channels);
 
         if (read)
-            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp);
+            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp, false);
         else
             run_kernel_no_return(ret_img->tp);
 

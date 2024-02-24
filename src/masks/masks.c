@@ -29,7 +29,7 @@ K9_Image *rgb_mask(K9_Image *mask, K9_Image *image, int *lower_bound, int *highe
 		global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_mem), (void *)&upper_mem_obj);
 
 		if (read)
-			mask->image = run_kernel(image->tp, *mask, mask->tp);
+			mask->image = run_kernel(image->tp, *mask, mask->tp, false);
 		else
 			run_kernel_no_return(image->tp);
 
@@ -75,10 +75,10 @@ K9_Image *bitwiseAnd(K9_Image *ret_img, K9_Image *image, K9_Image *mask, bool re
 
 		global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_mem), (void *)&mask->mem_id);
 
-		ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp);
+		ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp, false);
 
 		if (read)
-			ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp);
+			ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp, false);
 		else
 			run_kernel_no_return(ret_img->tp);
 	} else {
@@ -127,7 +127,7 @@ K9_Image *bitwiseNot(K9_Image *ret_img, K9_Image *image, K9_Image *mask, bool re
 		global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_mem), (void *)&mask->mem_id);
 
 		if (read)
-			ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp);
+			ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp, false);
 		else
 			run_kernel_no_return(ret_img->tp);
 	} else {
@@ -169,9 +169,9 @@ K9_Image *grayscale_mask(K9_Image *ret_img, K9_Image *image, uint8_t lower_bound
 		global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_uchar), (void *)&lower_bound);
 		global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_uchar), (void *)&higher_bound);
 
-		ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp);
+		ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp, false);
 		if (read)
-			ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp);
+			ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp, false);
 		else
 			run_kernel_no_return(ret_img->tp);
 	} else {

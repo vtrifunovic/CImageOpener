@@ -33,7 +33,7 @@ K9_Image *hit_x_miss(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read)
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 4, sizeof(cl_int), (void *)&image->width);
         
         if (read)
-            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp);
+            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp, false);
         else
             run_kernel_no_return(ret_img->tp);
 
@@ -93,7 +93,7 @@ K9_Image *bin_dilation(K9_Image *ret_img, K9_Image *image, Kernel kern, bool rea
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 4, sizeof(cl_int), (void *)&image->width);
 
         if (read)
-            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp);
+            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp, false);
         else
             run_kernel_no_return(ret_img->tp);
 
@@ -146,7 +146,7 @@ K9_Image *bin_erosion(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 4, sizeof(cl_int), (void *)&image->width);
 
         if (read)
-            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp);
+            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp, false);
         else
             run_kernel_no_return(ret_img->tp);
 
@@ -222,7 +222,7 @@ K9_Image *thinning(K9_Image *ret_img, K9_Image *image, bool read){
             set_main_args(ret_img->mem_id, tmp->mem_id);
             global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_int), (void *)&image->width);
             global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_uchar), (void *)&iter);
-            ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
+            ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size, false);
 
             iter = 0;
             stop = compare(*ret_img, *tmp);

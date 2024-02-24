@@ -11,6 +11,7 @@
 #include "tools/basic_tools.h"
 #include "tools/filters.h"
 #include "typename.h"
+#include "effects/effects.h"
 
 int press = 0, held = 0;
 
@@ -99,18 +100,18 @@ int main(int argc, char *argv[]){
     // binary hit miss
     K9_Image *hxm = create_img_template(mask, false);
     hxm = hit_x_miss(hxm, mask, kern, true);
-
+    
     // binary bitwise and
     K9_Image *and = create_img_template(new_img, false);
     and = bitwiseAnd(and, new_img, dil, true);
 
     // resizing image to half of our original size
     K9_Image *rz = create_img_template(new_img, false);
-    rz = resize_img(rz, new_img, (vec2){0.89, 0.89}, K9_BILINEAR, true);
+    rz = resize_img(rz, new_img, (vec2){2, 2}, K9_BILINEAR, true); // <- has a bug killing prog
     ////save_image(rz, "test.jpeg");
 
     // running median filter on image
-    K9_Image *med = create_img_template(new_img, true);
+    K9_Image *med = create_img_template(new_img, false);
     med = median_filter(med, new_img, 7, true);
     
     int g[] = {
@@ -119,9 +120,6 @@ int main(int argc, char *argv[]){
         -10, -8, -1
     };
     Kernel k2 = create_kernel(g, sizeof(g) / sizeof(int), true);
-
-    K9_Image *hp = create_img_template(new_img, true);
-    convolve(hp, new_img, k2, true);
 
     // blurring the image
     K9_Image *blr = create_img_template(new_img, false);
@@ -166,11 +164,11 @@ int main(int argc, char *argv[]){
 	    t += 1;
 	}
         else if (count == 2)
-            show_image(window, *rz, false);            
+            show_image(window, *g_dil, false);            
         else if (count == 3)
             show_image(window, *med, false);
         else if (count == 4)
-            show_image(window, *hp, false);
+            show_image(window, *rz, false);
         else if (count == 5)
             show_image(window, *mask, false);
         else if (count == 6)

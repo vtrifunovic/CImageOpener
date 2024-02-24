@@ -32,7 +32,7 @@ K9_Image *convert_channels(K9_Image *ret_img, K9_Image *image, int type, bool re
         set_main_args(image->mem_id, ret_img->mem_id);
 
         if (read)
-            ret_img->image = run_kernel(image->tp, *ret_img, ret_img->tp);
+            ret_img->image = run_kernel(image->tp, *ret_img, ret_img->tp, false);
         else
             run_kernel_no_return(image->tp);
     } else {
@@ -150,6 +150,7 @@ K9_Image *resize_img(K9_Image *ret_img, K9_Image *image, vec2 scale, int type, b
     ret_img->width = scale[0] * image->width;
     ret_img->height = scale[1] * image->height;
     ret_img->channels = image->channels;
+    ret_img->tp = ret_img->width * ret_img->height * ret_img->channels;
     if (global.enable_gpu == true){
         char prog[] = "./conversions/conversions.cl";
         char func[] = "resize_img_billinear";
@@ -174,15 +175,10 @@ K9_Image *resize_img(K9_Image *ret_img, K9_Image *image, vec2 scale, int type, b
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_mem), (void *)&scale_mem_obj);
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_mem), (void *)&sizes_mem_obj);
 
-        if (return_item_size > global_item_size){
-            global_item_size = return_item_size;
-            recalculate_local_workgroups(return_item_size, 0);
-        }
-
         if (read)
-            ret_img->image = run_kernel(global_item_size, *ret_img, return_item_size);
+            ret_img->image = run_kernel(return_item_size, *ret_img, return_item_size, false);
         else 
-            run_kernel_no_return(global_item_size);
+            run_kernel_no_return(return_item_size);
 
         global.gpu_values.ret = clReleaseMemObject(scale_mem_obj);
         global.gpu_values.ret = clReleaseMemObject(sizes_mem_obj);
@@ -250,7 +246,7 @@ K9_Image *translate_image(K9_Image *ret_img, K9_Image *image, int x, int y, bool
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 4, sizeof(cl_int), (void *)&y);
 
         if (read)
-            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp);
+            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp, false);
         else
             run_kernel_no_return(ret_img->tp);
 
@@ -327,7 +323,7 @@ K9_Image *rotate_image(K9_Image *ret_img, K9_Image *image, float deg, bool rsz, 
         }
 
         if (read)
-            ret_img->image = run_kernel(image->tp, *ret_img, ret_img->tp);
+            ret_img->image = run_kernel(image->tp, *ret_img, ret_img->tp, false);
         else
             run_kernel_no_return(ret_img->tp);
 

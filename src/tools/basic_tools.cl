@@ -67,3 +67,10 @@ __kernel void g_eroded(__global const uchar *in_image, __global uchar *out_image
     }
     out_image[x] = min;
 }
+
+__kernel void blend_img(__global const uchar *in_image, __global uchar *out_image, __global const uchar *b, float alpha){
+    int x = get_global_id(0);
+    float beta = 1 - alpha;
+
+    out_image[x] = (in_image[x] * alpha) + (b[x] * beta);
+}

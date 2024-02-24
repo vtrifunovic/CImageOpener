@@ -34,11 +34,10 @@ K9_Image *median_filter(K9_Image *ret_img, K9_Image *image, uint8_t order, bool 
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 5, sizeof(cl_uchar), (void *)&image->channels);
 
         if (read)
-            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp);
+            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp, true);
         else
             run_kernel_no_return(ret_img->tp);
 
-        // not time effective, but saves speed by resetting back to original
         recalculate_local_workgroups(ret_img->tp, 0);
     } else {
         uint8_t *window = (uint8_t *)malloc(order*order);
@@ -82,7 +81,7 @@ K9_Image *convolve(K9_Image *ret_img, K9_Image *image, Kernel kern, bool read){
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 5, sizeof(cl_uchar), (void *)&image->channels);
 
         if (read)
-        ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp);
+        ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp, true);
         else
         run_kernel_no_return(ret_img->tp);
 
@@ -142,7 +141,7 @@ K9_Image *gaussian_blur(K9_Image *ret_img, K9_Image *image, Kernel kern, bool re
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 6, sizeof(cl_int), (void *)&divisor);
 
         if (read)
-            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp);
+            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp, false);
         else
             run_kernel_no_return(ret_img->tp);
 
@@ -381,7 +380,7 @@ K9_Image *LUT(K9_Image *ret_img, K9_Image *image, int *table, int tablesize, boo
         global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_int), (void *)&tablesize);
 
         if (read)
-            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp);
+            ret_img->image = run_kernel(ret_img->tp, *ret_img, ret_img->tp, false);
         else
             run_kernel_no_return(ret_img->tp);
 

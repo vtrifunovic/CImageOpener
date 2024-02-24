@@ -20,7 +20,7 @@ K9_Image *pixel_lag(K9_Image *ret_img, K9_Image *image, int chance, int chunk_si
     global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 4, sizeof(cl_int), (void *)&value);
 
     if (read)
-        ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
+        ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size, false);
     else
         run_kernel_no_return(global_item_size);
 
@@ -88,9 +88,11 @@ K9_Image *buffer_kill(K9_Image *ret_img, K9_Image *image, uint8_t buffer_overwri
     global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_uchar), (void *)&buffer_overwrite);
 
     if (read)
-        ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size);
+        ret_img->image = run_kernel(global_item_size, *ret_img, global_item_size, false);
     else
         run_kernel_no_return(global_item_size);
 
     return ret_img;
 }
+
+
