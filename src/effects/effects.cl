@@ -63,14 +63,54 @@ __kernel void buffer_kill(__global const uchar *in_image, __global uchar *out_im
             cmax = 10;
         if (x%3 == 0){
             if (x-s > 0)
-                out_image[x-(int)s] = s;
-            float pos1 = x-s*cmax;
-            if ((int)pos1 < x)
-                out_image[(int)pos1] += s*cmax/h;
-            float pos2 = x/1.02;
-            if ((int)pos2 > 0)
-                out_image[(int)pos2] += h;
+                out_image[x-(int)s] = 255-s/in_image[x-(int)s];
+            float pos1 = x-s;
+            if ((int)pos1 > 0)
+                out_image[(int)pos1] -= 255-s*cmax/h;
+            float pos2 = x/1.002;
+            if ((int)pos2 > 0 && pos1 > 0)
+                out_image[(int)pos2] -= h-in_image[(int)pos1];
         }
 }
 
+static float magnitude(double z1, double z2){
+    float mag = z1*z1 + z2*z2;
+    return sqrt(mag);
+}
 
+__kernel void mbzoom(__global uchar *out_image, int width, 
+double scale, double cenx, double ceny, int height){
+    int x = get_global_id(0);
+    //calculate x & y pos of global_id
+    int a = x % width;
+    int b = x/width;
+    double p1 = (a - (double)width/2) * (4/(double)width) * (16/(9*(double)scale)) + cenx;
+    double p2 = (b - (double)width/2) * (4/(double)height) * (1/(double)scale) + ceny;
+    double z1, z2 = 0;
+    int i = 0;
+    int bounds = 100000;
+    bool isIn = true;
+    while (i < 1400 && isIn){
+        // zn^2 + c
+        double q1 = z1*z1 - z2*z2 + p1;
+        double q2 = 2*z1*z2 - p2;
+        // try: zn + sin(zn)
+        //double q1 = z1 - z2 + p1;
+        //double q2 = sin(z1-z2) - p2;
+        i++;
+        if (magnitude(q1, q2) > bounds)
+            isIn = false;
+        z1 = q1;
+        z2 = q2;
+    }
+    if (isIn){
+        out_image[x*3] = 0;
+        out_image[x*3+1] = 0;
+        out_image[x*3+2] = 0;
+    }
+    else{
+        out_image[x*3] = i%256;
+        out_image[x*3+1] = (i)%(int)z1*height;
+        out_image[x*3+2] = (i)%(int)z2*width;//(i*i)%height;
+    }
+}

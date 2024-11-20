@@ -161,9 +161,9 @@ uint8_t *read_mem_buffer(K9_Image image){
 void mem_check_gpu(K9_Image *image, K9_Image *ret_img, char *prog, char *func, uint16_t id, size_t global_item_size, bool read){
     if (ret_img->image == NULL && read)
         ret_img->image = (uint8_t *)malloc(ret_img->tp);
-    if (image->mem_id == NULL)
+    if (image != NULL && image->mem_id == NULL)
         update_input_buffer(image);
-    if (ret_img->mem_id == NULL)
+    if (ret_img != NULL && ret_img->mem_id == NULL)
         update_output_buffer(ret_img);
     read_cl_program(prog, id);
     if (strcmp(global.past_func, func) != 0){

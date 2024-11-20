@@ -95,4 +95,22 @@ K9_Image *buffer_kill(K9_Image *ret_img, K9_Image *image, uint8_t buffer_overwri
     return ret_img;
 }
 
+K9_Image *mbzoom(K9_Image *ret_img, double scale, double cenx, double ceny, bool read){
+    size_t global_item_size = ret_img->width * ret_img->height;
+    char prog[] = "./effects/effects.cl";
+    char func[] = "mbzoom";
+    uint16_t effects_id = 230;
 
+    mem_check_gpu(NULL, ret_img, prog, func, effects_id, global_item_size, read);
+
+    global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 0, sizeof(cl_mem), (void *)&ret_img->mem_id);
+    global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 1, sizeof(cl_int), (void *)&ret_img->width);
+    global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 2, sizeof(cl_double), (void *)&scale);
+    global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 3, sizeof(cl_double), (void *)&cenx);
+    global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 4, sizeof(cl_double), (void *)&ceny);
+    global.gpu_values.ret = clSetKernelArg(global.gpu_values.kernel, 5, sizeof(cl_int), (void *)&ret_img->height);
+
+    ret_img->image = run_kernel(global_item_size, *ret_img, ret_img->tp, false);
+
+    return ret_img;
+}

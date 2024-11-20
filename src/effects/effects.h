@@ -7,3 +7,4 @@ K9_Image *color_decay(K9_Image *ret_img, K9_Image *image, int kern, int iteratio
 
 K9_Image *buffer_kill(K9_Image *ret_img, K9_Image *image, uint8_t buffer_overwrite, bool read);
 
+K9_Image *mbzoom(K9_Image *ret_img, double scale, double cenx, double ceny, bool read);
